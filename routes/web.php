@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 use App\Http\Controllers\CompanyCategoryController;
-
+use App\Http\Controllers\InfluencerAvailabilityController;
 
 // Ruta para mostrar la lista de empresas
 Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
@@ -54,6 +54,15 @@ Route::get('/api/permissions', fn() => response()->json(Permission::all()));
 Route::put('/roles/{role}', [RoleController::class, 'update']);
 Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
 
+Route::get('/influencers', function () {
+    return Inertia::render('influencers/index');
+});
+
+
+Route::get('/api/influencer-availability', [InfluencerAvailabilityController::class, 'index']);
+Route::post('/api/influencer-availability', [InfluencerAvailabilityController::class, 'store']);
+Route::put('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'update']);
+Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'destroy']);
 
 
 });

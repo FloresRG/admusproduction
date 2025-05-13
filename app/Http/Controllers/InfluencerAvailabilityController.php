@@ -5,54 +5,83 @@ namespace App\Http\Controllers;
 use App\Models\InfluencerAvailability;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class InfluencerAvailabilityController extends Controller
 {
+
     public function index()
     {
-        $availabilities = InfluencerAvailability::with('user')->get();
-        return Inertia::render('InfluencerAvailabilities/Index', ['availabilities' => $availabilities]);
+        // Obtener todas las disponibilidades de los influencers
+        return response()->json(InfluencerAvailability::with('user')->get());
     }
 
-    public function create()
-    {
-        $users = User::all();
-        return Inertia::render('InfluencerAvailabilities/Create', ['users' => $users]);
-    }
 
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required',
-            'day_of_week' => 'required',
-            'start_time' => 'required',
-            'end_time' => 'required',
-            'turno' => 'required',
+            'day_of_week' => 'required|string',
+            'turno' => 'required|string',
         ]);
 
-        InfluencerAvailability::create($request->all());
-        return redirect('/influencer-availabilities');
+        $user_id = Auth::id();
+        $start_time = $request->turno == 'tarde' ? '14:00' : '09:30';
+        $end_time = $request->turno == 'tarde' ? '18:00' : '13:00';
+
+        $existingAvailability = InfluencerAvailability::where('user_id', $user_id)
+            ->where('day_of_week', $request->day_of_week)
+            ->where('turno', $request->turno)
+            ->first();
+
+        if ($existingAvailability) {
+            $existingAvailability->update([
+                'start_time' => $start_time,
+                'end_time' => $end_time,
+            ]);
+            return response()->json($existingAvailability);
+        } else {
+            $availability = InfluencerAvailability::create([
+                'user_id' => $user_id,
+                'day_of_week' => $request->day_of_week,
+                'turno' => $request->turno,
+                'start_time' => $start_time,
+                'end_time' => $end_time,
+            ]);
+            return response()->json($availability, 201);
+        }
     }
 
-    public function edit(InfluencerAvailability $influencerAvailability)
+    public function update(Request $request, $id)
     {
-        $users = User::all();
-        return Inertia::render('InfluencerAvailabilities/Edit', [
-            'availability' => $influencerAvailability,
-            'users' => $users
+        $request->validate([
+            'turno' => 'required|string',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
         ]);
+
+        $user_id = Auth::id();
+
+        // Obtener la disponibilidad que queremos actualizar
+        $availability = InfluencerAvailability::where('user_id', $user_id)->findOrFail($id);
+
+        // Actualizar las horas del turno
+        $availability->update([
+            'turno' => $request->turno,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+        ]);
+
+        return response()->json($availability);
     }
 
-    public function update(Request $request, InfluencerAvailability $influencerAvailability)
+    public function destroy($id)
     {
-        $influencerAvailability->update($request->all());
-        return redirect('/influencer-availabilities');
-    }
+        $user_id = Auth::id();
 
-    public function destroy(InfluencerAvailability $influencerAvailability)
-    {
-        $influencerAvailability->delete();
-        return redirect('/influencer-availabilities');
+        $availability = InfluencerAvailability::where('user_id', $user_id)->findOrFail($id);
+        $availability->delete();
+
+        return response()->json(null, 204);
     }
 }
