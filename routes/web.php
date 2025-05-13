@@ -11,15 +11,6 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 
-// Ruta para mostrar la lista de empresas
-Route::get('/companies', [CompanyController::class, 'index'])->name('companies.index');
-
-// Ruta para crear una nueva empresa (procesada por POST)
-Route::post('/companies', [CompanyController::class, 'store'])->name('companies.store');
-
-// Ruta para actualizar los datos de una empresa (procesada por PUT)
-Route::put('/companies/{company}', [CompanyController::class, 'update'])->name('companies.update');
-
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -30,11 +21,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
     Route::prefix('categories')->group(function () {
-    Route::get('/', [CompanyCategoryController::class, 'index']);
-    Route::post('/', [CompanyCategoryController::class, 'store']);
-    Route::put('{id}', [CompanyCategoryController::class, 'update']);
-    Route::delete('{id}', [CompanyCategoryController::class, 'destroy']);
+        Route::get('/', [CompanyCategoryController::class, 'index']);
+        Route::post('/', [CompanyCategoryController::class, 'store']);
+        Route::put('{id}', [CompanyCategoryController::class, 'update']);
+        Route::delete('{id}', [CompanyCategoryController::class, 'destroy']);
+    });
+    Route::prefix('companies')->group(function () {
+        Route::get('/', [CompanyController::class, 'index'])->name('index');
+        Route::get('/create', [CompanyController::class, 'create'])->name('create');
+        Route::post('/', [CompanyController::class, 'store'])->name('store');
+        Route::get('{company}/edit', [CompanyController::class, 'edit'])->name('edit');
+        Route::put('{company}', [CompanyController::class, 'update'])->name('update');
+        Route::delete('{company}', [CompanyController::class, 'destroy'])->name('destroy');
+    });
+    Route::get('/users', function () {
+        return Inertia::render('user');
+    });
+
+    Route::get('/api/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::put('/users/{user}', [UserController::class, 'update']);
+    Route::delete('/users/{user}', [UserController::class, 'destroy']);
+    Route::get('/api/roles', fn() => response()->json(Role::all()));
+    Route::get('/roles', function () {
+        return Inertia::render('roles');
+    });
+    Route::get('/api/roles', [RoleController::class, 'index']);
+    Route::post('/create/roles', [RoleController::class, 'store']);
+    Route::get('/api/permissions', fn() => response()->json(Permission::all()));
+    Route::put('/roles/{role}', [RoleController::class, 'update']);
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
 });
+<<<<<<< HEAD
 
 Route::get('/users', function () {
     return Inertia::render('user');
@@ -68,3 +86,7 @@ Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityContro
 });
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+=======
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';
+>>>>>>> dd5cd284aa166f5c3db7341615dca1d955f66eb2

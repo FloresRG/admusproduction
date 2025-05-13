@@ -1,226 +1,200 @@
-import { useState, useRef, useEffect } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { ModuleRegistry } from 'ag-grid-community';
-import { ClientSideRowModelModule } from 'ag-grid-community';
-import { Company, CompanyCategory } from './types';
-import { ColDef } from 'ag-grid-community';
-import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/react';
+import React, { useState, useMemo } from 'react';
+import { FaTrashAlt } from 'react-icons/fa';
 import Modal from 'react-modal';
+import { useReactTable, getCoreRowModel, getPaginationRowModel, flexRender, ColumnDef } from '@tanstack/react-table';
+import AppLayout from '@/layouts/app-layout';
+import { Head, Link } from '@inertiajs/react';
 
-// Registrar módulo requerido por AG Grid
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+Modal.setAppElement('#app');
 
-// Estilos de AG Grid (asegúrate de tener estos archivos en tu proyecto)
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
-
-interface Props {
-  companies: Company[];
-  categories: CompanyCategory[];
-}
-
-const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Company',
-    href: '/companies',
-  },
-];
-
-const Dashboard: React.FC<Props> = ({ companies, categories }) => {
-  const [rowData, setRowData] = useState<Company[]>(companies);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [formData, setFormData] = useState<Partial<Company>>({});
-  const [isCreating, setIsCreating] = useState(false);
-
-  const gridRef = useRef<AgGridReact<Company>>(null);
-
-  const columnDefs: ColDef<Company>[] = [
-    { headerName: 'Nombre', field: 'name', editable: true },
-    { headerName: 'Categoría', field: 'category.name' },
-    { headerName: 'Duración', field: 'contract_duration', editable: true },
-    { headerName: 'Descripción', field: 'description', editable: true },
-    {
-      headerName: 'Acciones',
-      cellRenderer: (params: any) => (
-        <button onClick={() => openModal(params.data)} className="btn btn-warning">Editar</button>
-      ),
-    },
-  ];
-
-  const openModal = (data: Company | null = null) => {
-    setFormData(data || {});
-    setIsCreating(data === null);
-    setModalOpen(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!formData.id) return;
-
-    try {
-      const response = await fetch(`/companies/${formData.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error('Error al actualizar');
-
-      const updatedCompany = await response.json();
-      setRowData((prev) =>
-        prev.map((company) => (company.id === updatedCompany.id ? updatedCompany : company))
-      );
-      setModalOpen(false);
-      alert('Empresa actualizada correctamente.');
-    } catch (error) {
-      console.error(error);
-      alert('Error al actualizar empresa.');
-    }
-  };
-
-  const handleCreate = async () => {
-    try {
-      const response = await fetch('/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error('Error al crear');
-
-      const newCompany = await response.json();
-      setRowData((prev) => [...prev, newCompany]);
-      setModalOpen(false);
-      alert('Empresa creada correctamente.');
-    } catch (error) {
-      console.error(error);
-      alert('Error al crear empresa.');
-    }
-  };
-
-  useEffect(() => {
-    Modal.setAppElement('#root');
-  }, []);
-
-  const customModalStyles = {
-    content: {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      transform: 'translate(-50%, -50%)',
-      padding: '20px',
-      borderRadius: '8px',
-      backgroundColor: '#fff',
-      boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
-      width: '90%',
-      maxWidth: '500px',
-    },
-  };
-
-  return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Dashboard" />
-      <div className="p-6">
-        <button onClick={() => openModal()} className="btn btn-primary mb-4">Crear Empresa</button>
-
-        <div className="ag-theme-alpine" style={{ height: 500 }}>
-          <AgGridReact
-            ref={gridRef}
-            rowData={rowData}
-            columnDefs={columnDefs}
-            pagination={true}
-            paginationPageSize={10}
-            domLayout="autoHeight"
-            suppressRowClickSelection={true}
-            rowSelection="single"
-          />
-        </div>
-      </div>
-
-      <Modal
-        isOpen={modalOpen}
-        onRequestClose={() => setModalOpen(false)}
-        style={customModalStyles}
-        contentLabel={isCreating ? 'Crear Empresa' : 'Editar Empresa'}
-      >
-        <h2 className="text-xl font-bold mb-4">{isCreating ? 'Crear Empresa' : 'Editar Empresa'}</h2>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            isCreating ? handleCreate() : handleUpdate();
-          }}
-        >
-          <div className="mb-4">
-            <label className="block">Nombre:</label>
-            <input
-              type="text"
-              value={formData.name || ''}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full border p-2 rounded"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block">Categoría:</label>
-            <select
-              value={formData.company_category_id || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, company_category_id: Number(e.target.value) })
-              }
-              className="w-full border p-2 rounded"
-              required
-            >
-              <option value="">Seleccione una categoría</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mb-4">
-            <label className="block">Duración:</label>
-            <input
-              type="number"
-              value={formData.contract_duration || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, contract_duration: Number(e.target.value) })
-              }
-              className="w-full border p-2 rounded"
-              required
-            />
-          </div>
-
-          <div className="mb-4">
-            <label className="block">Descripción:</label>
-            <textarea
-              value={formData.description || ''}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="w-full border p-2 rounded"
-              required
-            />
-          </div>
-
-          <div className="flex justify-end gap-4">
-            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-              {isCreating ? 'Crear' : 'Guardar'}
-            </button>
-            <button type="button" onClick={() => setModalOpen(false)} className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </Modal>
-    </AppLayout>
-  );
+type Company = {
+    id: number;
+    name: string;
+    category: {
+        name: string;
+    };
+    contract_duration: string;
+    availabilityDays: {
+        day_of_week: number;
+        start_time: string;
+        end_time: string;
+        turno: string;
+    }[];
 };
 
-export default Dashboard;
+type Props = {
+    companies: Company[];
+};
+
+const CompaniesIndex = ({ companies }: Props) => {
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+    const [notification, setNotification] = useState<string | null>(null);
+    const [companiesList, setCompaniesList] = useState(companies);
+
+    const columns = useMemo<ColumnDef<Company, any>[]>(() => [
+        { header: 'Nombre', accessorKey: 'name' },
+        { header: 'Categoría', accessorKey: 'category.name' },
+        { header: 'Duración del contrato', accessorKey: 'contract_duration' },
+        {
+            header: 'Acciones',
+            cell: ({ row }) => (
+                <div className="flex space-x-2">
+                    <Link href={`/companies/${row.original.id}/edit`} className="text-black hover:text-gray-700">Editar</Link>
+                    <button className="text-red-600" onClick={() => handleDelete(row.original)}>
+                        <FaTrashAlt />
+                    </button>
+                </div>
+            ),
+        },
+    ], []);
+
+    const table = useReactTable({
+        data: companiesList,
+        columns,
+        getCoreRowModel: getCoreRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+    });
+
+    const handleDelete = (company: Company) => {
+        setSelectedCompany(company);
+        setModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (selectedCompany) {
+            try {
+                const response = await fetch(`/companies/${selectedCompany.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                });
+                const data = await response.json();
+                setNotification(data.success);
+                setCompaniesList(companiesList.filter(c => c.id !== selectedCompany.id));
+            } catch (e) {
+                setNotification('Error al eliminar la compañía');
+            }
+            setModalOpen(false);
+            setSelectedCompany(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setModalOpen(false);
+        setSelectedCompany(null);
+    };
+
+    return (
+        <AppLayout>
+            {notification && (
+                <div className="fixed top-6 right-6 z-50 bg-green-100 text-green-800 border border-green-300 px-6 py-3 rounded-lg shadow-md transition duration-300">
+                    {notification}
+                </div>
+            )}
+            <Head title="Compañías" />
+            <div className="py-6">
+                <div className="mb-4">
+                    <Link
+                        href="/companies/create"
+                        className="px-4 py-2 text-white bg-black rounded hover:bg-gray-800"
+                    >
+                        Crear nueva compañía
+                    </Link>
+                </div>
+                <table className="min-w-full table-auto bg-white text-black">
+                    <thead>
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <tr key={headerGroup.id}>
+                                {headerGroup.headers.map(header => (
+                                    <th key={header.id} className="px-4 py-2 text-left border-b">
+                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody>
+                        {table.getRowModel().rows.map(row => (
+                            <tr key={row.id} className="border-t">
+                                {row.getVisibleCells().map(cell => (
+                                    <td key={cell.id} className="px-4 py-2">
+                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                <div className="mt-4 flex justify-between items-center">
+                    <div className="flex space-x-2">
+                        <button
+                            className="px-4 py-2 text-sm border bg-gray-100 rounded"
+                            onClick={() => table.setPageIndex(0)}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            {'<<'}
+                        </button>
+                        <button
+                            className="px-4 py-2 text-sm border bg-gray-100 rounded"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            {'<'}
+                        </button>
+                        <button
+                            className="px-4 py-2 text-sm border bg-gray-100 rounded"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            {'>'}
+                        </button>
+                        <button
+                            className="px-4 py-2 text-sm border bg-gray-100 rounded"
+                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            {'>>'}
+                        </button>
+                    </div>
+                    <div>
+                        <span>
+                            Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <Modal
+                isOpen={modalOpen}
+                onRequestClose={cancelDelete}
+                className="bg-white p-6 rounded-lg shadow-lg max-w-xs w-full mx-auto border border-black focus:outline-none focus:ring-2 focus:ring-black"
+                overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+            >
+                <h2 className="text-lg text-black">Confirmar eliminación</h2>
+                <p className="text-black">¿Estás seguro de que deseas eliminar la compañía "{selectedCompany?.name}"?</p>
+                <div className="mt-4 flex justify-end space-x-2">
+                    <button
+                        className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                        onClick={cancelDelete}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                        onClick={confirmDelete}
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            </Modal>
+
+
+        </AppLayout>
+    );
+};
+
+export default CompaniesIndex;
