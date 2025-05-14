@@ -24,16 +24,12 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-<<<<<<< HEAD
         title: 'Influencers',
         href: '/influencers',
         icon: LayoutGrid,
     },
     {
         title: 'company',
-=======
-        title: 'companies',
->>>>>>> dd5cd284aa166f5c3db7341615dca1d955f66eb2
         href: '/companies',
         icon: LayoutGrid,
     },

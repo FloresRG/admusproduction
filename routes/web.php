@@ -52,7 +52,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/roles/{role}', [RoleController::class, 'update']);
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
 });
-<<<<<<< HEAD
 
 Route::get('/users', function () {
     return Inertia::render('user');
@@ -83,10 +82,5 @@ Route::put('/api/influencer-availability/{id}', [InfluencerAvailabilityControlle
 Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'destroy']);
 
 
-});
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
-=======
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
->>>>>>> dd5cd284aa166f5c3db7341615dca1d955f66eb2
