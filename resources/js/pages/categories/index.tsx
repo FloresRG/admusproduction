@@ -1,297 +1,322 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { FaTrashAlt } from 'react-icons/fa';
-import Modal from 'react-modal';
-import { useReactTable, getCoreRowModel, getPaginationRowModel, flexRender, ColumnDef } from '@tanstack/react-table';
+// src/pages/categories/Index.tsx
+
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import {
+    Button,
+    Checkbox,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    Paper,
+    Snackbar,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TablePagination,
+    TableRow,
+    TableSortLabel,
+    TextField,
+    Toolbar,
+    Typography,
+} from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
 
 type Category = {
-  id: number;
-  name: string;
+    id: number;
+    name: string;
 };
 
-const breadcrumbs = [
-  {
-    title: 'Categories',
-    href: '/categories',
-  },
-];
+const breadcrumbs = [{ title: 'Categories', href: '/categories' }];
+
+// Helpers de ordenación
+type Order = 'asc' | 'desc';
+function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+    return b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
+}
+function getComparator<Key extends keyof any>(order: Order, orderBy: Key): (a: { [key in Key]: any }, b: { [key in Key]: any }) => number {
+    return order === 'desc' ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
+}
+function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
+    const stabilized = array.map((el, idx) => [el, idx] as [T, number]);
+    stabilized.sort((a, b) => {
+        const cmp = comparator(a[0], b[0]);
+        if (cmp !== 0) return cmp;
+        return a[1] - b[1];
+    });
+    return stabilized.map((el) => el[0]);
+}
 
 export default function Index({ categories }: { categories: Category[] }) {
-  const [rowData, setRowData] = useState(categories);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editingName, setEditingName] = useState<string>('');
-  const [search, setSearch] = useState('');
+    // Datos y CRUD
+    const [rowData, setRowData] = useState<Category[]>(categories);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [notification, setNotification] = useState<string | null>(null);
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingName, setEditingName] = useState('');
+    const [search, setSearch] = useState('');
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta categoría?')) {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      fetch(`/categories/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-      })
-        .then(() => {
-          setRowData((prevData) => prevData.filter((category) => category.id !== id));
-          setNotification('Categoría eliminada exitosamente');
-        })
-        .catch((error) => {
-          console.error('Error deleting category:', error);
-          setNotification('Hubo un error al eliminar la categoría');
-        });
-    }
-  };
+    // Sorting & Selecting state
+    const [order, setOrder] = useState<Order>('asc');
+    const [orderBy, setOrderBy] = useState<keyof Category>('id');
+    const [selected, setSelected] = useState<number[]>([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const handleEdit = (id: number, name: string) => {
-    setEditingId(id);
-    setEditingName(name);
-  };
+    // Handlers CRUD (idénticos a los tuyos)
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('¿Seguro que deseas eliminar?')) return;
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            await fetch(`/categories/${id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': csrf } });
+            setRowData((prev) => prev.filter((c) => c.id !== id));
+            setNotification('Categoría eliminada');
+        } catch {
+            setNotification('Error al eliminar');
+        }
+    };
+    const startEdit = (id: number, name: string) => {
+        setEditingId(id);
+        setEditingName(name);
+    };
+    const saveEdit = async (id: number) => {
+        if (!editingName.trim()) {
+            setNotification('Nombre obligatorio');
+            return;
+        }
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const res = await fetch(`/categories/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify({ name: editingName }),
+            });
+            if (!res.ok) throw new Error();
+            const upd = await res.json();
+            setRowData((prev) => prev.map((c) => (c.id === id ? upd : c)));
+            setNotification('Categoría actualizada');
+        } catch {
+            setNotification('Error al actualizar');
+        } finally {
+            setEditingId(null);
+            setEditingName('');
+        }
+    };
+    const createCategory = async () => {
+        if (!newCategoryName.trim()) {
+            setNotification('Nombre obligatorio');
+            return;
+        }
+        try {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+            const res = await fetch('/categories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
+                body: JSON.stringify({ name: newCategoryName }),
+            });
+            if (!res.ok) throw new Error();
+            const cr = await res.json();
+            setRowData((prev) => [...prev, cr]);
+            setNotification('Categoría creada');
+            setNewCategoryName('');
+            setDialogOpen(false);
+        } catch {
+            setNotification('Error al crear');
+        }
+    };
 
-  const saveEdit = async (id: number) => {
-    if (!editingName.trim()) {
-      setNotification('El nombre de la categoría es obligatorio.');
-      return;
-    }
-    try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/categories/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        body: JSON.stringify({ name: editingName }),
-      });
-      if (!response.ok) throw new Error('Error al actualizar la categoría');
-      const updated = await response.json();
-      setRowData(prev =>
-        prev.map(cat => (cat.id === id ? { ...cat, name: updated.name } : cat))
-      );
-      setNotification('Categoría actualizada exitosamente');
-      setEditingId(null);
-      setEditingName('');
-    } catch (error) {
-      setNotification('Hubo un error al actualizar la categoría');
-    }
-  };
+    // Notificaciones
+    useEffect(() => {
+        if (!notification) return;
+        const t = setTimeout(() => setNotification(null), 4000);
+        return () => clearTimeout(t);
+    }, [notification]);
 
-  const columns = useMemo<ColumnDef<Category, any>[]>(
-    () => [
-      {
-        header: 'ID',
-        accessorKey: 'id',
-      },
-      {
-        header: 'Nombre',
-        cell: ({ row }) => {
-          const isEditing = editingId === row.original.id;
-          return isEditing ? (
-            <input
-              value={editingName}
-              autoFocus
-              onChange={e => setEditingName(e.target.value)}
-              onBlur={() => saveEdit(row.original.id)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') saveEdit(row.original.id);
-                if (e.key === 'Escape') setEditingId(null);
-              }}
-              className="border px-2 py-1 rounded w-full"
+    // Filtrado de búsqueda
+    const filtered = useMemo(
+        () => rowData.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()) || String(c.id).includes(search)),
+        [rowData, search],
+    );
+
+    // Ordenación estable + paginación
+    const sortedData = useMemo(() => stableSort(filtered, getComparator(order, orderBy)), [filtered, order, orderBy]);
+    const paginatedData = useMemo(() => sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage), [sortedData, page, rowsPerPage]);
+
+    // Sorting & selecting handlers
+    const handleRequestSort = (property: keyof Category) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+    };
+    const handleSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelected(filtered.map((c) => c.id));
+        } else {
+            setSelected([]);
+        }
+    };
+    const handleClickRow = (id: number) => {
+        setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]));
+    };
+    const isSelected = (id: number) => selected.indexOf(id) !== -1;
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Categorías" />
+
+            {/* Buscador + Crear */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <TextField
+                    label="Buscar por nombre o ID"
+                    variant="outlined"
+                    size="small"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+                    Crear categoría
+                </Button>
+            </div>
+
+            {/* Toolbar selección */}
+            {selected.length > 0 && (
+                <Toolbar sx={{ bgcolor: 'action.selected', mb: 1 }}>
+                    <Typography sx={{ flex: '1 1 100%' }} color="inherit">
+                        {selected.length} seleccionado{selected.length > 1 ? 's' : ''}
+                    </Typography>
+                    <IconButton onClick={() => selected.forEach((id) => handleDelete(id))}>
+                        <DeleteIcon />
+                    </IconButton>
+                </Toolbar>
+            )}
+
+            {/* Tabla */}
+            <TableContainer component={Paper}>
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell padding="checkbox">
+                                <Checkbox
+                                    indeterminate={selected.length > 0 && selected.length < filtered.length}
+                                    checked={filtered.length > 0 && selected.length === filtered.length}
+                                    onChange={handleSelectAllClick}
+                                />
+                            </TableCell>
+                            <TableCell sortDirection={orderBy === 'id' ? order : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'id'}
+                                    direction={orderBy === 'id' ? order : 'asc'}
+                                    onClick={() => handleRequestSort('id')}
+                                >
+                                    ID
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell sortDirection={orderBy === 'name' ? order : false}>
+                                <TableSortLabel
+                                    active={orderBy === 'name'}
+                                    direction={orderBy === 'name' ? order : 'asc'}
+                                    onClick={() => handleRequestSort('name')}
+                                >
+                                    Nombre
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell>Acciones</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {paginatedData.map((row) => {
+                            const isItemSelected = isSelected(row.id);
+                            return (
+                                <TableRow hover key={row.id} selected={isItemSelected} onClick={() => handleClickRow(row.id)}>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox checked={isItemSelected} />
+                                    </TableCell>
+                                    <TableCell>{row.id}</TableCell>
+                                    <TableCell>
+                                        {editingId === row.id ? (
+                                            <TextField
+                                                value={editingName}
+                                                size="small"
+                                                autoFocus
+                                                onChange={(e) => setEditingName(e.target.value)}
+                                                onBlur={() => saveEdit(row.id)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') saveEdit(row.id);
+                                                    if (e.key === 'Escape') setEditingId(null);
+                                                }}
+                                            />
+                                        ) : (
+                                            <span
+                                                onDoubleClick={() => startEdit(row.id, row.name)}
+                                                style={{ cursor: 'pointer' }}
+                                                title="Doble click para editar"
+                                            >
+                                                {row.name}
+                                            </span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            size="small"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(row.id);
+                                            }}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
+            {/* Paginación externa */}
+            <TablePagination
+                component="div"
+                count={filtered.length}
+                page={page}
+                rowsPerPage={rowsPerPage}
+                onPageChange={(_, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                }}
+                rowsPerPageOptions={[5, 10, 25]}
             />
-          ) : (
-            <span
-              onDoubleClick={() => handleEdit(row.original.id, row.original.name)}
-              className="cursor-pointer"
-              title="Doble click para editar"
-            >
-              {row.original.name}
-            </span>
-          );
-        },
-      },
-      {
-        header: 'Acciones',
-        cell: ({ row }) => (
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleDelete(row.original.id)}
-              className="text-gray-600 hover:text-gray-800"
-              title="Eliminar"
-            >
-              <FaTrashAlt />
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [editingId, editingName]
-  );
 
-  // Filtrado por búsqueda
-  const filteredData = useMemo(
-    () =>
-      rowData.filter(cat =>
-        cat.name.toLowerCase().includes(search.toLowerCase()) ||
-        String(cat.id).includes(search)
-      ),
-    [rowData, search]
-  );
+            {/* Dialogo Crear */}
+            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
+                <DialogTitle>Crear Nueva Categoría</DialogTitle>
+                <DialogContent>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        margin="dense"
+                        label="Nombre de la categoría"
+                        value={newCategoryName}
+                        onChange={(e) => setNewCategoryName(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                    <Button variant="contained" onClick={createCategory}>
+                        Crear
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 10,
-      },
-    },
-  });
-
-  const openModal = () => setModalIsOpen(true);
-  const closeModal = () => setModalIsOpen(false);
-
-  const createCategory = async () => {
-    if (!newCategoryName.trim()) {
-      setNotification('El nombre de la categoría es obligatorio.');
-      return;
-    }
-
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-    try {
-      const response = await fetch('/categories', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        body: JSON.stringify({ name: newCategoryName }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al crear la categoría');
-      }
-
-      const newCategory = await response.json();
-      setRowData((prevData) => [...prevData, newCategory]);
-      setNotification('Categoría creada exitosamente');
-      setNewCategoryName('');
-      closeModal();
-    } catch (error) {
-      console.error('Error creating category:', error);
-      setNotification('Hubo un error al crear la categoría');
-    }
-  };
-
-  useEffect(() => {
-    if (notification) {
-      const timer = setTimeout(() => setNotification(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [notification]);
-
-  return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-      <Head title="Categorías" />
-
-      {notification && (
-        <div className="fixed top-6 right-6 z-50 bg-white text-gray-800 border border-gray-300 px-6 py-3 rounded-lg shadow-md transition duration-300">
-          {notification}
-        </div>
-      )}
-
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-4">Categorías</h1>
-
-        <div className="flex items-center mb-4 gap-2">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por nombre o ID..."
-            className="border border-gray-300 rounded px-3 py-2 w-full max-w-xs"
-          />
-          <button
-            onClick={openModal}
-            className="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 px-4 py-2 rounded"
-          >
-            + Crear nueva categoría
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300 shadow-md">
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} className="p-2 text-left cursor-pointer">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="p-2">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Paginación */}
-        <div className="flex justify-between items-center mt-4">
-          <button onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-            Anterior
-          </button>
-          <span>
-            Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
-          </span>
-          <button onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-            Siguiente
-          </button>
-        </div>
-      </div>
-
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={closeModal}
-        contentLabel="Crear Categoría"
-        ariaHideApp={false}
-        className="max-w-md mx-auto mt-24 bg-white p-6 rounded-lg shadow-lg border border-gray-300"
-      >
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Crear Nueva Categoría</h2>
-
-        <input
-          type="text"
-          value={newCategoryName}
-          onChange={(e) => setNewCategoryName(e.target.value)}
-          placeholder="Nombre de la categoría"
-          className="w-full px-4 py-2 mb-4 bg-white text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-        />
-        <div className="flex justify-end space-x-3">
-          <button onClick={createCategory} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
-            Crear
-          </button>
-          <button onClick={closeModal} className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">
-            Cancelar
-          </button>
-        </div>
-      </Modal>
-    </AppLayout>
-  );
+            {/* Snackbar Notificación */}
+            <Snackbar open={!!notification} message={notification} onClose={() => setNotification(null)} autoHideDuration={4000} />
+        </AppLayout>
+    );
 }
