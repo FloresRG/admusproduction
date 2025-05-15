@@ -9,6 +9,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 use App\Http\Controllers\CompanyCategoryController;
+use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 
 
@@ -61,7 +62,8 @@ Route::get('/api/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{user}', [UserController::class, 'update']);
 Route::delete('/users/{user}', [UserController::class, 'destroy']);
-Route::get('/api/roles', fn () => response()->json(Role::all()));
+Route::get('/api/roles', fn() => response()->json(Role::all()));
+
 Route::get('/roles', function () {
     return Inertia::render('roles');
 });
@@ -84,3 +86,17 @@ Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityContro
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
+Route::get('/infuencersdatos', function () {
+    return Inertia::render('influencers/infuencersdatos');
+});
+
+Route::get('/api/infuencersdatos', [DatoInfluencersController::class, 'index']);
+Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store']);
+Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']);
+Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
+Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
+Route::get('/api/roles', fn() => response()->json(Role::all()));
+
+
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';

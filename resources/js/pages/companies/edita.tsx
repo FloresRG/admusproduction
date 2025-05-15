@@ -1,6 +1,7 @@
 import React from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
+import { FaUser, FaCalendarAlt, FaClipboard, FaRegClock, FaUsers } from 'react-icons/fa';
 
 type CompanyCategory = {
     id: number;
@@ -13,11 +14,14 @@ type Company = {
     company_category_id: number;
     contract_duration: string;
     description: string;
+    start_date: string | null;
+    end_date: string | null;
     availability_days: {
         day_of_week: number;
         start_time: string;
         end_time: string;
         turno: string;
+        cantidad?: number | null;
     }[];
 };
 
@@ -31,20 +35,20 @@ type Availability = {
     start_time: string;
     end_time: string;
     turno: 'mañana' | 'tarde';
+    cantidad?: number | null;
 };
 
-// Normaliza el formato de hora a HH:mm
 function normalizeTime(time: string) {
     if (!time) return '';
     return time.length > 5 ? time.slice(0, 5) : time;
 }
 
 export default function Edita({ company, categories }: Props) {
-    // Normaliza las horas al cargar
     const initialAvailability = company.availability_days.map(avail => ({
         ...avail,
         start_time: normalizeTime(avail.start_time),
         end_time: normalizeTime(avail.end_time),
+        cantidad: avail.cantidad ?? null,
     }));
 
     const { data, setData, put, processing, errors } = useForm({
@@ -52,8 +56,24 @@ export default function Edita({ company, categories }: Props) {
         company_category_id: company.company_category_id,
         contract_duration: company.contract_duration,
         description: company.description || '',
-        availability: initialAvailability,
+        start_date: company.start_date || '',
+        end_date: company.end_date || '',
+        availability: initialAvailability.length > 0 ? initialAvailability : [
+            { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null }
+        ],
     });
+
+    const handleAddAvailability = () => {
+        setData('availability', [
+            ...data.availability,
+            { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null },
+        ]);
+    };
+
+    const handleRemoveAvailability = (index: number) => {
+        if (data.availability.length === 1) return;
+        setData('availability', data.availability.filter((_, i) => i !== index));
+    };
 
     const handleAvailabilityChange = (
         index: number,
@@ -72,7 +92,6 @@ export default function Edita({ company, categories }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Normaliza todas las horas antes de enviar
         const cleanedAvailability = data.availability.map(avail => ({
             ...avail,
             start_time: normalizeTime(avail.start_time),
@@ -81,84 +100,113 @@ export default function Edita({ company, categories }: Props) {
 
         setData('availability', cleanedAvailability);
 
-        put(`/companies/${company.id}`, {
-            onError: (errs) => {
-                console.error('Errores de validación:', errs);
-            },
-        });
+        put(`/companies/${company.id}`);
     };
 
     return (
         <AppLayout>
             <Head title="Editar Compañía" />
-
-            <div className="max-w-3xl mx-auto p-8 bg-white rounded-xl shadow-lg">
-                <h1 className="text-2xl font-bold text-center mb-6">Editar compañía</h1>
-
+            <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+                <h1 className="text-2xl font-semibold text-gray-800 mb-6">Editar Compañía</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Nombre de la compañía */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Nombre</label>
-                        <input
-                            type="text"
-                            className="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={data.name}
-                            onChange={e => setData('name', e.target.value)}
-                        />
-                        {errors.name && <div className="text-red-600 mt-1">{errors.name}</div>}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.name}
+                                onChange={e => setData('name', e.target.value)}
+                                placeholder="Nombre de la compañía"
+                            />
+                            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        </div>
+                        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                     </div>
 
-                    {/* Categoría */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Categoría</label>
-                        <select
-                            className="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={data.company_category_id}
-                            onChange={e => setData('company_category_id', Number(e.target.value))}
-                        >
-                            <option value="">Selecciona una categoría</option>
-                            {categories.map(cat => (
-                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                            ))}
-                        </select>
-                        {errors.company_category_id && <div className="text-red-600 mt-1">{errors.company_category_id}</div>}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
+                        <div className="relative">
+                            <select
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.company_category_id}
+                                onChange={e => setData('company_category_id', Number(e.target.value))}
+                            >
+                                <option value="">Selecciona una categoría</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
+                            </select>
+                            <FaClipboard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        </div>
+                        {errors.company_category_id && <p className="text-red-500 text-sm mt-1">{errors.company_category_id}</p>}
                     </div>
 
-                    {/* Duración del contrato */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Duración del contrato</label>
-                        <input
-                            type="text"
-                            className="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={data.contract_duration}
-                            onChange={e => setData('contract_duration', e.target.value)}
-                        />
-                        {errors.contract_duration && <div className="text-red-600 mt-1">{errors.contract_duration}</div>}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Duración del contrato</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.contract_duration}
+                                onChange={e => setData('contract_duration', e.target.value)}
+                                placeholder="Duración del contrato"
+                            />
+                            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        </div>
+                        {errors.contract_duration && <p className="text-red-500 text-sm mt-1">{errors.contract_duration}</p>}
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
+                        <div className="relative">
+                            <textarea
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.description}
+                                onChange={e => setData('description', e.target.value)}
+                                placeholder="Descripción de la compañía"
+                                rows={4}
+                            />
+                            <FaClipboard className="absolute left-3 top-3 text-gray-500" />
+                        </div>
+                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
                     </div>
 
-                    {/* Descripción */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Descripción</label>
-                        <textarea
-                            className="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={data.description}
-                            onChange={e => setData('description', e.target.value)}
-                        />
-                        {errors.description && <div className="text-red-600 mt-1">{errors.description}</div>}
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de inicio del contrato</label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.start_date || ''}
+                                onChange={e => setData('start_date', e.target.value)}
+                            />
+                            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        </div>
+                        {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
                     </div>
 
-                    {/* Disponibilidad */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de fin del contrato</label>
+                        <div className="relative">
+                            <input
+                                type="date"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.end_date || ''}
+                                onChange={e => setData('end_date', e.target.value)}
+                            />
+                            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                        </div>
+                        {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Días de disponibilidad</label>
                         {data.availability.map((avail, idx) => (
-                            <div key={idx} className="grid grid-cols-4 gap-4 mb-4">
-                                {/* Día de la semana */}
+                            <div key={idx} className="grid grid-cols-6 gap-2 mb-2 items-center">
                                 <select
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="input border-gray-300 rounded-lg"
                                     value={avail.day_of_week}
-                                    onChange={e =>
-                                        handleAvailabilityChange(idx, 'day_of_week', parseInt(e.target.value))
-                                    }
+                                    onChange={e => handleAvailabilityChange(idx, 'day_of_week', parseInt(e.target.value))}
                                 >
                                     <option value={1}>Lunes</option>
                                     <option value={2}>Martes</option>
@@ -168,49 +216,47 @@ export default function Edita({ company, categories }: Props) {
                                     <option value={6}>Sábado</option>
                                     <option value={7}>Domingo</option>
                                 </select>
-
-                                {/* Horario de inicio */}
-                                <input
-                                    type="time"
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={normalizeTime(avail.start_time)}
-                                    onChange={e => handleAvailabilityChange(idx, 'start_time', e.target.value)}
-                                />
-
-                                {/* Horario de fin */}
-                                <input
-                                    type="time"
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={normalizeTime(avail.end_time)}
-                                    onChange={e => handleAvailabilityChange(idx, 'end_time', e.target.value)}
-                                />
-
-                                {/* Turno */}
+                               
                                 <select
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="input border-gray-300 rounded-lg"
                                     value={avail.turno}
                                     onChange={e => handleAvailabilityChange(idx, 'turno', e.target.value)}
                                 >
                                     <option value="mañana">Mañana</option>
                                     <option value="tarde">Tarde</option>
                                 </select>
+                               
+                                <button
+                                    type="button"
+                                    className="ml-2 text-red-600 font-bold text-xl"
+                                    onClick={() => handleRemoveAvailability(idx)}
+                                    disabled={data.availability.length === 1}
+                                    title="Eliminar este día"
+                                >
+                                    ×
+                                </button>
                             </div>
                         ))}
-                        {Object.keys(errors as Record<string, string>)
+                        <button
+                            type="button"
+                            onClick={handleAddAvailability}
+                            className="text-blue-600 font-semibold mt-2 hover:underline"
+                        >
+                            + Añadir otro día
+                        </button>
+                        {Object.keys(errors)
                             .filter(key => key.startsWith('availability'))
                             .map(key => (
-                                <div key={key} className="text-red-600">{(errors as Record<string, string>)[key]}</div>
+                                <p key={key} className="text-red-500 text-sm mt-1">{errors[key as keyof typeof errors]}</p>
                             ))}
                     </div>
-
-                    {/* Botón de Guardar */}
-                    <div className="flex justify-end space-x-4">
+                    <div className="pt-4">
                         <button
                             type="submit"
-                            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out disabled:opacity-50"
                             disabled={processing}
                         >
-                            {processing ? 'Guardando...' : 'Guardar cambios'}
+                            Guardar cambios
                         </button>
                     </div>
                 </form>
@@ -218,3 +264,4 @@ export default function Edita({ company, categories }: Props) {
         </AppLayout>
     );
 }
+

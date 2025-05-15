@@ -50,6 +50,43 @@ export function AppSidebar() {
     if (isAdmin || isInfluencer) {
         items.push({ title: 'Influencers', href: '/influencers', icon: LayoutGrid });
     }
+const mainNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Usuarios',
+        href: '/users',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Roles',
+        href: '/roles',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Influencers',
+        href: '/influencers',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'company',
+        href: '/companies',
+        icon: LayoutGrid,
+    },
+     {
+        title: 'categories',
+        href: '/categories',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Influencers Datos',
+        href: '/infuencersdatos',
+        icon: LayoutGrid,
+    },
+];
 
     const footerNavItems: NavItem[] = [
         {
