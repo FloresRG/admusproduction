@@ -46,4 +46,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    // En el modelo User
+    public function dato()
+    {
+        return $this->hasOne(Dato::class, 'id_user');  // Relación uno a uno con el modelo Dato
+    }
 }
