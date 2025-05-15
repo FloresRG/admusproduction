@@ -83,6 +83,9 @@ Route::post('/api/influencer-availability', [InfluencerAvailabilityController::c
 Route::put('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'update']);
 Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'destroy']);
 
+
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';
 Route::get('/infuencersdatos', function () {
     return Inertia::render('influencers/infuencersdatos');
 });
