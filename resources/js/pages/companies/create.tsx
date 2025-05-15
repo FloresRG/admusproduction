@@ -133,7 +133,7 @@ export default function Create({ categories }: Props) {
                     </div>
                     {/* Fecha de inicio */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Fecha de inicio del contrato</label>
+                        <label className="block text-sm font-medium text-gray-700">Fecha de inicio</label>
                         <input
                             type="date"
                             className="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -144,7 +144,7 @@ export default function Create({ categories }: Props) {
                     </div>
                     {/* Fecha de fin */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Fecha de fin del contrato</label>
+                        <label className="block text-sm font-medium text-gray-700">Fecha de fin</label>
                         <input
                             type="date"
                             className="w-full p-3 mt-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -175,7 +175,20 @@ export default function Create({ categories }: Props) {
                                     <option value={7}>Domingo</option>
                                 </select>
                                 {/* Horario de inicio */}
-                               
+                                <input
+                                    type="time"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={avail.start_time}
+                                    onChange={e => handleAvailabilityChange(idx, 'start_time', e.target.value)}
+                                />
+                                {/* Horario de fin */}
+                                <input
+                                    type="time"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={avail.end_time}
+                                    onChange={e => handleAvailabilityChange(idx, 'end_time', e.target.value)}
+                                />
+                                {/* Turno */}
                                 <select
                                     className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={avail.turno}
@@ -185,7 +198,20 @@ export default function Create({ categories }: Props) {
                                     <option value="tarde">Tarde</option>
                                 </select>
                                 {/* Cantidad */}
-                                
+                                <input
+                                    type="number"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Cantidad"
+                                    value={avail.cantidad ?? ''}
+                                    min={0}
+                                    onChange={e =>
+                                        handleAvailabilityChange(
+                                            idx,
+                                            'cantidad',
+                                            e.target.value ? parseInt(e.target.value) : null
+                                        )
+                                    }
+                                />
                                 {/* Eliminar día */}
                                 <button
                                     type="button"

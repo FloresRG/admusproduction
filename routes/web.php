@@ -11,7 +11,7 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
-
+use App\Http\Controllers\WeekController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -38,7 +38,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/users', function () {
         return Inertia::render('user');
     });
+    Route::prefix('weeks')->group(function () {
+        // Vista con Inertia.js (index)
+        Route::get('/', [WeekController::class, 'index'])->name('weeks.index');
 
+        // Rutas con JSON (Crear, Editar, Eliminar)
+        Route::post('/', [WeekController::class, 'store'])->name('weeks.store');
+        Route::put('{week}', [WeekController::class, 'update'])->name('weeks.update');
+        Route::delete('{week}', [WeekController::class, 'destroy'])->name('weeks.destroy');
+
+        Route::get('/{id}/bookings', [WeekController::class, 'bookingsByWeek'])->name('weeks.bookings');
+    });
+   
     Route::get('/api/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{user}', [UserController::class, 'update']);
@@ -84,8 +95,8 @@ Route::put('/api/influencer-availability/{id}', [InfluencerAvailabilityControlle
 Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'destroy']);
 
 
-require __DIR__.'/settings.php';
-require __DIR__.'/auth.php';
+require __DIR__ . '/settings.php';
+require __DIR__ . '/auth.php';
 Route::get('/infuencersdatos', function () {
     return Inertia::render('influencers/infuencersdatos');
 });
