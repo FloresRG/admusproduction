@@ -25,6 +25,9 @@
     },
     "dependencies": {
         "@ag-grid-community/react": "^32.3.5",
+        "@chakra-ui/react": "^3.17.0",
+        "@emotion/react": "^11.14.0",
+        "@emotion/styled": "^11.14.0",
         "@headlessui/react": "^2.2.0",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/react": "^2.0.0",
@@ -53,6 +56,7 @@
         "clsx": "^2.1.1",
         "concurrently": "^9.0.1",
         "date-fns": "^4.1.0",
+        "framer-motion": "^12.11.3",
         "globals": "^15.14.0",
         "laravel-vite-plugin": "^1.0",
         "lucide-react": "^0.475.0",

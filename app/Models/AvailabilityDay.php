@@ -15,6 +15,7 @@ class AvailabilityDay extends Model
         'start_time',
         'end_time',
         'turno',
+        'cantidad', // Campo opcional
     ];
 
     public function company()

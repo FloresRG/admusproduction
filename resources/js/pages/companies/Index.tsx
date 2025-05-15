@@ -1,12 +1,17 @@
 import React, { useState, useMemo } from 'react';
-import { FaTrashAlt } from 'react-icons/fa';
+import { FaTrashAlt, FaSearch } from 'react-icons/fa';
 import Modal from 'react-modal';
 import { useReactTable, getCoreRowModel, getPaginationRowModel, flexRender, ColumnDef } from '@tanstack/react-table';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 
 Modal.setAppElement('#app');
-
+type AvailabilityDay = {
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+    turno: string;
+};
 type Company = {
     id: number;
     name: string;
@@ -14,34 +19,79 @@ type Company = {
         name: string;
     };
     contract_duration: string;
-    availabilityDays: {
-        day_of_week: number;
-        start_time: string;
-        end_time: string;
-        turno: string;
-    }[];
+    start_date?: string;
+    end_date?: string;
+    // Acepta ambas variantes
+    availabilityDays?: AvailabilityDay[];
+    availability_days?: AvailabilityDay[];
 };
-
 type Props = {
     companies: Company[];
 };
+
+const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+function formatDay(day: number) {
+    return daysOfWeek[day - 1] || '';
+}
 
 const CompaniesIndex = ({ companies }: Props) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
     const [notification, setNotification] = useState<string | null>(null);
     const [companiesList, setCompaniesList] = useState(companies);
+    const [search, setSearch] = useState('');
+
+    // Buscador reactivo
+    const filteredCompanies = useMemo(() => {
+        const s = search.trim().toLowerCase();
+        if (!s) return companiesList;
+        return companiesList.filter(c =>
+            c.name.toLowerCase().includes(s) ||
+            c.category?.name?.toLowerCase().includes(s)
+        );
+    }, [search, companiesList]);
 
     const columns = useMemo<ColumnDef<Company, any>[]>(() => [
         { header: 'Nombre', accessorKey: 'name' },
         { header: 'Categoría', accessorKey: 'category.name' },
         { header: 'Duración del contrato', accessorKey: 'contract_duration' },
+        { header: 'Fecha inicio', accessorKey: 'start_date' },
+        { header: 'Fecha fin', accessorKey: 'end_date' },
+        {
+            header: 'Días Disponibles',
+            cell: ({ row }) => {
+                // Usa snake_case si así llega desde Laravel
+                const availability = Array.isArray(row.original.availability_days)
+                    ? row.original.availability_days
+                    : [];
+                return (
+                    <div className="flex flex-col gap-1">
+                        {availability.length === 0 && (
+                            <span className="text-gray-400 italic">Sin disponibilidad</span>
+                        )}
+                        {availability.map((d, i) => (
+                            <span
+                                key={i}
+                                className={`inline-block px-2 py-1 rounded text-xs font-semibold
+                            ${d.turno === 'mañana' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}
+                            border border-gray-200`}
+                            >
+                                {formatDay(d.day_of_week)}: {d.start_time} - {d.end_time} ({d.turno})
+                            </span>
+                        ))}
+                    </div>
+                );
+            },
+        },
         {
             header: 'Acciones',
             cell: ({ row }) => (
                 <div className="flex space-x-2">
-                    <Link href={`/companies/${row.original.id}/edit`} className="text-black hover:text-gray-700">Editar</Link>
-                    <button className="text-red-600" onClick={() => handleDelete(row.original)}>
+                    <Link href={`/companies/${row.original.id}/edit`} className="text-black hover:text-gray-700 underline">
+                        Editar
+                    </Link>
+                    <button className="text-red-600 hover:text-red-800" onClick={() => handleDelete(row.original)}>
                         <FaTrashAlt />
                     </button>
                 </div>
@@ -50,18 +100,18 @@ const CompaniesIndex = ({ companies }: Props) => {
     ], []);
 
     const table = useReactTable({
-        data: companiesList,
+        data: filteredCompanies,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
     });
 
-    const handleDelete = (company: Company) => {
+    function handleDelete(company: Company) {
         setSelectedCompany(company);
         setModalOpen(true);
-    };
+    }
 
-    const confirmDelete = async () => {
+    async function confirmDelete() {
         if (selectedCompany) {
             try {
                 const response = await fetch(`/companies/${selectedCompany.id}`, {
@@ -80,55 +130,73 @@ const CompaniesIndex = ({ companies }: Props) => {
             setModalOpen(false);
             setSelectedCompany(null);
         }
-    };
+    }
 
-    const cancelDelete = () => {
+    function cancelDelete() {
         setModalOpen(false);
         setSelectedCompany(null);
-    };
+    }
 
     return (
         <AppLayout>
+            <Head title="Compañías" />
             {notification && (
                 <div className="fixed top-6 right-6 z-50 bg-green-100 text-green-800 border border-green-300 px-6 py-3 rounded-lg shadow-md transition duration-300">
                     {notification}
                 </div>
             )}
-            <Head title="Compañías" />
             <div className="py-6">
-                <div className="mb-4">
+                <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <Link
                         href="/companies/create"
-                        className="px-4 py-2 text-white bg-black rounded hover:bg-gray-800"
+                        className="px-4 py-2 text-white bg-black rounded hover:bg-gray-800 font-semibold"
                     >
                         Crear nueva compañía
                     </Link>
+                    <div className="relative w-full md:w-72">
+                        <input
+                            type="text"
+                            placeholder="Buscar por nombre o categoría..."
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    </div>
                 </div>
-                <table className="min-w-full table-auto bg-white text-black">
-                    <thead>
-                        {table.getHeaderGroups().map(headerGroup => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map(header => (
-                                    <th key={header.id} className="px-4 py-2 text-left border-b">
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody>
-                        {table.getRowModel().rows.map(row => (
-                            <tr key={row.id} className="border-t">
-                                {row.getVisibleCells().map(cell => (
-                                    <td key={cell.id} className="px-4 py-2">
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                <div className="overflow-x-auto rounded shadow border border-gray-200 bg-white">
+                    <table className="min-w-full table-auto text-black">
+                        <thead className="bg-gray-100">
+                            {table.getHeaderGroups().map(headerGroup => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map(header => (
+                                        <th key={header.id} className="px-4 py-2 text-left border-b font-semibold">
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                        </thead>
+                        <tbody>
+                            {table.getRowModel().rows.length === 0 && (
+                                <tr>
+                                    <td colSpan={columns.length} className="text-center py-8 text-gray-400">
+                                        No se encontraron compañías.
                                     </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-
+                                </tr>
+                            )}
+                            {table.getRowModel().rows.map(row => (
+                                <tr key={row.id} className="border-t hover:bg-gray-50 transition">
+                                    {row.getVisibleCells().map(cell => (
+                                        <td key={cell.id} className="px-4 py-2 align-top">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
                 <div className="mt-4 flex justify-between items-center">
                     <div className="flex space-x-2">
                         <button
@@ -167,15 +235,14 @@ const CompaniesIndex = ({ companies }: Props) => {
                     </div>
                 </div>
             </div>
-
             <Modal
                 isOpen={modalOpen}
                 onRequestClose={cancelDelete}
                 className="bg-white p-6 rounded-lg shadow-lg max-w-xs w-full mx-auto border border-black focus:outline-none focus:ring-2 focus:ring-black"
                 overlayClassName="fixed inset-0 bg-black bg-opacity-50"
             >
-                <h2 className="text-lg text-black">Confirmar eliminación</h2>
-                <p className="text-black">¿Estás seguro de que deseas eliminar la compañía "{selectedCompany?.name}"?</p>
+                <h2 className="text-lg text-black font-bold">Confirmar eliminación</h2>
+                <p className="text-black mt-2">¿Estás seguro de que deseas eliminar la compañía "<span className="font-semibold">{selectedCompany?.name}</span>"?</p>
                 <div className="mt-4 flex justify-end space-x-2">
                     <button
                         className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
@@ -191,8 +258,6 @@ const CompaniesIndex = ({ companies }: Props) => {
                     </button>
                 </div>
             </Modal>
-
-
         </AppLayout>
     );
 };
