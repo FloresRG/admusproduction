@@ -130,7 +130,7 @@ export default function RolesPermissions() {
                                 <tr key={role.id} className="hover:bg-gray-50 transition">
                                     <td className="px-6 py-4 text-sm text-gray-800">{role.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-700">
-                                        {role.permissions.length > 0 ? (
+                                        {role.permissions?.length > 0 ? (
                                             <ul className="list-disc list-inside">
                                                 {role.permissions.map((p) => (
                                                     <li key={p.id}>{p.name}</li>

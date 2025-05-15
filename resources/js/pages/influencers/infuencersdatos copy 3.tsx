@@ -3,12 +3,12 @@ import { Head } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
 import { FaTrashAlt } from 'react-icons/fa';
+import Modal from 'react-modal';
 
 type User = {
     id: number;
     name: string;
     email: string;
-    cantidad: number;
 };
 
 const breadcrumbs = [
@@ -22,8 +22,8 @@ export default function UserList() {
     const [rowData, setRowData] = useState<User[]>([]);
     const [search, setSearch] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [editingField, setEditingField] = useState<string | null>(null);
-    const [editingValue, setEditingValue] = useState<string | number>('');
+    const [editingField, setEditingField] = useState<string | null>(null); // Campo que se está editando
+    const [editingValue, setEditingValue] = useState<string | number>(''); // Valor del campo que se está editando
     const [notification, setNotification] = useState<string | null>(null);
 
     // Cargar usuarios desde la API
@@ -57,15 +57,10 @@ export default function UserList() {
     };
 
     // Editar campo específico
-    // Editar el campo cantidad y manejar la creación de un nuevo dato si no existe
     const handleEditField = (id: number, field: string, value: string | number) => {
         setEditingId(id);
         setEditingField(field);
         setEditingValue(value);
-        if (field === 'cantidad' && !value) {
-            // Si no hay valor para la cantidad, creemos un nuevo registro en la tabla 'datos'
-            setEditingValue(0); // Inicia con un valor por defecto si es vacío
-        }
     };
 
     // Guardar la edición de un campo
@@ -87,11 +82,15 @@ export default function UserList() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || '',
                 },
-                body: JSON.stringify(updatedField), // Asegúrate de incluir el campo cantidad
+                body: JSON.stringify(updatedField),
             });
             if (!response.ok) throw new Error('Error al actualizar el campo');
             const updatedUser = await response.json();
-            setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user)));
+            setRowData((prev) =>
+                prev.map((user) =>
+                    user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user,
+                ),
+            );
             setNotification('Campo actualizado exitosamente');
             setEditingId(null);
             setEditingField(null);
@@ -101,107 +100,77 @@ export default function UserList() {
         }
     };
 
-    const columns = useMemo<ColumnDef<User, any>[]>(
-        () => [
-            {
-                header: 'ID',
-                accessorKey: 'id',
+
+    const columns = useMemo<ColumnDef<User, any>[]>(() => [
+        {
+            header: 'ID',
+            accessorKey: 'id',
+        },
+        {
+            header: 'Nombre',
+            cell: ({ row }) => {
+                const isEditing = editingId === row.original.id && editingField === 'name';
+                return isEditing ? (
+                    <input
+                        value={editingValue}
+                        autoFocus
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={saveEditField}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveEditField();
+                            if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        className="w-full rounded border px-2 py-1"
+                    />
+                ) : (
+                    <span
+                        onDoubleClick={() => handleEditField(row.original.id, 'name', row.original.name)}
+                        className="cursor-pointer"
+                        title="Doble click para editar"
+                    >
+                        {row.original.name}
+                    </span>
+                );
             },
-            {
-                header: 'Nombre',
-                cell: ({ row }) => {
-                    const isEditing = editingId === row.original.id && editingField === 'name';
-                    return isEditing ? (
-                        <input
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={saveEditField}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditField();
-                                if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            className="w-full rounded border px-2 py-1"
-                        />
-                    ) : (
-                        <span
-                            onDoubleClick={() => handleEditField(row.original.id, 'name', row.original.name)}
-                            className="cursor-pointer"
-                            title="Doble click para editar"
-                        >
-                            {row.original.name}
-                        </span>
-                    );
-                },
+        },
+        {
+            header: 'Email',
+            cell: ({ row }) => {
+                const isEditing = editingId === row.original.id && editingField === 'email';
+                return isEditing ? (
+                    <input
+                        value={editingValue}
+                        autoFocus
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={saveEditField}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveEditField();
+                            if (e.key === 'Escape') setEditingId(null);
+                        }}
+                        className="w-full rounded border px-2 py-1"
+                    />
+                ) : (
+                    <span
+                        onDoubleClick={() => handleEditField(row.original.id, 'email', row.original.email)}
+                        className="cursor-pointer"
+                        title="Doble click para editar"
+                    >
+                        {row.original.email}
+                    </span>
+                );
             },
-            {
-                header: 'Email',
-                cell: ({ row }) => {
-                    const isEditing = editingId === row.original.id && editingField === 'email';
-                    return isEditing ? (
-                        <input
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={saveEditField}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditField();
-                                if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            className="w-full rounded border px-2 py-1"
-                        />
-                    ) : (
-                        <span
-                            onDoubleClick={() => handleEditField(row.original.id, 'email', row.original.email)}
-                            className="cursor-pointer"
-                            title="Doble click para editar"
-                        >
-                            {row.original.email}
-                        </span>
-                    );
-                },
-            },
-            {
-                header: 'Cantidad',
-                cell: ({ row }) => {
-                    const isEditing = editingId === row.original.id && editingField === 'cantidad';
-                    return isEditing ? (
-                        <input
-                            type="number"
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={saveEditField}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditField();
-                                if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            className="w-full rounded border px-2 py-1"
-                        />
-                    ) : (
-                        <span
-                            onDoubleClick={() => handleEditField(row.original.id, 'cantidad', row.original.cantidad)}
-                            className="cursor-pointer"
-                            title="Doble click para editar"
-                        >
-                            {row.original.cantidad}
-                        </span>
-                    );
-                },
-            },
-            {
-                header: 'Acciones',
-                cell: ({ row }) => (
-                    <div className="flex space-x-2">
-                        <button onClick={() => handleDelete(row.original.id)} className="text-gray-600 hover:text-gray-800" title="Eliminar">
-                            <FaTrashAlt />
-                        </button>
-                    </div>
-                ),
-            },
-        ],
-        [editingId, editingField, editingValue],
-    );
+        },
+        {
+            header: 'Acciones',
+            cell: ({ row }) => (
+                <div className="flex space-x-2">
+                    <button onClick={() => handleDelete(row.original.id)} className="text-gray-600 hover:text-gray-800" title="Eliminar">
+                        <FaTrashAlt />
+                    </button>
+                </div>
+            ),
+        },
+    ], [editingId, editingField, editingValue]);
 
     const filteredData = useMemo(
         () => rowData.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()) || String(user.id).includes(search)),
@@ -221,6 +190,7 @@ export default function UserList() {
         },
     });
 
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Usuarios" />
@@ -238,6 +208,7 @@ export default function UserList() {
                     placeholder="Buscar por nombre o ID..."
                     className="w-full max-w-xs rounded border border-gray-300 px-3 py-2"
                 />
+                
                 <div className="mt-4 overflow-x-auto">
                     <table className="min-w-full border border-gray-300 bg-white shadow-md">
                         <thead>
@@ -265,6 +236,7 @@ export default function UserList() {
                     </table>
                 </div>
             </div>
+ 
         </AppLayout>
     );
 }

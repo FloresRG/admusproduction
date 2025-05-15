@@ -17,6 +17,8 @@ class DatoInfluencersController extends Controller
 
         return response()->json($users);
     } */
+
+
     public function index()
     {
         $users = User::role('influencer')
@@ -33,8 +35,6 @@ class DatoInfluencersController extends Controller
 
         return response()->json($users);
     }
-
-
     public function store(Request $request)
     {
         // Validamos los datos de entrada
@@ -62,41 +62,7 @@ class DatoInfluencersController extends Controller
     }
 
 
-
-    /* public function update(Request $request, $id)
-{
-    $user = User::find($id);
-
-    if (!$user) {
-        return response()->json(['message' => 'Usuario no encontrado'], 404);
-    }
-
-    // Validación de los campos proporcionados
-    $request->validate([
-        'name' => 'nullable|string|max:255',
-        'email' => 'nullable|email|max:255|unique:users,email,' . $id,
-        'cantidad' => 'nullable|numeric|min:0',  // Validación para cantidad
-    ]);
-
-    // Actualizar los campos de la tabla 'users'
-    if ($request->has('name')) {
-        $user->name = $request->name;
-    }
-    if ($request->has('email')) {
-        $user->email = $request->email;
-    }
-
-    // Actualizar el campo cantidad en la tabla 'datos'
-    if ($request->has('cantidad')) {
-        $user->dato()->update(['cantidad' => $request->cantidad]);  // Asumimos que existe un solo dato asociado
-    }
-
-    // Guardar cambios en el usuario
-    $user->save();
-
-    return response()->json(['dato' => $user->fresh()->dato]); // Devolvemos el dato actualizado
-} */
-    public function update(Request $request, $id)
+    /*  public function update(Request $request, $id)
     {
         $user = User::find($id);
 
@@ -119,7 +85,7 @@ class DatoInfluencersController extends Controller
             $user->email = $request->email;
         }
 
-        // Actualizar o crear el campo cantidad en la tabla 'datos'
+        // Actualizar el campo cantidad en la tabla 'datos'
         if ($request->has('cantidad')) {
             // Verificar si el usuario tiene un dato asociado
             $dato = $user->dato; // Relación con el modelo Dato (User tiene un Dato)
@@ -130,7 +96,7 @@ class DatoInfluencersController extends Controller
                 $dato->save();
             } else {
                 // Si no existe el Dato, creamos uno nuevo
-                $user->dato()->create([  // Aquí creamos el nuevo Dato
+                $user->dato()->create([
                     'cantidad' => $request->cantidad,
                     'id_user' => $user->id,
                 ]);
@@ -140,7 +106,53 @@ class DatoInfluencersController extends Controller
         // Guardar cambios en el usuario
         $user->save();
 
-        return response()->json(['dato' => $user->dato]);
+        return response()->json(['dato' => $user]);
+    } */
+    public function update(Request $request, $id)
+    {
+        $user = User::with('dato')->find($id); // Asegúrate de cargar la relación
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
+        }
+
+        $request->validate([
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email,' . $id,
+            'cantidad' => 'nullable|integer|min:0',
+        ]);
+
+        if ($request->has('name')) {
+            $user->name = $request->name;
+        }
+        if ($request->has('email')) {
+            $user->email = $request->email;
+        }
+
+        if ($request->has('cantidad')) {
+            $dato = $user->dato;
+
+            if ($dato) {
+                $dato->cantidad = $request->cantidad;
+                $dato->save();
+            } else {
+                $dato = $user->dato()->create([
+                    'cantidad' => $request->cantidad,
+                    'id_user' => $user->id,
+                ]);
+            }
+        }
+
+        $user->save();
+
+        // Devuelve una respuesta compatible con lo que espera el frontend
+        return response()->json([
+            'dato' => [
+                'cantidad' => $dato->cantidad ?? null,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]
+        ]);
     }
 
 
