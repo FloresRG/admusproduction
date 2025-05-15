@@ -3,7 +3,6 @@
 import type React from 'react';
 
 import { Link } from '@inertiajs/react';
-import { Moon, Sun } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 // Simulación de usePage para el ejemplo
@@ -92,25 +91,47 @@ export default function Header() {
             }}
         >
             <div className="container mx-auto flex items-center justify-between px-4 py-4">
-                <Link
-                    href={route('home')}
-                    className="group relative text-3xl font-bold text-red-500 transition-all duration-300 hover:text-red-400"
-                    style={{
-                        textShadow: '0 0 10px rgba(255, 0, 0, 0.3)',
-                    }}
-                >
-                    AdmUs
-                    <span
-                        className="absolute -bottom-1 left-0 h-0.5 w-0 bg-red-500 opacity-0 transition-all duration-300 group-hover:w-full group-hover:opacity-100"
-                        style={{
-                            boxShadow: '0 0 10px rgba(255, 0, 0, 0.5)',
-                        }}
-                    />
-                </Link>
+                <div className="w-20"></div>
 
                 <nav className="hidden items-center space-x-8 md:flex">
                     <NavLink href="#quienes-somos" active={isSectionActive('quienes-somos')} onClick={scrollToSection('quienes-somos')}>
                         Quiénes Somos
+                    </NavLink>
+                    <div className="group relative">
+                        <NavLink href="#servicios" active={isSectionActive('servicios')} onClick={scrollToSection('servicios')}>
+                            Servicios
+                        </NavLink>
+                        <div className="absolute top-full left-0 z-50 mt-1 hidden w-64 overflow-hidden rounded-md bg-red-600 shadow-lg group-hover:block">
+                            <div className="py-2">
+                                <a href="#nuestros-servicios" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Nuestros Servicios
+                                </a>
+                                <a href="#marketing-digital" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Marketing Digital
+                                </a>
+                                <a href="#desarrollo-web" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Desarrollo Web
+                                </a>
+                                <a href="#diseno-grafico" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Diseño Gráfico y Branding
+                                </a>
+                                <a href="#consultorias" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Consultorías
+                                </a>
+                                <a href="#produccion-audiovisual" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Producción Audiovisual
+                                </a>
+                                <a href="#fotografia" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Fotografía
+                                </a>
+                                <a href="#eventos-digitales" className="block px-4 py-3 text-white hover:bg-red-700">
+                                    Eventos Digitales y en Vivo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <NavLink href="#portafolio" active={isSectionActive('portafolio')} onClick={scrollToSection('portafolio')}>
+                        Portafolio
                     </NavLink>
                     <NavLink href="#como-trabajamos" active={isSectionActive('como-trabajamos')} onClick={scrollToSection('como-trabajamos')}>
                         Cómo Trabajamos
@@ -156,23 +177,6 @@ export default function Header() {
                             </Link>
                         </>
                     )}
-
-                    <button
-                        onClick={toggleTheme}
-                        className="transform rounded-lg bg-red-500/20 p-2 text-red-500 transition-all duration-300 hover:scale-105 hover:bg-red-500/30"
-                        aria-label="Toggle theme"
-                        style={{
-                            boxShadow: '0 0 10px rgba(255, 0, 0, 0.2)',
-                        }}
-                    >
-                        {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                    </button>
-                    <button
-                        className="ml-4 transform rounded-lg bg-red-600 p-2 text-white transition-all duration-300 hover:scale-105 hover:bg-red-700"
-                        style={{
-                            boxShadow: '0 0 15px rgba(255, 0, 0, 0.3)',
-                        }}
-                    ></button>
                 </div>
             </div>
         </header>
@@ -191,9 +195,12 @@ function NavLink({ href, active, onClick, children }: NavLinkProps) {
         <a
             href={href}
             onClick={onClick}
-            className={`group relative cursor-pointer py-2 text-red-500 transition-all duration-300 hover:text-red-400 ${active ? 'font-medium text-red-400' : ''} `}
+            className={`group relative cursor-pointer py-2 text-white transition-all duration-300 hover:text-red-200 ${active ? 'font-medium text-red-200' : ''} `}
             style={{
-                textShadow: active ? '0 0 10px rgba(255, 0, 0, 0.4)' : '0 0 5px rgba(255, 0, 0, 0.2)',
+                textShadow: active ? '0 0 10px rgba(255, 255, 255, 0.4)' : '0 0 5px rgba(255, 255, 255, 0.2)',
+                fontFamily: "'Georgia', serif",
+                fontWeight: 500,
+                letterSpacing: '0.5px',
             }}
         >
             {children}
