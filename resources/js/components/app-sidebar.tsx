@@ -43,6 +43,8 @@ export function AppSidebar() {
             { title: 'Roles', href: '/roles', icon: LayoutGrid },
             { title: 'Companies', href: '/companies', icon: LayoutGrid },
             { title: 'Categories', href: '/categories', icon: LayoutGrid },
+              { title: 'Influencers Datos', href: '/infuencersdatos', icon: LayoutGrid },
+              { title: 'Semanas', href: '/weeks', icon: LayoutGrid },
         );
     }
 

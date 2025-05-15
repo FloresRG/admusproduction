@@ -8,43 +8,92 @@ use Inertia\Inertia;
 
 class WeekController extends Controller
 {
-    public function index()
+    /**
+     * Mostrar todas las semanas (Inertia.js)
+     *
+     * @return \Inertia\Response
+     */
+    public function index(Request $request)
     {
-        $weeks = Week::all();
-        return Inertia::render('Weeks/Index', ['weeks' => $weeks]);
-    }
+        $search = $request->input('search', '');
 
-    public function create()
-    {
-        return Inertia::render('Weeks/Create');
-    }
+        $weeks = Week::where('name', 'like', '%' . $search . '%')
+            ->orWhere('start_date', 'like', '%' . $search . '%')
+            ->orWhere('end_date', 'like', '%' . $search . '%')
+            ->paginate(10); // Paginación de 10 por página
 
+        return Inertia::render('weeks/Index', [
+            'weeks' => $weeks,
+            'search' => $search
+        ]);
+    }
+    /**
+     * Crear una nueva semana
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        Week::create($request->all());
-        return redirect('/weeks');
+        $week = Week::create($request->all());
+
+        return response()->json([
+            'message' => 'Semana creada con éxito',
+            'week' => $week,
+        ], 201);
     }
 
-    public function edit(Week $week)
-    {
-        return Inertia::render('Weeks/Edit', ['week' => $week]);
-    }
-
+    /**
+     * Actualizar una semana
+     *
+     * @param Request $request
+     * @param Week $week
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function update(Request $request, Week $week)
     {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
         $week->update($request->all());
-        return redirect('/weeks');
+
+        return response()->json([
+            'message' => 'Semana actualizada con éxito',
+            'week' => $week,
+        ]);
     }
 
+    /**
+     * Eliminar una semana
+     *
+     * @param Week $week
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function destroy(Week $week)
     {
         $week->delete();
-        return redirect('/weeks');
+
+        return response()->json([
+            'message' => 'Semana eliminada con éxito',
+        ]);
     }
+    public function bookingsByWeek($id)
+    {
+        $week = Week::with(['bookings.user', 'bookings.company'])->findOrFail($id);
+
+        return Inertia::render('weeks/BookingsByWeek', [
+            'week' => $week,
+            'bookings' => $week->bookings,
+        ]);
+    }
+  
 }

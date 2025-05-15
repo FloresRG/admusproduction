@@ -216,16 +216,45 @@ export default function Edita({ company, categories }: Props) {
                                     <option value={6}>Sábado</option>
                                     <option value={7}>Domingo</option>
                                 </select>
-                               
+                                {/* Horario de inicio */}
+                                <input
+                                    type="time"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={avail.start_time}
+                                    onChange={e => handleAvailabilityChange(idx, 'start_time', e.target.value)}
+                                />
+                                {/* Horario de fin */}
+                                <input
+                                    type="time"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    value={avail.end_time}
+                                    onChange={e => handleAvailabilityChange(idx, 'end_time', e.target.value)}
+                                />
+                                {/* Turno */}
                                 <select
-                                    className="input border-gray-300 rounded-lg"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={avail.turno}
                                     onChange={e => handleAvailabilityChange(idx, 'turno', e.target.value)}
                                 >
                                     <option value="mañana">Mañana</option>
                                     <option value="tarde">Tarde</option>
                                 </select>
-                               
+                                {/* Cantidad */}
+                                <input
+                                    type="number"
+                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    placeholder="Cantidad"
+                                    value={avail.cantidad ?? ''}
+                                    min={0}
+                                    onChange={e =>
+                                        handleAvailabilityChange(
+                                            idx,
+                                            'cantidad',
+                                            e.target.value ? parseInt(e.target.value) : null
+                                        )
+                                    }
+                                />
+
                                 <button
                                     type="button"
                                     className="ml-2 text-red-600 font-bold text-xl"

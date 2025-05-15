@@ -19,7 +19,17 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
         ]);
-        
+         // Crear algunas semanas
+        \App\Models\Week::factory(10)->create();
+
+        // Crear algunas compañías
+        \App\Models\Company::factory(10)->create();
+
+        // Crear algunos usuarios
+        \App\Models\User::factory(10)->create();
+
+        // Crear algunas reservas
+        \App\Models\Booking::factory(10)->create();
         /* User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',

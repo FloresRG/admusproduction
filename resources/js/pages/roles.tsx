@@ -130,7 +130,7 @@ export default function RolesPermissions() {
                                 <tr key={role.id} className="hover:bg-gray-50 transition">
                                     <td className="px-6 py-4 text-sm text-gray-800">{role.name}</td>
                                     <td className="px-6 py-4 text-sm text-gray-700">
-                                        {role.permissions.length > 0 ? (
+                                        {role.permissions && role.permissions.length > 0 ? (
                                             <ul className="list-disc list-inside">
                                                 {role.permissions.map((p) => (
                                                     <li key={p.id}>{p.name}</li>
@@ -139,6 +139,7 @@ export default function RolesPermissions() {
                                         ) : (
                                             <span className="italic text-gray-400">No tiene permisos asignados</span>
                                         )}
+
                                     </td>
                                     <td className="px-6 py-4 text-sm space-x-3">
                                         <button
@@ -209,9 +210,8 @@ export default function RolesPermissions() {
                                 Cancelar
                             </button>
                             <button
-                                className={`bg-blue-600 text-white px-4 py-2 rounded-md transition shadow-md ${
-                                    loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
-                                }`}
+                                className={`bg-blue-600 text-white px-4 py-2 rounded-md transition shadow-md ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                                    }`}
                                 onClick={handleSubmit}
                                 disabled={loading}
                             >
