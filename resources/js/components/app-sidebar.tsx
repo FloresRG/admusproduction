@@ -9,6 +9,16 @@ import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
 import { useEffect } from 'react';
 import AppLogo from './app-logo';
+// Importa los iconos al inicio del archivo
+// Importa los iconos al inicio del archivo
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import GroupIcon from '@mui/icons-material/Group';
+import PeopleIcon from '@mui/icons-material/People';
+import SecurityIcon from '@mui/icons-material/Security';
+import BusinessIcon from '@mui/icons-material/Business';
+import CategoryIcon from '@mui/icons-material/Category';
+import InsightsIcon from '@mui/icons-material/Insights';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 
 type PageProps = {
     auth: {
@@ -34,23 +44,23 @@ export function AppSidebar() {
     const isInfluencer = roles.includes('influencer');
 
     // Siempre disponible
-    const items: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: LayoutGrid }];
+const items: NavItem[] = [{ title: 'Dashboard', href: '/dashboard', icon: DashboardIcon }];
 
     // Solo admin ve Usuarios, Roles, Companies y Categories
-    if (isAdmin) {
-        items.push(
-            { title: 'Usuarios', href: '/users', icon: LayoutGrid },
-            { title: 'Roles', href: '/roles', icon: LayoutGrid },
-            { title: 'Companies', href: '/companies', icon: LayoutGrid },
-            { title: 'Categories', href: '/categories', icon: LayoutGrid },
-            { title: 'Influencers Datos', href: '/infuencersdatos', icon: LayoutGrid },
-              { title: 'Semanas', href: '/weeks', icon: LayoutGrid },
-        );
-    }
+   if (isAdmin) {
+    items.push(
+        { title: 'Usuarios', href: '/users', icon: PeopleIcon },
+        { title: 'Roles', href: '/roles', icon: SecurityIcon },
+        { title: 'Companies', href: '/companies', icon: BusinessIcon },
+        { title: 'Categories', href: '/categories', icon: CategoryIcon },
+        { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
+        { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
+    );
+}
 
     // Admin e influencer ven la sección de Influencers
     if (isAdmin || isInfluencer) {
-        items.push({ title: 'Influencers', href: '/influencers', icon: LayoutGrid });
+items.push({ title: 'Influencers', href: '/influencers', icon: GroupIcon });
     }
 const mainNavItems: NavItem[] = [
     {

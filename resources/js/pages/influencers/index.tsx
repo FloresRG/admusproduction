@@ -5,10 +5,7 @@ import { useEffect, useState } from 'react';
 import 'react-calendar/dist/Calendar.css';
 
 const breadcrumbs = [
-    {
-        title: 'Disponibilidad de Influencers',
-        href: '/influencer-availability',
-    },
+    { title: 'Disponibilidad de Influencers', href: '/influencer-availability' },
 ];
 
 interface InfluencerAvailability {
@@ -30,18 +27,18 @@ const dayOfWeekInSpanish: { [key: string]: string } = {
 };
 
 const InfluencerAvailabilityCrud = () => {
+    const theme = useTheme();
     const [availabilities, setAvailabilities] = useState<InfluencerAvailability[]>([]);
-    const [calendarDates, setCalendarDates] = useState<Date[]>([]); // Para almacenar los 7 días de la semana
-    const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({}); // Para almacenar el turno seleccionado por día
-    const [userId, setUserId] = useState<number | null>(null); // Para almacenar el ID del usuario logueado
+    const [calendarDates, setCalendarDates] = useState<Date[]>([]);
+    const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({});
+    const [userId, setUserId] = useState<number | null>(null);
 
     useEffect(() => {
-        setCalendarDates(getCurrentWeekDates()); // Cargar los días de la semana actual
+        setCalendarDates(getCurrentWeekDays());
         fetchAvailabilities();
-        fetchUserId(); // Obtener el ID del usuario logueado
+        fetchUserId();
     }, []);
 
-    // Función para obtener el ID del usuario logueado
     const fetchUserId = () => {
         axios
             .get('/api/auth/user') // Aquí supongo que tienes un endpoint para obtener el usuario logueado
@@ -51,50 +48,33 @@ const InfluencerAvailabilityCrud = () => {
             .catch((error) => console.error('Error fetching user id:', error));
     };
 
-    // Función para obtener los días de la semana actual (lunes a domingo)
-    const getCurrentWeekDates = () => {
-        const start = startOfWeek(new Date(), { weekStartsOn: 1 }); // Semana comienza en lunes
-        const end = endOfWeek(new Date(), { weekStartsOn: 1 });
-
-        const weekDays = [];
-        for (let day = start; day <= end; day.setDate(day.getDate() + 1)) {
-            weekDays.push(new Date(day));
-        }
-        return weekDays;
+    const getCurrentWeekDays = () => {
+        const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+        return Array.from({ length: 5 }, (_, i) => addDays(start, i)); // Lunes a viernes
     };
 
-    // Función para obtener las disponibilidades del usuario
     const fetchAvailabilities = () => {
         axios
             .get('/api/influencer-availability')
             .then((response) => {
                 setAvailabilities(response.data);
-                const initialTurnoSelection: { [key: string]: string } = {};
+                const initial: { [key: string]: string } = {};
                 response.data.forEach((avail: InfluencerAvailability) => {
-                    initialTurnoSelection[avail.day_of_week] = avail.turno;
+                    initial[avail.day_of_week] = avail.turno;
                 });
-                setTurnoSelection(initialTurnoSelection); // Establece los turnos seleccionados al cargar los datos
+                setTurnoSelection(initial);
             })
             .catch((error) => console.error('Error fetching availabilities:', error));
     };
 
-    // Función para manejar la selección de turno y guardar en base de datos
     const handleTurnoSelection = (day: string, turno: string) => {
-        const previousTurno = turnoSelection[day];
-
-        if (previousTurno === turno) {
-            // Si el turno ya está seleccionado, lo eliminamos (deseleccionamos)
-            deleteAvailability(day, previousTurno);
+        const previous = turnoSelection[day];
+        if (previous === turno) {
+            deleteAvailability(day, previous);
             return;
         }
+        setTurnoSelection(prev => ({ ...prev, [day]: turno }));
 
-        // Si no estaba seleccionado, lo seleccionamos
-        setTurnoSelection((prev) => ({
-            ...prev,
-            [day]: turno,
-        }));
-
-        // Asignar las horas dependiendo del turno
         const start_time = turno === 'mañana' ? '09:30' : '14:00';
         const end_time = turno === 'mañana' ? '13:00' : '18:00';
 
@@ -113,7 +93,6 @@ const InfluencerAvailabilityCrud = () => {
             // Si existe, actualizamos
             updateAvailability(existingAvailabilityNewTurno.id, start_time, end_time);
         } else {
-            // Si no existe, creamos una nueva disponibilidad
             createAvailability(day, turno, start_time, end_time);
         }
     };
@@ -140,7 +119,6 @@ const InfluencerAvailabilityCrud = () => {
             .catch((error) => console.error('Error updating availability:', error));
     };
 
-    // Eliminar una disponibilidad
     const deleteAvailability = (day: string, turno: string) => {
         const existingAvailability = availabilities.find((avail) => avail.day_of_week === day && avail.turno === turno);
 
