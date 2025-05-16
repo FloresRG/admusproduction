@@ -14,7 +14,7 @@ class CompanyController extends Controller
     // Listar compañías con sus categorías y días de disponibilidad
     public function index()
     {
-      $companies = Company::with(['category', 'availabilityDays'])->get();
+        $companies = Company::with(['category', 'availabilityDays'])->get();
         return Inertia::render('companies/Index', [
             'companies' => $companies,
         ]);
@@ -58,8 +58,18 @@ class CompanyController extends Controller
         ]);
 
         foreach ($validated['availability'] as $day) {
+            $dayNames = [
+                1 => 'monday',
+                2 => 'tuesday',
+                3 => 'wednesday',
+                4 => 'thursday',
+                5 => 'friday',
+                6 => 'saturday',
+                7 => 'sunday',
+            ];
+
             $company->availabilityDays()->create([
-                'day_of_week' => $day['day_of_week'],
+                'day_of_week' => $dayNames[$day['day_of_week']], // Aquí hacemos la conversión
                 'start_time' => $day['start_time'],
                 'end_time' => $day['end_time'],
                 'turno' => $day['turno'],
@@ -120,14 +130,25 @@ class CompanyController extends Controller
         $company->availabilityDays()->delete();
 
         foreach ($validated['availability'] as $day) {
+            $dayNames = [
+                1 => 'monday',
+                2 => 'tuesday',
+                3 => 'wednesday',
+                4 => 'thursday',
+                5 => 'friday',
+                6 => 'saturday',
+                7 => 'sunday',
+            ];
+
             $company->availabilityDays()->create([
-                'day_of_week' => $day['day_of_week'],
+                'day_of_week' => $dayNames[$day['day_of_week']], // Conversión aquí
                 'start_time' => $day['start_time'],
                 'end_time' => $day['end_time'],
                 'turno' => $day['turno'],
                 'cantidad' => $day['cantidad'] ?? null,
             ]);
         }
+
 
         return Inertia::render('companies/Index', [
             'companies' => Company::with(['category', 'availabilityDays'])->get(),

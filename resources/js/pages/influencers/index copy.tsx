@@ -19,15 +19,6 @@ interface InfluencerAvailability {
     end_time: string;
     turno: string;
 }
-const dayOfWeekInSpanish: { [key: string]: string } = {
-    monday: 'Lunes',
-    tuesday: 'Martes',
-    wednesday: 'Miércoles',
-    thursday: 'Jueves',
-    friday: 'Viernes',
-    saturday: 'Sábado',
-    sunday: 'Domingo',
-};
 
 const InfluencerAvailabilityCrud = () => {
     const [availabilities, setAvailabilities] = useState<InfluencerAvailability[]>([]);
@@ -157,27 +148,14 @@ const InfluencerAvailabilityCrud = () => {
         return turnoSelection[day] === turno;
     };
 
-    const handleAsignarEmpresa = async () => {
-        try {
-            const response = await axios.post(`/api/asignar-empresa`);
-            const { empresa_nombre } = response.data;
-            alert(`Empresas asignadas: ${empresa_nombre}`);
-        } catch (error: any) {
-            if (error.response?.data?.message) {
-                alert(`${error.response.data.message}`);
-            } else {
-                alert('Error desconocido al asignar empresa.');
-            }
-            console.error('Error al asignar empresa:', error);
-        }
-    };
-    
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             {/* Botón fuera del contenedor principal */}
             <div className="flex justify-end p-6">
-                <button onClick={handleAsignarEmpresa} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
+                <button
+                    onClick={() => alert('Asignar empresa')} // Aquí va la lógica real
+                    className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700"
+                >
                     Asignar Empresa
                 </button>
             </div>
@@ -192,12 +170,11 @@ const InfluencerAvailabilityCrud = () => {
                 <div className="overflow-x-auto rounded-lg border bg-white p-6 shadow">
                     <div className="grid grid-cols-7 gap-4">
                         {calendarDates.map((date, index) => {
-                            const dayOfWeek = format(date, 'EEEE').toLowerCase(); // Día en inglés
-                            const dayInSpanish = dayOfWeekInSpanish[dayOfWeek]; // Ejemplo: 'lunes', 'martes', etc.
+                            const dayOfWeek = format(date, 'EEEE').toLowerCase(); // Ejemplo: 'lunes', 'martes', etc.
                             return (
                                 <div key={index} className="flex flex-col items-center rounded-lg border border-gray-300 p-4">
                                     <div className="mb-4 text-center font-semibold">
-                                        {dayInSpanish} {/* Muestra la fecha */}
+                                        {format(date, 'dd MMM')} {/* Muestra la fecha */}
                                     </div>
 
                                     <div className="flex flex-col space-y-2">
@@ -207,7 +184,7 @@ const InfluencerAvailabilityCrud = () => {
                                                 isTurnoSelected(dayOfWeek, 'mañana') ? 'bg-green-500 text-white' : 'bg-gray-200'
                                             }`}
                                         >
-                                            Mañana
+                                            Mañana (09:30 - 13:00)
                                         </button>
                                         <button
                                             onClick={() => handleTurnoSelection(dayOfWeek, 'tarde')}
@@ -215,7 +192,7 @@ const InfluencerAvailabilityCrud = () => {
                                                 isTurnoSelected(dayOfWeek, 'tarde') ? 'bg-orange-500 text-white' : 'bg-gray-200'
                                             }`}
                                         >
-                                            Tarde
+                                            Tarde (14:00 - 18:00)
                                         </button>
                                     </div>
                                 </div>

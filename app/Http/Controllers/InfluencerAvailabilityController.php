@@ -2,21 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
+use App\Models\Company;
+use App\Models\Dato;
 use App\Models\InfluencerAvailability;
 use App\Models\User;
+use App\Models\Week;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class InfluencerAvailabilityController extends Controller
 {
-
     public function index()
     {
-        // Obtener todas las disponibilidades de los influencers
-        return response()->json(InfluencerAvailability::with('user')->get());
-    }
+        $userId = Auth::id();
 
+        // Obtener solo las disponibilidades del usuario logueado
+        $availabilities = InfluencerAvailability::with('user')
+            ->where('user_id', $userId)
+            ->get();
+
+        return response()->json($availabilities);
+    }
 
     public function store(Request $request)
     {
@@ -83,5 +91,119 @@ class InfluencerAvailabilityController extends Controller
         $availability->delete();
 
         return response()->json(null, 204);
+    }
+    public function asignarEmpresa()
+    {
+        $userId = Auth::id();
+
+        // Obtener las disponibilidades del influencer
+        $influencerDisponibilidad = InfluencerAvailability::where('user_id', $userId)->get();
+
+        if ($influencerDisponibilidad->isEmpty()) {
+            return response()->json(['message' => 'No tienes disponibilidad registrada. Agrega Dias Diponibles'], 404);
+        }
+
+        // Obtener cuántas empresas puede tener asignadas (por 'cantidad' en la tabla 'datos')
+        $cantidadPermitida = Dato::where('id_user', $userId)->value('cantidad') ?? 1;
+
+        // Traer empresas con días y turnos compatibles (no filtramos por bookings)
+        $empresasCompatibles = Company::whereHas('availabilityDays', function ($query) use ($influencerDisponibilidad) {
+            foreach ($influencerDisponibilidad as $disp) {
+                $query->orWhere(function ($subquery) use ($disp) {
+                    $subquery->where('day_of_week', $disp->day_of_week)
+                        ->where('turno', $disp->turno);
+                });
+            }
+        })->with('availabilityDays')->get();
+
+        if ($empresasCompatibles->isEmpty()) {
+            return response()->json(['message' => 'No hay empresas con la misma disponibilidad.'], 404);
+        }
+
+        $empresasAsignables = [];
+
+        // Recorremos empresas compatibles y sus días para hacer match con la disponibilidad del influencer
+        foreach ($empresasCompatibles as $empresa) {
+            foreach ($empresa->availabilityDays as $empresaDisp) {
+                foreach ($influencerDisponibilidad as $userDisp) {
+                    if (
+                        $empresaDisp->day_of_week === $userDisp->day_of_week &&
+                        $empresaDisp->turno === $userDisp->turno
+                    ) {
+                        // Guardamos la empresa y el día de la semana en el array
+                        $empresasAsignables[] = [
+                            'empresa' => $empresa,
+                            'turno' => $empresaDisp->turno,
+                            'day_of_week' => $empresaDisp->day_of_week, // Guardamos el día
+                        ];
+                        break 2; // Ya hizo match esta empresa con una disponibilidad
+                    }
+                }
+            }
+        }
+
+        // Mezclamos aleatoriamente las empresas encontradas
+        shuffle($empresasAsignables);
+
+        // Limitamos a la cantidad permitida por el campo `cantidad`
+        $seleccionadas = array_slice($empresasAsignables, 0, $cantidadPermitida);
+
+        $bookingsCreados = [];
+        $empresasAsignadas = [];  // Guardaremos los nombres de las empresas asignadas
+
+        // Obtener el lunes de la próxima semana
+        $nextMonday = now()->addWeek()->startOfWeek();
+
+        // Verificar si ya existe una semana con este lunes
+        $week = Week::where('start_date', $nextMonday->format('Y-m-d'))->first();
+
+        if (!$week) {
+            // Si no existe, crear la nueva semana
+            $week = Week::create([
+                'name' => $nextMonday->format('Y-m-d'),
+                'start_date' => $nextMonday->format('Y-m-d'),
+                'end_date' => $nextMonday->addDays(6)->format('Y-m-d'), // Sábado de esa semana
+            ]);
+        }
+
+        // Creamos los bookings con el week_id de la nueva semana o la semana existente
+        foreach ($seleccionadas as $item) {
+            // Verificar si ya existe un booking para esa empresa, día y turno en la misma semana
+            $existingBooking = Booking::where('company_id', $item['empresa']->id)
+                ->where('day_of_week', $item['day_of_week'])
+                ->where('turno', $item['turno'])
+                ->where('week_id', $week->id)  // Verificar en la semana específica
+                ->first();
+
+            // Si ya existe un booking, no lo creamos
+            if ($existingBooking) {
+                continue; // Saltamos a la siguiente iteración
+            }
+
+            // Crear el nuevo booking si no existe
+            $booking = Booking::create([
+                'company_id' => $item['empresa']->id,
+                'user_id' => $userId,
+                'status' => 'activo',
+                'turno' => $item['turno'],
+                'day_of_week' => $item['day_of_week'], // Guardamos el día de la semana
+                'week_id' => $week->id, // Asignamos el week_id de la semana encontrada o creada
+            ]);
+
+            $bookingsCreados[] = $booking;
+            // Añadimos el nombre de la empresa a la lista de empresas asignadas
+            $empresasAsignadas[] = $item['empresa']->name;
+        }
+
+        if (empty($bookingsCreados)) {
+            return response()->json(['message' => 'No se encontraron Empresas Disponibles.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Empresas asignadas correctamente.',
+            'empresa_nombre' => implode(', ', $empresasAsignadas),  // Convertimos el array en una cadena de nombres
+            'total_bookings' => count($bookingsCreados),
+            'empresa_ids' => collect($bookingsCreados)->pluck('company_id')->unique(),
+        ]);
     }
 }

@@ -7,7 +7,7 @@ import { Head, Link } from '@inertiajs/react';
 
 Modal.setAppElement('#app');
 type AvailabilityDay = {
-    day_of_week: number;
+    day_of_week: string;
     start_time: string;
     end_time: string;
     turno: string;
@@ -31,9 +31,20 @@ type Props = {
 
 const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-function formatDay(day: number) {
-    return daysOfWeek[day - 1] || '';
+function formatDay(day: string) {
+    const dayMap: Record<string, string> = {
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo',
+    };
+
+    return dayMap[day] || day;
 }
+
 
 const CompaniesIndex = ({ companies }: Props) => {
     const [modalOpen, setModalOpen] = useState(false);
