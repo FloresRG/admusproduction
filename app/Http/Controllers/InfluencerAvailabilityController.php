@@ -18,8 +18,6 @@ class InfluencerAvailabilityController extends Controller
     public function index()
     {
         $userId = Auth::id();
-
-        // Obtener solo las disponibilidades del usuario logueado
         $availabilities = InfluencerAvailability::with('user')
             ->where('user_id', $userId)
             ->get();
