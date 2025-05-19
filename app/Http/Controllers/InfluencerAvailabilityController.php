@@ -11,6 +11,7 @@ use App\Models\Week;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use FPDF;
 
 class InfluencerAvailabilityController extends Controller
 {
@@ -95,6 +96,23 @@ class InfluencerAvailabilityController extends Controller
     public function asignarEmpresa()
     {
         $userId = Auth::id();
+
+        // Obtener el lunes de la próxima semana
+        $nextMonday = now()->addWeek()->startOfWeek();
+
+        // Verificar si ya existe una semana con este lunes
+        $week = Week::where('start_date', $nextMonday->format('Y-m-d'))->first();
+
+        if ($week) {
+            // Verificar si ya existen bookings para ese usuario en esa semana
+            $existingBookings = Booking::where('user_id', $userId)
+                ->where('week_id', $week->id)
+                ->exists();
+
+            if ($existingBookings) {
+                return response()->json(['message' => 'Ya tienes asignado empresas para la próxima semana.'], 403);
+            }
+        }
 
         // Obtener las disponibilidades del influencer
         $influencerDisponibilidad = InfluencerAvailability::where('user_id', $userId)->get();
@@ -205,5 +223,72 @@ class InfluencerAvailabilityController extends Controller
             'total_bookings' => count($bookingsCreados),
             'empresa_ids' => collect($bookingsCreados)->pluck('company_id')->unique(),
         ]);
+    }
+
+    public function generarPdfEmpresasAsignadas()
+    {
+        $userId = Auth::id();
+
+        $nextMonday = now()->addWeek()->startOfWeek()->format('Y-m-d');
+        $week = Week::where('start_date', $nextMonday)->first();
+
+        if (!$week) {
+            return response()->json(['error' => 'No se encontró la semana asignada.'], 404);
+        }
+
+        $bookings = Booking::with('company')
+            ->where('user_id', $userId)
+            ->where('week_id', $week->id)
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json(['error' => 'No hay empresas asignadas para esa semana.'], 404);
+        }
+
+        // Traducción de días
+        $diasTraducidos = [
+            'monday' => 'Lunes',
+            'tuesday' => 'Martes',
+            'wednesday' => 'Miércoles',
+            'thursday' => 'Jueves',
+            'friday' => 'Viernes',
+            'saturday' => 'Sábado',
+            'sunday' => 'Domingo',
+        ];
+
+        $pdf = new \FPDF();
+        $pdf->AddPage();
+
+        // Título
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->SetFillColor(240, 240, 240);
+        $pdf->Cell(0, 12, utf8_decode('Empresas Asignadas'), 0, 1, 'C', true);
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+        $pdf->Ln(5);
+
+        // Encabezado de tabla
+        $pdf->SetFillColor(200, 200, 255);
+        $pdf->SetDrawColor(100, 100, 100);
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(80, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
+        $pdf->Cell(50, 10, utf8_decode('Día'), 1, 0, 'C', true);
+        $pdf->Cell(50, 10, utf8_decode('Turno'), 1, 1, 'C', true);
+
+        // Contenido
+        $pdf->SetFont('Arial', '', 12);
+        foreach ($bookings as $booking) {
+            $empresa = utf8_decode($booking->company->name);
+            $dia = $diasTraducidos[strtolower($booking->day_of_week)] ?? ucfirst($booking->day_of_week);
+            $turno = ucfirst($booking->turno);
+
+            $pdf->Cell(80, 10, $empresa, 1, 0, 'L');
+            $pdf->Cell(50, 10, utf8_decode($dia), 1, 0, 'C');
+            $pdf->Cell(50, 10, utf8_decode($turno), 1, 1, 'C');
+        }
+
+        return response($pdf->Output('S', 'empresas_asignadas.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="empresas_asignadas.pdf"');
     }
 }

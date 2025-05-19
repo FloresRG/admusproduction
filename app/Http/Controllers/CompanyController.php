@@ -141,7 +141,7 @@ class CompanyController extends Controller
             ];
 
             $company->availabilityDays()->create([
-                'day_of_week' => $dayNames[$day['day_of_week']], // Conversión aquí
+                'day_of_week' => $dayNames[$day['day_of_week']], 
                 'start_time' => $day['start_time'],
                 'end_time' => $day['end_time'],
                 'turno' => $day['turno'],
