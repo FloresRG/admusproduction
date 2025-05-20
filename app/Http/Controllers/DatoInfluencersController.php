@@ -10,13 +10,6 @@ use Spatie\Permission\Models\Role;
 
 class DatoInfluencersController extends Controller
 {
-    /* public function index()
-    {
-        // Obtener solo los usuarios con el rol 'influencer' y cargar la relación 'roles'
-        $users = User::role('influencer')->with('roles')->get();
-
-        return response()->json($users);
-    } */
     public function index()
     {
         $users = User::role('influencer')
@@ -61,41 +54,6 @@ class DatoInfluencersController extends Controller
         return response()->json($user, 201);
     }
 
-
-
-    /* public function update(Request $request, $id)
-{
-    $user = User::find($id);
-
-    if (!$user) {
-        return response()->json(['message' => 'Usuario no encontrado'], 404);
-    }
-
-    // Validación de los campos proporcionados
-    $request->validate([
-        'name' => 'nullable|string|max:255',
-        'email' => 'nullable|email|max:255|unique:users,email,' . $id,
-        'cantidad' => 'nullable|numeric|min:0',  // Validación para cantidad
-    ]);
-
-    // Actualizar los campos de la tabla 'users'
-    if ($request->has('name')) {
-        $user->name = $request->name;
-    }
-    if ($request->has('email')) {
-        $user->email = $request->email;
-    }
-
-    // Actualizar el campo cantidad en la tabla 'datos'
-    if ($request->has('cantidad')) {
-        $user->dato()->update(['cantidad' => $request->cantidad]);  // Asumimos que existe un solo dato asociado
-    }
-
-    // Guardar cambios en el usuario
-    $user->save();
-
-    return response()->json(['dato' => $user->fresh()->dato]); // Devolvemos el dato actualizado
-} */
     public function update(Request $request, $id)
     {
         $user = User::find($id);
