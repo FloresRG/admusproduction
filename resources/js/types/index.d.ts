@@ -41,3 +41,18 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+export type Booking = {
+  id: number;
+  turno: string;
+  start_time: string;
+  end_time: string;
+  status: string;
+  company: {
+    name: string;
+  };
+  week: {
+    name: string;
+    start_date: string;
+    end_date: string;
+  };
+};

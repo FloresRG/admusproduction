@@ -54,11 +54,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
              ->name('weeks.bookings.index');
     });
+<<<<<<< HEAD
      // —– Rutas para Booking (UPDATE) —–
     // ¡Esto SALE fuera del prefix('weeks')!
     Route::patch('bookings/{booking}', [BookingController::class, 'update'])
          ->name('bookings.update');
    
+=======
+
+>>>>>>> 90cfd13f99f45fea2362f4b8b1e932aadc705cfa
     Route::get('/api/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{user}', [UserController::class, 'update']);
@@ -72,8 +76,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/permissions', fn() => response()->json(Permission::all()));
     Route::put('/roles/{role}', [RoleController::class, 'update']);
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+    Route::get('/bookings', [BookingController::class, 'bookingsThisWeekForAuthenticatedUser']);
 });
-
 Route::get('/users', function () {
     return Inertia::render('user');
 });
