@@ -17,6 +17,8 @@ class CompanyFactory extends Factory
             'company_category_id' => CompanyCategory::inRandomOrder()->first()->id,
             'contract_duration' => $this->faker->numberBetween(1, 5),
             'description' => $this->faker->text(),
+            'ubicacion' => $this->faker->text(),
+            'direccion' => $this->faker->text(),
             'start_date' => $this->faker->date(),
             'end_date' => $this->faker->date(),
         ];

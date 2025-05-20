@@ -1,33 +1,10 @@
-import React from 'react';
-import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { FaUser, FaCalendarAlt, FaClipboard, FaRegClock, FaUsers } from 'react-icons/fa';
+import { Head, Link, useForm } from '@inertiajs/react';
+import React from 'react';
 
 type CompanyCategory = {
     id: number;
     name: string;
-};
-
-type Company = {
-    id: number;
-    name: string;
-    company_category_id: number;
-    contract_duration: string;
-    description: string;
-    start_date: string | null;
-    end_date: string | null;
-    availability_days: {
-        day_of_week: number;
-        start_time: string;
-        end_time: string;
-        turno: string;
-        cantidad?: number | null;
-    }[];
-};
-
-type Props = {
-    company: Company;
-    categories: CompanyCategory[];
 };
 
 type Availability = {
@@ -38,254 +15,235 @@ type Availability = {
     cantidad?: number | null;
 };
 
-function normalizeTime(time: string) {
-    if (!time) return '';
-    return time.length > 5 ? time.slice(0, 5) : time;
-}
+type Company = {
+    id: number;
+    name: string;
+    company_category_id: string;
+    contract_duration: string;
+    description: string;
+    direccion: string;
+    start_date: string;
+    end_date: string;
+};
 
-export default function Edita({ company, categories }: Props) {
-    const initialAvailability = company.availability_days.map(avail => ({
-        ...avail,
-        start_time: normalizeTime(avail.start_time),
-        end_time: normalizeTime(avail.end_time),
-        cantidad: avail.cantidad ?? null,
-    }));
+type Props = {
+    company: Company;
+    categories: CompanyCategory[];
+    availability: Availability[];
+};
 
+// Utilidad para crear disponibilidad vacía
+const createEmptyAvailability = (): Availability => ({
+    day_of_week: 1,
+    start_time: '',
+    end_time: '',
+    turno: 'mañana',
+    cantidad: null,
+});
+
+export default function Edit({ company, categories, availability }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         name: company.name,
         company_category_id: company.company_category_id,
         contract_duration: company.contract_duration,
         description: company.description || '',
+        direccion: company.direccion || '',
         start_date: company.start_date || '',
         end_date: company.end_date || '',
-        availability: initialAvailability.length > 0 ? initialAvailability : [
-            { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null }
-        ],
+        availability: availability.length ? availability : [createEmptyAvailability()],
     });
 
     const handleAddAvailability = () => {
-        setData('availability', [
-            ...data.availability,
-            { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null },
-        ]);
-    };
-
-    const handleRemoveAvailability = (index: number) => {
-        if (data.availability.length === 1) return;
-        setData('availability', data.availability.filter((_, i) => i !== index));
+        setData('availability', [...data.availability, createEmptyAvailability()]);
     };
 
     const handleAvailabilityChange = (
         index: number,
         field: keyof Availability,
-        value: Availability[keyof Availability]
+        value: Availability[keyof Availability],
     ) => {
         const updated = [...data.availability];
-        if (field === 'start_time' || field === 'end_time') {
-            updated[index] = { ...updated[index], [field]: normalizeTime(value as string) };
-        } else {
-            updated[index] = { ...updated[index], [field]: value };
-        }
+        updated[index] = { ...updated[index], [field]: value };
         setData('availability', updated);
+    };
+
+    const handleRemoveAvailability = (index: number) => {
+        if (data.availability.length === 1) return;
+        setData(
+            'availability',
+            data.availability.filter((_, i) => i !== index),
+        );
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
-        const cleanedAvailability = data.availability.map(avail => ({
-            ...avail,
-            start_time: normalizeTime(avail.start_time),
-            end_time: normalizeTime(avail.end_time),
-        }));
-
-        setData('availability', cleanedAvailability);
-
         put(`/companies/${company.id}`);
     };
 
     return (
         <AppLayout>
-            <Head title="Editar Compañía" />
-            <div className="max-w-3xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-                <h1 className="text-2xl font-semibold text-gray-800 mb-6">Editar Compañía</h1>
+            <Head title="Editar Empresa" />
+            <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-lg">
+                <h1 className="mb-6 text-center text-2xl font-bold">Editar Empresa</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
-                        <div className="relative">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
                             <input
                                 type="text"
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.name}
-                                onChange={e => setData('name', e.target.value)}
-                                placeholder="Nombre de la compañía"
+                                onChange={(e) => setData('name', e.target.value)}
                             />
-                            <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            {errors.name && <div className="mt-1 text-red-600">{errors.name}</div>}
                         </div>
-                        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-                        <div className="relative">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Categoría</label>
                             <select
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.company_category_id}
-                                onChange={e => setData('company_category_id', Number(e.target.value))}
+                                onChange={(e) => setData('company_category_id', e.target.value)}
                             >
-                                <option value="">Selecciona una categoría</option>
-                                {categories.map(cat => (
-                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                <option value="">Seleccione una categoría</option>
+                                {categories.map((cat) => (
+                                    <option key={cat.id} value={cat.id}>
+                                        {cat.name}
+                                    </option>
                                 ))}
                             </select>
-                            <FaClipboard className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            {errors.company_category_id && <div className="mt-1 text-red-600">{errors.company_category_id}</div>}
                         </div>
-                        {errors.company_category_id && <p className="text-red-500 text-sm mt-1">{errors.company_category_id}</p>}
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Duración del contrato</label>
-                        <div className="relative">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Duración del contrato</label>
                             <input
                                 type="text"
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.contract_duration}
-                                onChange={e => setData('contract_duration', e.target.value)}
-                                placeholder="Duración del contrato"
+                                onChange={(e) => setData('contract_duration', e.target.value)}
                             />
-                            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            {errors.contract_duration && <div className="mt-1 text-red-600">{errors.contract_duration}</div>}
                         </div>
-                        {errors.contract_duration && <p className="text-red-500 text-sm mt-1">{errors.contract_duration}</p>}
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
-                        <div className="relative">
-                            <textarea
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                value={data.description}
-                                onChange={e => setData('description', e.target.value)}
-                                placeholder="Descripción de la compañía"
-                                rows={4}
-                            />
-                            <FaClipboard className="absolute left-3 top-3 text-gray-500" />
-                        </div>
-                        {errors.description && <p className="text-red-500 text-sm mt-1">{errors.description}</p>}
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de inicio del contrato</label>
-                        <div className="relative">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Fecha de inicio</label>
                             <input
                                 type="date"
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                value={data.start_date || ''}
-                                onChange={e => setData('start_date', e.target.value)}
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.start_date}
+                                onChange={(e) => setData('start_date', e.target.value)}
                             />
-                            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            {errors.start_date && <div className="mt-1 text-red-600">{errors.start_date}</div>}
                         </div>
-                        {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
-                    </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Fecha de fin del contrato</label>
-                        <div className="relative">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Fecha de fin</label>
                             <input
                                 type="date"
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                value={data.end_date || ''}
-                                onChange={e => setData('end_date', e.target.value)}
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                value={data.end_date}
+                                onChange={(e) => setData('end_date', e.target.value)}
                             />
-                            <FaCalendarAlt className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            {errors.end_date && <div className="mt-1 text-red-600">{errors.end_date}</div>}
                         </div>
-                        {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Días de disponibilidad</label>
+                        <label className="block text-sm font-medium text-gray-700">Dirección</label>
+                        <textarea
+                            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            value={data.direccion}
+                            onChange={(e) => setData('direccion', e.target.value)}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Descripción</label>
+                        <textarea
+                            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            value={data.description}
+                            onChange={(e) => setData('description', e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mt-6">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">Días de disponibilidad</label>
+
                         {data.availability.map((avail, idx) => (
-                            <div key={idx} className="grid grid-cols-6 gap-2 mb-2 items-center">
-                                <select
-                                    className="input border-gray-300 rounded-lg"
-                                    value={avail.day_of_week}
-                                    onChange={e => handleAvailabilityChange(idx, 'day_of_week', parseInt(e.target.value))}
-                                >
-                                    <option value={1}>Lunes</option>
-                                    <option value={2}>Martes</option>
-                                    <option value={3}>Miércoles</option>
-                                    <option value={4}>Jueves</option>
-                                    <option value={5}>Viernes</option>
-                                    <option value={6}>Sábado</option>
-                                    <option value={7}>Domingo</option>
-                                </select>
-                                {/* Horario de inicio */}
-                                <input
-                                    type="time"
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={avail.start_time}
-                                    onChange={e => handleAvailabilityChange(idx, 'start_time', e.target.value)}
-                                />
-                                {/* Horario de fin */}
-                                <input
-                                    type="time"
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={avail.end_time}
-                                    onChange={e => handleAvailabilityChange(idx, 'end_time', e.target.value)}
-                                />
-                                {/* Turno */}
-                                <select
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={avail.turno}
-                                    onChange={e => handleAvailabilityChange(idx, 'turno', e.target.value)}
-                                >
-                                    <option value="mañana">Mañana</option>
-                                    <option value="tarde">Tarde</option>
-                                </select>
-                                {/* Cantidad */}
-                                <input
-                                    type="number"
-                                    className="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Cantidad"
-                                    value={avail.cantidad ?? ''}
-                                    min={0}
-                                    onChange={e =>
-                                        handleAvailabilityChange(
-                                            idx,
-                                            'cantidad',
-                                            e.target.value ? parseInt(e.target.value) : null
-                                        )
-                                    }
-                                />
+                            <div key={idx} className="mb-4 flex justify-center">
+                                <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-3">
+                                    <select
+                                        className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        value={avail.day_of_week}
+                                        onChange={(e) => handleAvailabilityChange(idx, 'day_of_week', parseInt(e.target.value))}
+                                    >
+                                        <option value={1}>Lunes</option>
+                                        <option value={2}>Martes</option>
+                                        <option value={3}>Miércoles</option>
+                                        <option value={4}>Jueves</option>
+                                        <option value={5}>Viernes</option>
+                                        <option value={6}>Sábado</option>
+                                        <option value={7}>Domingo</option>
+                                    </select>
 
-                                <button
-                                    type="button"
-                                    className="ml-2 text-red-600 font-bold text-xl"
-                                    onClick={() => handleRemoveAvailability(idx)}
-                                    disabled={data.availability.length === 1}
-                                    title="Eliminar este día"
-                                >
-                                    ×
-                                </button>
+                                    <select
+                                        className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        value={avail.turno}
+                                        onChange={(e) => {
+                                            const turno = e.target.value as 'mañana' | 'tarde';
+                                            const times = turno === 'mañana'
+                                                ? { start_time: '09:30', end_time: '13:00' }
+                                                : { start_time: '14:00', end_time: '18:00' };
+
+                                            handleAvailabilityChange(idx, 'turno', turno);
+                                            handleAvailabilityChange(idx, 'start_time', times.start_time);
+                                            handleAvailabilityChange(idx, 'end_time', times.end_time);
+                                        }}
+                                    >
+                                        <option value="mañana">Mañana</option>
+                                        <option value="tarde">Tarde</option>
+                                    </select>
+
+                                    <div className="flex items-center justify-center">
+                                        <button
+                                            type="button"
+                                            className="text-xl font-bold text-red-600"
+                                            onClick={() => handleRemoveAvailability(idx)}
+                                            disabled={data.availability.length === 1}
+                                            title="Eliminar este día"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         ))}
-                        <button
-                            type="button"
-                            onClick={handleAddAvailability}
-                            className="text-blue-600 font-semibold mt-2 hover:underline"
-                        >
-                            + Añadir otro día
-                        </button>
+
+                        <div className="mt-2 flex justify-center">
+                            <button type="button" onClick={handleAddAvailability} className="font-semibold text-blue-600">
+                                + Añadir otro día
+                            </button>
+                        </div>
+
+                        {/* Mostrar errores de disponibilidad si existen */}
                         {Object.keys(errors)
-                            .filter(key => key.startsWith('availability'))
-                            .map(key => (
-                                <p key={key} className="text-red-500 text-sm mt-1">{errors[key as keyof typeof errors]}</p>
+                            .filter((key) => key.startsWith('availability'))
+                            .map((key) => (
+                                <div key={key} className="text-center text-red-600">
+                                    {errors[key as keyof typeof errors]}
+                                </div>
                             ))}
                     </div>
-                    <div className="pt-4">
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-150 ease-in-out disabled:opacity-50"
-                            disabled={processing}
-                        >
-                            Guardar cambios
+
+                    <div className="flex justify-end space-x-4">
+                        <Link href="/companies" className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-400">
+                            Cancelar
+                        </Link>
+                        <button type="submit" className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700" disabled={processing}>
+                            {processing ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                     </div>
                 </form>
@@ -293,4 +251,3 @@ export default function Edita({ company, categories }: Props) {
         </AppLayout>
     );
 }
-

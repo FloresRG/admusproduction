@@ -14,6 +14,8 @@ class Company extends Model
         'company_category_id',
         'contract_duration',
         'description',
+        'ubicacion',
+        'direccion',
         'start_date',
         'end_date',
     ];

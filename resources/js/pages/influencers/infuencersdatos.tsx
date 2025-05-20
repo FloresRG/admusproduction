@@ -2,7 +2,6 @@ import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { useEffect, useMemo, useState } from 'react';
-import { FaTrashAlt } from 'react-icons/fa';
 
 type User = {
     id: number;
@@ -90,7 +89,7 @@ export default function UserList() {
             });
             if (!response.ok) throw new Error('Error al actualizar el campo');
             const updatedUser = await response.json();
-            setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user)));
+            setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: editingValue } : user)));
             setNotification('Campo actualizado exitosamente');
             setEditingId(null);
             setEditingField(null);
@@ -220,58 +219,54 @@ export default function UserList() {
         },
     });
 
-   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Influencer" />
-        {notification && (
-            <div className="fixed top-6 right-6 z-50 rounded-lg border border-green-400 bg-green-100 px-6 py-3 text-green-800 shadow-lg transition duration-300">
-                {notification}
-            </div>
-        )}
-        <div className="container mx-auto p-6">
-            <h1 className="mb-6 text-3xl font-bold text-gray-800">Listado de influencer</h1>
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Influencer" />
+            {notification && (
+                <div className="fixed top-6 right-6 z-50 rounded-lg border border-green-400 bg-green-100 px-6 py-3 text-green-800 shadow-lg transition duration-300">
+                    {notification}
+                </div>
+            )}
+            <div className="container mx-auto p-6">
+                <h1 className="mb-6 text-3xl font-bold text-gray-800">Listado de influencer</h1>
 
-            <div className="mb-6 max-w-sm">
-                <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="🔍 Buscar por nombre o ID..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                />
-            </div>
+                <div className="mb-6 max-w-sm">
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="🔍 Buscar por nombre o ID..."
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    />
+                </div>
 
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-md">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className="p-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide"
-                                    >
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                        {table.getRowModel().rows.map((row) => (
-                            <tr key={row.id} className="hover:bg-gray-50 transition">
-                                {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id} className="p-3 text-sm text-gray-800">
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-md">
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <th key={header.id} className="p-3 text-left text-sm font-semibold tracking-wide text-gray-700 uppercase">
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 bg-white">
+                            {table.getRowModel().rows.map((row) => (
+                                <tr key={row.id} className="transition hover:bg-gray-50">
+                                    {row.getVisibleCells().map((cell) => (
+                                        <td key={cell.id} className="p-3 text-sm text-gray-800">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-    </AppLayout>
-);
-
+        </AppLayout>
+    );
 }

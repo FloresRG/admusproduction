@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('company_category_id')->constrained()->onDelete('cascade');
-            $table->string('contract_duration'); // o $table->integer() si es en meses/días
-            $table->text('description');
+            $table->string('contract_duration'); 
+            $table->text('description')->nullable();
+            $table->string('ubicacion')->nullable();
+            $table->string('direccion')->nullable(); 
             $table->dateTime('start_date')->nullable();
             $table->dateTime('end_date')->nullable();
             $table->timestamps();
