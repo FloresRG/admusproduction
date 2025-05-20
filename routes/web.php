@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
@@ -49,7 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/{id}/bookings', [WeekController::class, 'bookingsByWeek'])->name('weeks.bookings');
     });
-   
+
     Route::get('/api/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{user}', [UserController::class, 'update']);
@@ -63,8 +64,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/permissions', fn() => response()->json(Permission::all()));
     Route::put('/roles/{role}', [RoleController::class, 'update']);
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+    Route::get('/bookings', [BookingController::class, 'bookingsThisWeekForAuthenticatedUser']);
 });
-
 Route::get('/users', function () {
     return Inertia::render('user');
 });
