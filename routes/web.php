@@ -42,7 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     // —– Rutas para Weeks —–
-    Route::prefix('weeks')->group(function(){
+    Route::prefix('weeks')->group(function () {
         // Listar semanas
         Route::get('/', [WeekController::class, 'index'])->name('weeks.index');
         Route::post('/', [WeekController::class, 'store'])->name('weeks.store');
@@ -52,13 +52,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Listar bookings DE UNA semana concreta
         // Nota el parametro se llama {week} para que exista coherencia de Binding
         Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
-             ->name('weeks.bookings.index');
+            ->name('weeks.bookings.index');
     });
-     // —– Rutas para Booking (UPDATE) —–
+    // —– Rutas para Booking (UPDATE) —–
     // ¡Esto SALE fuera del prefix('weeks')!
     Route::patch('bookings/{booking}', [BookingController::class, 'update'])
-         ->name('bookings.update');
-   
+        ->name('bookings.update');
+
     Route::get('/api/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
     Route::put('/users/{user}', [UserController::class, 'update']);

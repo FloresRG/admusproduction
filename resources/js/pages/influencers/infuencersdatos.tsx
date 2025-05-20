@@ -1,8 +1,34 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { useEffect, useMemo, useState } from 'react';
-import { FaTrashAlt } from 'react-icons/fa';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
+import {
+    Button,
+    Checkbox,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    Paper,
+    Snackbar,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TablePagination,
+    TableRow,
+    TableSortLabel,
+    TextField,
+    Toolbar,
+    Typography,
+    useTheme,
+    Box,
+} from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
 
 type User = {
     id: number;
@@ -18,13 +44,41 @@ const breadcrumbs = [
     },
 ];
 
-export default function UserList() {
+type Order = 'asc' | 'desc';
+
+function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+    return b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
+}
+function getComparator<Key extends keyof any>(order: Order, orderBy: Key): (a: { [key in Key]: any }, b: { [key in Key]: any }) => number {
+    return order === 'desc'
+        ? (a, b) => descendingComparator(a, b, orderBy)
+        : (a, b) => -descendingComparator(a, b, orderBy);
+}
+function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
+    const stabilized = array.map((el, idx) => [el, idx] as [T, number]);
+    stabilized.sort((a, b) => {
+        const cmp = comparator(a[0], b[0]);
+        if (cmp !== 0) return cmp;
+        return a[1] - b[1];
+    });
+    return stabilized.map((el) => el[0]);
+}
+
+export default function InfluencersDatos() {
+    const theme = useTheme();
     const [rowData, setRowData] = useState<User[]>([]);
     const [search, setSearch] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingField, setEditingField] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState<string | number>('');
     const [notification, setNotification] = useState<string | null>(null);
+
+    // Sorting & Selecting state
+    const [order, setOrder] = useState<Order>('asc');
+    const [orderBy, setOrderBy] = useState<keyof User>('id');
+    const [selected, setSelected] = useState<number[]>([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     // Cargar usuarios desde la API
     useEffect(() => {
@@ -35,24 +89,21 @@ export default function UserList() {
     }, []);
 
     // Eliminar usuario
-    const handleDelete = (id: number) => {
-        if (window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
+        try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            fetch(`/infuencersdatos/${id}`, {
+            await fetch(`/infuencersdatos/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || '',
                 },
-            })
-                .then(() => {
-                    setRowData((prevData) => prevData.filter((user) => user.id !== id));
-                    setNotification('Usuario eliminado exitosamente');
-                })
-                .catch((error) => {
-                    console.error('Error deleting user:', error);
-                    setNotification('Hubo un error al eliminar el usuario');
-                });
+            });
+            setRowData((prevData) => prevData.filter((user) => user.id !== id));
+            setNotification('Usuario eliminado exitosamente');
+        } catch (error) {
+            setNotification('Hubo un error al eliminar el usuario');
         }
     };
 
@@ -62,8 +113,7 @@ export default function UserList() {
         setEditingField(field);
         setEditingValue(value);
         if (field === 'cantidad' && !value) {
-            // Si no hay valor para la cantidad, creemos un nuevo registro en la tabla 'datos'
-            setEditingValue(0); // Inicia con un valor por defecto si es vacío
+            setEditingValue(0);
         }
     };
 
@@ -86,11 +136,15 @@ export default function UserList() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken || '',
                 },
-                body: JSON.stringify(updatedField), // Asegúrate de incluir el campo cantidad
+                body: JSON.stringify(updatedField),
             });
             if (!response.ok) throw new Error('Error al actualizar el campo');
             const updatedUser = await response.json();
-            setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user)));
+            setRowData((prev) =>
+                prev.map((user) =>
+                    user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user
+                )
+            );
             setNotification('Campo actualizado exitosamente');
             setEditingId(null);
             setEditingField(null);
@@ -100,178 +154,314 @@ export default function UserList() {
         }
     };
 
-    const columns = useMemo<ColumnDef<User, any>[]>(
-        () => [
-            {
-                header: 'ID',
-                accessorKey: 'id',
-            },
-            {
-                header: 'Nombre',
-                cell: ({ row }) => {
-                    const isEditing = editingId === row.original.id && editingField === 'name';
-                    return isEditing ? (
-                        <input
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={saveEditField}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditField();
-                                if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            className="w-full rounded border px-2 py-1"
-                        />
-                    ) : (
-                        <span
-                            onDoubleClick={() => handleEditField(row.original.id, 'name', row.original.name)}
-                            className="cursor-pointer"
-                            title="Doble click para editar"
-                        >
-                            {row.original.name}
-                        </span>
-                    );
-                },
-            },
-            {
-                header: 'Email',
-                cell: ({ row }) => {
-                    const isEditing = editingId === row.original.id && editingField === 'email';
-                    return isEditing ? (
-                        <input
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={saveEditField}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditField();
-                                if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            className="w-full rounded border px-2 py-1"
-                        />
-                    ) : (
-                        <span
-                            onDoubleClick={() => handleEditField(row.original.id, 'email', row.original.email)}
-                            className="cursor-pointer"
-                            title="Doble click para editar"
-                        >
-                            {row.original.email}
-                        </span>
-                    );
-                },
-            },
-            {
-                header: 'Cantidad de videos asignados',
-                cell: ({ row }) => {
-                    const isEditing = editingId === row.original.id && editingField === 'cantidad';
-                    return isEditing ? (
-                        <input
-                            type="number"
-                            value={editingValue}
-                            autoFocus
-                            onChange={(e) => setEditingValue(e.target.value)}
-                            onBlur={saveEditField}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') saveEditField();
-                                if (e.key === 'Escape') setEditingId(null);
-                            }}
-                            className="w-full rounded border px-2 py-1"
-                        />
-                    ) : (
-                        <span
-                            onDoubleClick={() => handleEditField(row.original.id, 'cantidad', row.original.cantidad)}
-                            className="cursor-pointer"
-                            title="Doble click para editar"
-                        >
-                            {row.original.cantidad}
-                        </span>
-                    );
-                },
-            },
-            /* {
-                header: 'Acciones',
-                cell: ({ row }) => (
-                    <div className="flex space-x-2">
-                        <button onClick={() => handleDelete(row.original.id)} className="text-gray-600 hover:text-gray-800" title="Eliminar">
-                            <FaTrashAlt />
-                        </button>
-                    </div>
-                ),
-            }, */
-        ],
-        [editingId, editingField, editingValue],
+    // Filtrado de búsqueda
+    const filtered = useMemo(
+        () =>
+            rowData.filter(
+                (user) =>
+                    user.name.toLowerCase().includes(search.toLowerCase()) ||
+                    String(user.id).includes(search)
+            ),
+        [rowData, search]
     );
 
-    const filteredData = useMemo(
-        () => rowData.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()) || String(user.id).includes(search)),
-        [rowData, search],
+    // Ordenación estable + paginación
+    const sortedData = useMemo(
+        () => stableSort(filtered, getComparator(order, orderBy)),
+        [filtered, order, orderBy]
+    );
+    const paginatedData = useMemo(
+        () => sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+        [sortedData, page, rowsPerPage]
     );
 
-    const table = useReactTable({
-        data: filteredData,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        initialState: {
-            pagination: {
-                pageIndex: 0,
-                pageSize: 10,
-            },
-        },
-    });
+    // Sorting & selecting handlers
+    const handleRequestSort = (property: keyof User) => {
+        const isAsc = orderBy === property && order === 'asc';
+        setOrder(isAsc ? 'desc' : 'asc');
+        setOrderBy(property);
+    };
+    const handleSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelected(filtered.map((u) => u.id));
+        } else {
+            setSelected([]);
+        }
+    };
+    const handleClickRow = (id: number) => {
+        setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]));
+    };
+    const isSelected = (id: number) => selected.indexOf(id) !== -1;
 
-   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Influencer" />
-        {notification && (
-            <div className="fixed top-6 right-6 z-50 rounded-lg border border-green-400 bg-green-100 px-6 py-3 text-green-800 shadow-lg transition duration-300">
-                {notification}
-            </div>
-        )}
-        <div className="container mx-auto p-6">
-            <h1 className="mb-6 text-3xl font-bold text-gray-800">Listado de influencer</h1>
+    // Notificaciones
+    useEffect(() => {
+        if (!notification) return;
+        const t = setTimeout(() => setNotification(null), 4000);
+        return () => clearTimeout(t);
+    }, [notification]);
 
-            <div className="mb-6 max-w-sm">
-                <input
-                    type="text"
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Influencer" />
+
+            {/* Buscador */}
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+                <TextField
+                    label="Buscar por nombre o ID"
+                    variant="outlined"
+                    size="small"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="🔍 Buscar por nombre o ID..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    sx={{ maxWidth: 320 }}
+                    InputProps={{
+                        startAdornment: (
+                            <IconButton tabIndex={-1}>
+                                <SearchIcon />
+                            </IconButton>
+                        ),
+                    }}
                 />
-            </div>
+            </Box>
 
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-md">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className="p-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide"
-                                    >
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                        {table.getRowModel().rows.map((row) => (
-                            <tr key={row.id} className="hover:bg-gray-50 transition">
-                                {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id} className="p-3 text-sm text-gray-800">
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </AppLayout>
-);
+            {/* Toolbar selección */}
+            {selected.length > 0 && (
+                <Toolbar sx={{ bgcolor: 'action.selected', mb: 1, borderRadius: 2 }}>
+                    <Typography sx={{ flex: '1 1 100%' }} color="inherit">
+                        {selected.length} seleccionado{selected.length > 1 ? 's' : ''}
+                    </Typography>
+                    <IconButton color="error" onClick={() => selected.forEach((id) => handleDelete(id))}>
+                        <DeleteIcon />
+                    </IconButton>
+                </Toolbar>
+            )}
 
+            {/* Tabla */}
+            <TableContainer
+                component={Paper}
+                sx={{
+                    borderRadius: 2,
+                    boxShadow: 3,
+                    overflowX: 'auto',
+                    border: '1px solid #e0e0e0',
+                    background: theme.palette.background.paper,
+                    mx: { xs: 0, md: 2 },
+                }}
+            >
+                <Table size="small">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell padding="checkbox" sx={{
+                                backgroundColor: theme.palette.primary.main,
+                                color: theme.palette.common.white,
+                            }}>
+                                <Checkbox
+                                    indeterminate={selected.length > 0 && selected.length < filtered.length}
+                                    checked={filtered.length > 0 && selected.length === filtered.length}
+                                    onChange={handleSelectAllClick}
+                                    sx={{ color: theme.palette.common.white }}
+                                />
+                            </TableCell>
+                            <TableCell
+                                sortDirection={orderBy === 'id' ? order : false}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
+                                <TableSortLabel
+                                    active={orderBy === 'id'}
+                                    direction={orderBy === 'id' ? order : 'asc'}
+                                    onClick={() => handleRequestSort('id')}
+                                    sx={{ color: theme.palette.common.white, '&.Mui-active': { color: theme.palette.common.white } }}
+                                >
+                                    ID
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell
+                                sortDirection={orderBy === 'name' ? order : false}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
+                                <TableSortLabel
+                                    active={orderBy === 'name'}
+                                    direction={orderBy === 'name' ? order : 'asc'}
+                                    onClick={() => handleRequestSort('name')}
+                                    sx={{ color: theme.palette.common.white, '&.Mui-active': { color: theme.palette.common.white } }}
+                                >
+                                    Nombre
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell
+                                sortDirection={orderBy === 'email' ? order : false}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
+                                <TableSortLabel
+                                    active={orderBy === 'email'}
+                                    direction={orderBy === 'email' ? order : 'asc'}
+                                    onClick={() => handleRequestSort('email')}
+                                    sx={{ color: theme.palette.common.white, '&.Mui-active': { color: theme.palette.common.white } }}
+                                >
+                                    Email
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell
+                                sortDirection={orderBy === 'cantidad' ? order : false}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
+                                <TableSortLabel
+                                    active={orderBy === 'cantidad'}
+                                    direction={orderBy === 'cantidad' ? order : 'asc'}
+                                    onClick={() => handleRequestSort('cantidad')}
+                                    sx={{ color: theme.palette.common.white, '&.Mui-active': { color: theme.palette.common.white } }}
+                                >
+                                    Cantidad de videos asignados
+                                </TableSortLabel>
+                            </TableCell>
+                            <TableCell
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
+                                Acciones
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {paginatedData.map((row) => {
+                            const isItemSelected = isSelected(row.id);
+                            return (
+                                <TableRow hover key={row.id} selected={isItemSelected} onClick={() => handleClickRow(row.id)}>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox checked={isItemSelected} />
+                                    </TableCell>
+                                    <TableCell>{row.id}</TableCell>
+                                    <TableCell>
+                                        {editingId === row.id && editingField === 'name' ? (
+                                            <TextField
+                                                value={editingValue}
+                                                size="small"
+                                                autoFocus
+                                                onChange={(e) => setEditingValue(e.target.value)}
+                                                onBlur={saveEditField}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') saveEditField();
+                                                    if (e.key === 'Escape') setEditingId(null);
+                                                }}
+                                            />
+                                        ) : (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleEditField(row.id, 'name', row.name); }} />
+                                                <span
+                                                    onDoubleClick={() => handleEditField(row.id, 'name', row.name)}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Doble click para editar"
+                                                >
+                                                    {row.name}
+                                                </span>
+                                            </Box>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {editingId === row.id && editingField === 'email' ? (
+                                            <TextField
+                                                value={editingValue}
+                                                size="small"
+                                                autoFocus
+                                                onChange={(e) => setEditingValue(e.target.value)}
+                                                onBlur={saveEditField}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') saveEditField();
+                                                    if (e.key === 'Escape') setEditingId(null);
+                                                }}
+                                            />
+                                        ) : (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleEditField(row.id, 'email', row.email); }} />
+                                                <span
+                                                    onDoubleClick={() => handleEditField(row.id, 'email', row.email)}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Doble click para editar"
+                                                >
+                                                    {row.email}
+                                                </span>
+                                            </Box>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {editingId === row.id && editingField === 'cantidad' ? (
+                                            <TextField
+                                                type="number"
+                                                value={editingValue}
+                                                size="small"
+                                                autoFocus
+                                                onChange={(e) => setEditingValue(e.target.value)}
+                                                onBlur={saveEditField}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') saveEditField();
+                                                    if (e.key === 'Escape') setEditingId(null);
+                                                }}
+                                            />
+                                        ) : (
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleEditField(row.id, 'cantidad', row.cantidad); }} />
+                                                <span
+                                                    onDoubleClick={() => handleEditField(row.id, 'cantidad', row.cantidad)}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Doble click para editar"
+                                                >
+                                                    {row.cantidad}
+                                                </span>
+                                            </Box>
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            size="small"
+                                            color="error"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(row.id);
+                                            }}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+                <TablePagination
+                    component="div"
+                    count={filtered.length}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                    }}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    labelRowsPerPage="Filas por página"
+                />
+            </TableContainer>
+
+            {/* Snackbar Notificación */}
+            <Snackbar open={!!notification} message={notification} onClose={() => setNotification(null)} autoHideDuration={4000} />
+        </AppLayout>
+    );
 }

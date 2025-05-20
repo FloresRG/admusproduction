@@ -93,10 +93,6 @@ class InfluencerAvailabilityController extends Controller
     }
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 557b917c2f2091e9f0e8efaa61f7c342653bd435
     public function asignarEmpresa()
     {
         $userId = Auth::id();
@@ -229,79 +225,75 @@ class InfluencerAvailabilityController extends Controller
         ]);
     }
 
-<<<<<<< HEAD
 
     
 
-    public function generarPdfEmpresasAsignadas()
-=======
-    /* public function generarPdfEmpresasAsignadas()
->>>>>>> 557b917c2f2091e9f0e8efaa61f7c342653bd435
-    {
-        $userId = Auth::id();
+    // public function generarPdfEmpresasAsignadas()
+    // {
+    //     $userId = Auth::id();
 
-        $nextMonday = now()->addWeek()->startOfWeek()->format('Y-m-d');
-        $week = Week::where('start_date', $nextMonday)->first();
+    //     $nextMonday = now()->addWeek()->startOfWeek()->format('Y-m-d');
+    //     $week = Week::where('start_date', $nextMonday)->first();
 
-        if (!$week) {
-            return response()->json(['error' => 'No se encontró la semana asignada.'], 404);
-        }
+    //     if (!$week) {
+    //         return response()->json(['error' => 'No se encontró la semana asignada.'], 404);
+    //     }
 
-        $bookings = Booking::with('company')
-            ->where('user_id', $userId)
-            ->where('week_id', $week->id)
-            ->get();
+    //     $bookings = Booking::with('company')
+    //         ->where('user_id', $userId)
+    //         ->where('week_id', $week->id)
+    //         ->get();
 
-        if ($bookings->isEmpty()) {
-            return response()->json(['error' => 'No hay empresas asignadas para esa semana.'], 404);
-        }
+    //     if ($bookings->isEmpty()) {
+    //         return response()->json(['error' => 'No hay empresas asignadas para esa semana.'], 404);
+    //     }
 
-        // Traducción de días
-        $diasTraducidos = [
-            'monday' => 'Lunes',
-            'tuesday' => 'Martes',
-            'wednesday' => 'Miércoles',
-            'thursday' => 'Jueves',
-            'friday' => 'Viernes',
-            'saturday' => 'Sábado',
-            'sunday' => 'Domingo',
-        ];
+    //     // Traducción de días
+    //     $diasTraducidos = [
+    //         'monday' => 'Lunes',
+    //         'tuesday' => 'Martes',
+    //         'wednesday' => 'Miércoles',
+    //         'thursday' => 'Jueves',
+    //         'friday' => 'Viernes',
+    //         'saturday' => 'Sábado',
+    //         'sunday' => 'Domingo',
+    //     ];
 
-        $pdf = new \FPDF();
-        $pdf->AddPage();
+    //     $pdf = new \FPDF();
+    //     $pdf->AddPage();
 
-        // Título
-        $pdf->SetFont('Arial', 'B', 16);
-        $pdf->SetFillColor(240, 240, 240);
-        $pdf->Cell(0, 12, utf8_decode('Empresas Asignadas'), 0, 1, 'C', true);
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
-        $pdf->Ln(5);
+    //     // Título
+    //     $pdf->SetFont('Arial', 'B', 16);
+    //     $pdf->SetFillColor(240, 240, 240);
+    //     $pdf->Cell(0, 12, utf8_decode('Empresas Asignadas'), 0, 1, 'C', true);
+    //     $pdf->SetFont('Arial', '', 12);
+    //     $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+    //     $pdf->Ln(5);
 
-        // Encabezado de tabla
-        $pdf->SetFillColor(200, 200, 255);
-        $pdf->SetDrawColor(100, 100, 100);
-        $pdf->SetFont('Arial', 'B', 12);
-        $pdf->Cell(80, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
-        $pdf->Cell(50, 10, utf8_decode('Día'), 1, 0, 'C', true);
-        $pdf->Cell(50, 10, utf8_decode('Turno'), 1, 1, 'C', true);
+    //     // Encabezado de tabla
+    //     $pdf->SetFillColor(200, 200, 255);
+    //     $pdf->SetDrawColor(100, 100, 100);
+    //     $pdf->SetFont('Arial', 'B', 12);
+    //     $pdf->Cell(80, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
+    //     $pdf->Cell(50, 10, utf8_decode('Día'), 1, 0, 'C', true);
+    //     $pdf->Cell(50, 10, utf8_decode('Turno'), 1, 1, 'C', true);
 
-        // Contenido
-        $pdf->SetFont('Arial', '', 12);
-        foreach ($bookings as $booking) {
-            $empresa = utf8_decode($booking->company->name);
-            $dia = $diasTraducidos[strtolower($booking->day_of_week)] ?? ucfirst($booking->day_of_week);
-            $turno = ucfirst($booking->turno);
+    //     // Contenido
+    //     $pdf->SetFont('Arial', '', 12);
+    //     foreach ($bookings as $booking) {
+    //         $empresa = utf8_decode($booking->company->name);
+    //         $dia = $diasTraducidos[strtolower($booking->day_of_week)] ?? ucfirst($booking->day_of_week);
+    //         $turno = ucfirst($booking->turno);
 
-            $pdf->Cell(80, 10, $empresa, 1, 0, 'L');
-            $pdf->Cell(50, 10, utf8_decode($dia), 1, 0, 'C');
-            $pdf->Cell(50, 10, utf8_decode($turno), 1, 1, 'C');
-        }
+    //         $pdf->Cell(80, 10, $empresa, 1, 0, 'L');
+    //         $pdf->Cell(50, 10, utf8_decode($dia), 1, 0, 'C');
+    //         $pdf->Cell(50, 10, utf8_decode($turno), 1, 1, 'C');
+    //     }
 
-        return response($pdf->Output('S', 'empresas_asignadas.pdf'))
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="empresas_asignadas.pdf"');
-    } */
+    //     return response($pdf->Output('S', 'empresas_asignadas.pdf'))
+    //         ->header('Content-Type', 'application/pdf')
+    //         ->header('Content-Disposition', 'inline; filename="empresas_asignadas.pdf"');
+    // } 
     public function generarPdfEmpresasAsignadas()
     {
         $userId = Auth::id();

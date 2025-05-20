@@ -4,6 +4,8 @@ import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import {
     Button,
     Checkbox,
@@ -25,6 +27,8 @@ import {
     TextField,
     Toolbar,
     Typography,
+    useTheme,
+    Box,
 } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -33,7 +37,7 @@ type Category = {
     name: string;
 };
 
-const breadcrumbs = [{ title: 'Categories', href: '/categories' }];
+const breadcrumbs = [{ title: 'Categorías', href: '/categories' }];
 
 // Helpers de ordenación
 type Order = 'asc' | 'desc';
@@ -54,6 +58,7 @@ function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
 }
 
 export default function Index({ categories }: { categories: Category[] }) {
+    const theme = useTheme();
     // Datos y CRUD
     const [rowData, setRowData] = useState<Category[]>(categories);
     const [newCategoryName, setNewCategoryName] = useState('');
@@ -172,62 +177,113 @@ export default function Index({ categories }: { categories: Category[] }) {
             <Head title="Categorías" />
 
             {/* Buscador + Crear */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
                 <TextField
                     label="Buscar por nombre o ID"
                     variant="outlined"
                     size="small"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
+                    sx={{ maxWidth: 320 }}
+                    InputProps={{
+                        startAdornment: (
+                            <IconButton tabIndex={-1}>
+                                <SearchIcon />
+                            </IconButton>
+                        ),
+                    }}
                 />
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => setDialogOpen(true)}
+                    sx={{ fontWeight: 'bold' }}
+                >
                     Crear categoría
                 </Button>
-            </div>
+            </Box>
 
             {/* Toolbar selección */}
             {selected.length > 0 && (
-                <Toolbar sx={{ bgcolor: 'action.selected', mb: 1 }}>
+                <Toolbar sx={{ bgcolor: 'action.selected', mb: 1, borderRadius: 2 }}>
                     <Typography sx={{ flex: '1 1 100%' }} color="inherit">
                         {selected.length} seleccionado{selected.length > 1 ? 's' : ''}
                     </Typography>
-                    <IconButton onClick={() => selected.forEach((id) => handleDelete(id))}>
+                    <IconButton color="error" onClick={() => selected.forEach((id) => handleDelete(id))}>
                         <DeleteIcon />
                     </IconButton>
                 </Toolbar>
             )}
 
             {/* Tabla */}
-            <TableContainer component={Paper}>
+            <TableContainer
+                component={Paper}
+                sx={{
+                    borderRadius: 2,
+                    boxShadow: 3,
+                    overflowX: 'auto',
+                    border: '1px solid #e0e0e0',
+                    background: theme.palette.background.paper,
+                    mx: { xs: 0, md: 2 },
+                }}
+            >
                 <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell padding="checkbox">
+                            <TableCell padding="checkbox" sx={{
+                                backgroundColor: theme.palette.primary.main,
+                                color: theme.palette.common.white,
+                            }}>
                                 <Checkbox
                                     indeterminate={selected.length > 0 && selected.length < filtered.length}
                                     checked={filtered.length > 0 && selected.length === filtered.length}
                                     onChange={handleSelectAllClick}
+                                    sx={{ color: theme.palette.common.white }}
                                 />
                             </TableCell>
-                            <TableCell sortDirection={orderBy === 'id' ? order : false}>
+                            <TableCell
+                                sortDirection={orderBy === 'id' ? order : false}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
                                 <TableSortLabel
                                     active={orderBy === 'id'}
                                     direction={orderBy === 'id' ? order : 'asc'}
                                     onClick={() => handleRequestSort('id')}
+                                    sx={{ color: theme.palette.common.white, '&.Mui-active': { color: theme.palette.common.white } }}
                                 >
                                     ID
                                 </TableSortLabel>
                             </TableCell>
-                            <TableCell sortDirection={orderBy === 'name' ? order : false}>
+                            <TableCell
+                                sortDirection={orderBy === 'name' ? order : false}
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
                                 <TableSortLabel
                                     active={orderBy === 'name'}
                                     direction={orderBy === 'name' ? order : 'asc'}
                                     onClick={() => handleRequestSort('name')}
+                                    sx={{ color: theme.palette.common.white, '&.Mui-active': { color: theme.palette.common.white } }}
                                 >
                                     Nombre
                                 </TableSortLabel>
                             </TableCell>
-                            <TableCell>Acciones</TableCell>
+                            <TableCell
+                                sx={{
+                                    fontWeight: 'bold',
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
+                                Acciones
+                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -253,18 +309,22 @@ export default function Index({ categories }: { categories: Category[] }) {
                                                 }}
                                             />
                                         ) : (
-                                            <span
-                                                onDoubleClick={() => startEdit(row.id, row.name)}
-                                                style={{ cursor: 'pointer' }}
-                                                title="Doble click para editar"
-                                            >
-                                                {row.name}
-                                            </span>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); startEdit(row.id, row.name); }} />
+                                                <span
+                                                    onDoubleClick={() => startEdit(row.id, row.name)}
+                                                    style={{ cursor: 'pointer' }}
+                                                    title="Doble click para editar"
+                                                >
+                                                    {row.name}
+                                                </span>
+                                            </Box>
                                         )}
                                     </TableCell>
                                     <TableCell>
                                         <IconButton
                                             size="small"
+                                            color="error"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleDelete(row.id);
@@ -278,21 +338,20 @@ export default function Index({ categories }: { categories: Category[] }) {
                         })}
                     </TableBody>
                 </Table>
+                <TablePagination
+                    component="div"
+                    count={filtered.length}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    onPageChange={(_, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                    }}
+                    rowsPerPageOptions={[5, 10, 25]}
+                    labelRowsPerPage="Filas por página"
+                />
             </TableContainer>
-
-            {/* Paginación externa */}
-            <TablePagination
-                component="div"
-                count={filtered.length}
-                page={page}
-                rowsPerPage={rowsPerPage}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                onRowsPerPageChange={(e) => {
-                    setRowsPerPage(parseInt(e.target.value, 10));
-                    setPage(0);
-                }}
-                rowsPerPageOptions={[5, 10, 25]}
-            />
 
             {/* Dialogo Crear */}
             <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>

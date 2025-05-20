@@ -1,8 +1,25 @@
-import AppLayout from '@/layouts/app-layout'; // Suponiendo que tienes un layout similar
+import AppLayout from '@/layouts/app-layout';
 import axios from 'axios';
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { useEffect, useState } from 'react';
-import 'react-calendar/dist/Calendar.css';
+import {
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Grid,
+    Typography,
+    useTheme,
+    Snackbar,
+    Alert,
+    Stack,
+    Chip,
+    Fade,
+} from '@mui/material';
+import BusinessIcon from '@mui/icons-material/Business';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import Brightness2Icon from '@mui/icons-material/Brightness2';
 
 const breadcrumbs = [
     {
@@ -30,45 +47,40 @@ const dayOfWeekInSpanish: { [key: string]: string } = {
 };
 
 const InfluencerAvailabilityCrud = () => {
+    const theme = useTheme();
     const [availabilities, setAvailabilities] = useState<InfluencerAvailability[]>([]);
-    const [calendarDates, setCalendarDates] = useState<Date[]>([]); // Para almacenar los 7 días de la semana
-    const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({}); // Para almacenar el turno seleccionado por día
-    const [userId, setUserId] = useState<number | null>(null); // Para almacenar el ID del usuario logueado
+    const [calendarDates, setCalendarDates] = useState<Date[]>([]);
+    const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({});
+    const [userId, setUserId] = useState<number | null>(null);
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
     useEffect(() => {
-        setCalendarDates(getCurrentWeekDates()); // Cargar los días de la semana actual
+        setCalendarDates(getCurrentWeekDates());
         fetchAvailabilities();
-        fetchUserId(); // Obtener el ID del usuario logueado
+        fetchUserId();
     }, []);
 
-    // Función para obtener el ID del usuario logueado
     const fetchUserId = () => {
         axios
-            .get('/api/auth/user') // Aquí supongo que tienes un endpoint para obtener el usuario logueado
-            .then((response) => {
-                setUserId(response.data.id);
-            })
-            .catch((error) => console.error('Error fetching user id:', error));
+            .get('/api/auth/user')
+            .then((response) => setUserId(response.data.id))
+            .catch(() => setSnackbar({ open: true, message: 'Error obteniendo usuario', severity: 'error' }));
     };
 
-    // Función para obtener los días de la semana actual (lunes a domingo)
     const getCurrentWeekDates = () => {
-        const start = startOfWeek(new Date(), { weekStartsOn: 1 }); // lunes
-        const end = endOfWeek(new Date(), { weekStartsOn: 1 }); // domingo
-
+        const start = startOfWeek(new Date(), { weekStartsOn: 1 });
+        const end = endOfWeek(new Date(), { weekStartsOn: 1 });
         const weekDays: Date[] = [];
         for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
-            const currentDay = new Date(day); // crear copia del objeto Date
-            const dayOfWeek = currentDay.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
+            const currentDay = new Date(day);
+            const dayOfWeek = currentDay.getDay();
             if (dayOfWeek >= 1 && dayOfWeek <= 5) {
                 weekDays.push(currentDay);
             }
         }
-
         return weekDays;
     };
 
-    // Función para obtener las disponibilidades del usuario
     const fetchAvailabilities = () => {
         axios
             .get('/api/influencer-availability')
@@ -78,52 +90,30 @@ const InfluencerAvailabilityCrud = () => {
                 response.data.forEach((avail: InfluencerAvailability) => {
                     initialTurnoSelection[avail.day_of_week] = avail.turno;
                 });
-                setTurnoSelection(initialTurnoSelection); // Establece los turnos seleccionados al cargar los datos
+                setTurnoSelection(initialTurnoSelection);
             })
-            .catch((error) => console.error('Error fetching availabilities:', error));
+            .catch(() => setSnackbar({ open: true, message: 'Error obteniendo disponibilidad', severity: 'error' }));
     };
 
-    // Función para manejar la selección de turno y guardar en base de datos
     const handleTurnoSelection = (day: string, turno: string) => {
         const previousTurno = turnoSelection[day];
-
         if (previousTurno === turno) {
-            // Si el turno ya está seleccionado, lo eliminamos (deseleccionamos)
             deleteAvailability(day, previousTurno);
             return;
         }
-
-        // Si no estaba seleccionado, lo seleccionamos
-        setTurnoSelection((prev) => ({
-            ...prev,
-            [day]: turno,
-        }));
-
-        // Asignar las horas dependiendo del turno
+        setTurnoSelection((prev) => ({ ...prev, [day]: turno }));
         const start_time = turno === 'mañana' ? '09:30' : '14:00';
         const end_time = turno === 'mañana' ? '13:00' : '18:00';
-
-        // Si ya había un turno, lo eliminamos antes de agregar el nuevo
         const existingAvailability = availabilities.find((avail) => avail.day_of_week === day && avail.turno === previousTurno);
-
-        if (existingAvailability) {
-            // Eliminar la disponibilidad anterior si se cambia de turno
-            deleteAvailability(day, previousTurno);
-        }
-
-        // Crear o actualizar la disponibilidad en la base de datos
+        if (existingAvailability) deleteAvailability(day, previousTurno);
         const existingAvailabilityNewTurno = availabilities.find((avail) => avail.day_of_week === day && avail.turno === turno);
-
         if (existingAvailabilityNewTurno) {
-            // Si existe, actualizamos
             updateAvailability(existingAvailabilityNewTurno.id, start_time, end_time);
         } else {
-            // Si no existe, creamos una nueva disponibilidad
             createAvailability(day, turno, start_time, end_time);
         }
     };
 
-    // Crear una nueva disponibilidad
     const createAvailability = (day: string, turno: string, start_time: string, end_time: string) => {
         axios
             .post('/api/influencer-availability', {
@@ -133,120 +123,199 @@ const InfluencerAvailabilityCrud = () => {
                 start_time,
                 end_time,
             })
-            .then(() => fetchAvailabilities())
-            .catch((error) => console.error('Error creating availability:', error));
+            .then(() => {
+                setSnackbar({ open: true, message: 'Disponibilidad guardada', severity: 'success' });
+                fetchAvailabilities();
+            })
+            .catch(() => setSnackbar({ open: true, message: 'Error guardando disponibilidad', severity: 'error' }));
     };
 
-    // Actualizar una disponibilidad existente
     const updateAvailability = (id: number, start_time: string, end_time: string) => {
         axios
             .put(`/api/influencer-availability/${id}`, { start_time, end_time })
-            .then(() => fetchAvailabilities())
-            .catch((error) => console.error('Error updating availability:', error));
+            .then(() => {
+                setSnackbar({ open: true, message: 'Disponibilidad actualizada', severity: 'success' });
+                fetchAvailabilities();
+            })
+            .catch(() => setSnackbar({ open: true, message: 'Error actualizando disponibilidad', severity: 'error' }));
     };
 
-    // Eliminar una disponibilidad
     const deleteAvailability = (day: string, turno: string) => {
         const existingAvailability = availabilities.find((avail) => avail.day_of_week === day && avail.turno === turno);
-
         if (existingAvailability) {
             axios
                 .delete(`/api/influencer-availability/${existingAvailability.id}`)
-                .then(() => fetchAvailabilities()) // Refrescar después de eliminar
-                .catch((error) => console.error('Error deleting availability:', error));
+                .then(() => {
+                    setSnackbar({ open: true, message: 'Disponibilidad eliminada', severity: 'success' });
+                    fetchAvailabilities();
+                })
+                .catch(() => setSnackbar({ open: true, message: 'Error eliminando disponibilidad', severity: 'error' }));
         }
     };
 
-    // Verificar si un día y turno están seleccionados
-    const isTurnoSelected = (day: string, turno: string) => {
-        return turnoSelection[day] === turno;
-    };
+    const isTurnoSelected = (day: string, turno: string) => turnoSelection[day] === turno;
 
     const handleAsignarEmpresa = async () => {
         try {
             const response = await axios.post(`/api/asignar-empresa`);
             const { empresa_nombre } = response.data;
-
-            alert(`Empresas asignadas: ${empresa_nombre}`);
-
-            //Abrir el PDF en una nueva pestaña si todo salió bien
+            setSnackbar({ open: true, message: `Empresas asignadas: ${empresa_nombre}`, severity: 'success' });
             window.open('/api/reporte-empresas-asignadas', '_blank');
         } catch (error: any) {
-            if (error.response?.data?.message) {
-                alert(`${error.response.data.message}`);
-            } else {
-                alert('Error desconocido al asignar empresa.');
-            }
-            console.error('Error al asignar empresa:', error);
+            setSnackbar({
+                open: true,
+                message: error.response?.data?.message || 'Error desconocido al asignar empresa.',
+                severity: 'error',
+            });
         }
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            {/* Botón fuera del contenedor principal */}
-            <div className="flex justify-end p-6">
-                <button
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+                <Button
                     onClick={handleAsignarEmpresa}
-                    className="rounded bg-gradient-to-r from-indigo-500 to-blue-600 px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:from-indigo-600 hover:to-blue-700"
+                    variant="contained"
+                    color="primary"
+                    size="large"
+                    startIcon={<BusinessIcon />}
+                    sx={{
+                        fontWeight: 'bold',
+                        borderRadius: 3,
+                        boxShadow: 3,
+                        textTransform: 'none',
+                        px: 4,
+                        py: 1.5,
+                    }}
                 >
                     Asignar Empresa
-                </button>
-            </div>
+                </Button>
+            </Box>
 
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl bg-gradient-to-br from-white via-gray-100 to-gray-200 p-6 shadow-xl">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-800">Disponibilidad de Influencers</h1>
-                </div>
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-medium tracking-tight text-gray-700">Agrega los días y turnos disponibles</h2>
-                </div>
+            <Box
+                sx={{
+                    borderRadius: 4,
+                    background: `linear-gradient(135deg, ${theme.palette.background.paper} 60%, ${theme.palette.grey[100]})`,
+                    boxShadow: 6,
+                    p: { xs: 2, md: 4 },
+                    mb: 4,
+                }}
+            >
+                <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
+                    Disponibilidad de Influencers
+                </Typography>
+                <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
+                    Agrega los días y turnos disponibles para la semana actual
+                </Typography>
 
-                <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                        {calendarDates
-                            .filter((date) => {
-                                const dayNum = date.getDay(); // 1 = lunes, ..., 5 = viernes
-                                return dayNum >= 1 && dayNum <= 5;
-                            })
-                            .map((date, index) => {
-                                const dayOfWeek = format(date, 'EEEE').toLowerCase();
-                                const dayInSpanish = dayOfWeekInSpanish[dayOfWeek];
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className="flex flex-col items-center rounded-2xl border border-gray-200 bg-gradient-to-tr from-white via-gray-50 to-gray-100 p-5 shadow-md transition-transform hover:scale-105 hover:shadow-xl"
-                                    >
-                                        <div className="mb-3 text-center text-lg font-semibold text-gray-700">{dayInSpanish}</div>
-
-                                        <div className="flex w-full flex-col space-y-3">
-                                            <button
-                                                onClick={() => handleTurnoSelection(dayOfWeek, 'mañana')}
-                                                className={`w-full rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                                                    isTurnoSelected(dayOfWeek, 'mañana')
-                                                        ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-green-100'
-                                                }`}
-                                            >
-                                                Mañana
-                                            </button>
-                                            <button
-                                                onClick={() => handleTurnoSelection(dayOfWeek, 'tarde')}
-                                                className={`w-full rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                                                    isTurnoSelected(dayOfWeek, 'tarde')
-                                                        ? 'bg-gradient-to-r from-orange-400 to-orange-600 text-white shadow'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-orange-100'
-                                                }`}
-                                            >
-                                                Tarde
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                    </div>
-                </div>
-            </div>
+                <Grid container spacing={3}>
+                    {calendarDates
+                        .filter((date) => {
+                            const dayNum = date.getDay();
+                            return dayNum >= 1 && dayNum <= 5;
+                        })
+                        .map((date, index) => {
+                            const dayOfWeek = format(date, 'EEEE').toLowerCase();
+                            const dayInSpanish = dayOfWeekInSpanish[dayOfWeek];
+                            return (
+                                <Grid item xs={12} sm={6} md={2.4} key={index}>
+                                    <Fade in timeout={600 + index * 100}>
+                                        <Card
+                                            elevation={isTurnoSelected(dayOfWeek, 'mañana') || isTurnoSelected(dayOfWeek, 'tarde') ? 8 : 2}
+                                            sx={{
+                                                borderRadius: 3,
+                                                border: isTurnoSelected(dayOfWeek, 'mañana') || isTurnoSelected(dayOfWeek, 'tarde')
+                                                    ? `2px solid ${theme.palette.primary.main}`
+                                                    : `1px solid ${theme.palette.grey[200]}`,
+                                                background: isTurnoSelected(dayOfWeek, 'mañana')
+                                                    ? 'linear-gradient(135deg, #e3fcec 60%, #b2f2e5)'
+                                                    : isTurnoSelected(dayOfWeek, 'tarde')
+                                                    ? 'linear-gradient(135deg, #fff3e0 60%, #ffe0b2)'
+                                                    : theme.palette.background.paper,
+                                                transition: 'all 0.3s',
+                                            }}
+                                        >
+                                            <CardContent>
+                                                <Stack alignItems="center" spacing={2}>
+                                                    <Typography variant="h6" fontWeight="bold" color="text.primary">
+                                                        {dayInSpanish}
+                                                    </Typography>
+                                                    <Stack direction="row" spacing={2} width="100%">
+                                                        <Button
+                                                            fullWidth
+                                                            variant={isTurnoSelected(dayOfWeek, 'mañana') ? 'contained' : 'outlined'}
+                                                            color="success"
+                                                            startIcon={<WbSunnyIcon />}
+                                                            sx={{
+                                                                fontWeight: 600,
+                                                                boxShadow: isTurnoSelected(dayOfWeek, 'mañana') ? 3 : 0,
+                                                                background: isTurnoSelected(dayOfWeek, 'mañana')
+                                                                    ? 'linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)'
+                                                                    : undefined,
+                                                                color: isTurnoSelected(dayOfWeek, 'mañana') ? '#fff' : undefined,
+                                                                borderColor: isTurnoSelected(dayOfWeek, 'mañana')
+                                                                    ? theme.palette.success.main
+                                                                    : undefined,
+                                                                transition: 'all 0.2s',
+                                                            }}
+                                                            onClick={() => handleTurnoSelection(dayOfWeek, 'mañana')}
+                                                        >
+                                                            Mañana
+                                                        </Button>
+                                                        <Button
+                                                            fullWidth
+                                                            variant={isTurnoSelected(dayOfWeek, 'tarde') ? 'contained' : 'outlined'}
+                                                            color="warning"
+                                                            startIcon={<Brightness2Icon />}
+                                                            sx={{
+                                                                fontWeight: 600,
+                                                                boxShadow: isTurnoSelected(dayOfWeek, 'tarde') ? 3 : 0,
+                                                                background: isTurnoSelected(dayOfWeek, 'tarde')
+                                                                    ? 'linear-gradient(90deg, #f7971e 0%, #ffd200 100%)'
+                                                                    : undefined,
+                                                                color: isTurnoSelected(dayOfWeek, 'tarde') ? '#fff' : undefined,
+                                                                borderColor: isTurnoSelected(dayOfWeek, 'tarde')
+                                                                    ? theme.palette.warning.main
+                                                                    : undefined,
+                                                                transition: 'all 0.2s',
+                                                            }}
+                                                            onClick={() => handleTurnoSelection(dayOfWeek, 'tarde')}
+                                                        >
+                                                            Tarde
+                                                        </Button>
+                                                    </Stack>
+                                                    {/* Chips de horarios seleccionados */}
+                                                    {turnoSelection[dayOfWeek] && (
+                                                        <Chip
+                                                            icon={<AccessTimeIcon />}
+                                                            label={
+                                                                turnoSelection[dayOfWeek] === 'mañana'
+                                                                    ? '09:30 - 13:00'
+                                                                    : '14:00 - 18:00'
+                                                            }
+                                                            color={turnoSelection[dayOfWeek] === 'mañana' ? 'success' : 'warning'}
+                                                            sx={{ fontWeight: 500 }}
+                                                        />
+                                                    )}
+                                                </Stack>
+                                            </CardContent>
+                                        </Card>
+                                    </Fade>
+                                </Grid>
+                            );
+                        })}
+                </Grid>
+            </Box>
+            <Snackbar
+                open={snackbar.open}
+                autoHideDuration={4000}
+                onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert severity={snackbar.severity} onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+                    {snackbar.message}
+                </Alert>
+            </Snackbar>
         </AppLayout>
     );
 };

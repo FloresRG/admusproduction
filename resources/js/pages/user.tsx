@@ -1,11 +1,36 @@
+import React, { useEffect, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
-
-// Importamos el DataTable y su tipo de columna
-import { DataTable, DataTableColumn } from '@/components/ui/data-table/data-table';
+import {
+    Box,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    TextField,
+    IconButton,
+    useTheme,
+    useMediaQuery,
+    Checkbox,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    FormControlLabel,
+    FormGroup,
+    Typography,
+    Select,
+    MenuItem,
+    InputLabel,
+    FormControl,
+} from '@mui/material';
+import { Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon, Close as CloseIcon } from '@mui/icons-material';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -37,6 +62,10 @@ export default function UsersPermissions() {
     const [loading, setLoading] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [editUserId, setEditUserId] = useState<number | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     useEffect(() => {
         fetchUsers();
@@ -62,7 +91,7 @@ export default function UsersPermissions() {
         setNewUserName('');
         setNewUserEmail('');
         setNewUserPassword('');
-        setSelectedRole(null);
+        setSelectedRole('');
         setShowModal(true);
     };
 
@@ -71,7 +100,7 @@ export default function UsersPermissions() {
         setEditUserId(user.id);
         setNewUserName(user.name);
         setNewUserEmail(user.email);
-        setSelectedRole(user.roles[0]?.name || null);
+        setSelectedRole(user.roles[0]?.name || '');
         setShowModal(true);
     };
 
@@ -115,110 +144,247 @@ export default function UsersPermissions() {
             });
     };
 
-    // ——————————————————————————————————————————————
-    // 1. Definición de columnas para DataTable
-    const userColumns: DataTableColumn[] = [
-        { id: 'name', header: 'Nombre', accessorKey: 'name', enableSorting: true },
-        { id: 'email', header: 'Email', accessorKey: 'email', enableSorting: true },
-        { id: 'role', header: 'Rol', accessorKey: 'role', enableSorting: true },
-    ];
+    // Filtrar usuarios por nombre o email
+    const filteredUsers = users.filter(
+        (u) =>
+            u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    // 2. Transformación de los datos recibidos a un array plano
-    const tableData = users.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.roles[0]?.name || '—',
-    }));
-    // ——————————————————————————————————————————————
+    // Manejar selección de filas
+    const handleRowCheckbox = (userId: number) => {
+        setSelectedRows((prev) =>
+            prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
+        );
+    };
+
+    // Checkbox de cabecera (seleccionar todos)
+    const handleHeaderCheckbox = () => {
+        if (selectedRows.length === filteredUsers.length) {
+            setSelectedRows([]);
+        } else {
+            setSelectedRows(filteredUsers.map((u) => u.id));
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Usuarios y Roles" />
 
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl bg-gray-50 p-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-semibold tracking-tight text-gray-800">Usuarios y Roles</h1>
-                    <button className="rounded-md bg-blue-600 px-5 py-2 text-white shadow transition hover:bg-blue-700" onClick={openCreateModal}>
-                        Crear Nuevo Usuario
-                    </button>
-                </div>
-
-                {/* ——————————————————————————————————————————————
-            3. Reemplazamos la tabla HTML por el componente DataTable
-        —————————————————————————————————————————————— */}
-                <div className="rounded-lg border bg-white p-4 shadow">
-                    <DataTable
-                        columns={userColumns}
-                        data={tableData}
-                        itemsPerPage={5}
-                        onRowSelect={(rows) => console.log('Filas seleccionadas:', rows)}
-                        title="Listado de Usuarios"
+            <Box sx={{ padding: 2 }}>
+                {/* Buscador */}
+                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+                    <TextField
+                        label="Buscar"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        sx={{ marginRight: 2 }}
+                        InputProps={{
+                            startAdornment: (
+                                <IconButton>
+                                    <SearchIcon />
+                                </IconButton>
+                            ),
+                        }}
                     />
-                </div>
-            </div>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ ml: 2 }}
+                        onClick={openCreateModal}
+                        startIcon={<EditIcon />}
+                    >
+                        Nuevo Usuario
+                    </Button>
+                </Box>
 
-            {/* Modal (sin cambios) */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/30 backdrop-blur-sm">
-                    <div className="w-full max-w-md space-y-4 rounded-lg bg-white p-6 shadow-2xl">
-                        <h2 className="text-xl font-semibold text-gray-800">{isEditMode ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h2>
-                        <input
-                            type="text"
-                            className="w-full rounded-md border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Nombre del usuario"
-                            value={newUserName}
-                            onChange={(e) => setNewUserName(e.target.value)}
+                {/* Tabla */}
+                <TableContainer
+                    component={Paper}
+                    sx={{
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        overflowX: 'auto',
+                        maxHeight: 'calc(100vh - 200px)',
+                    }}
+                >
+                    <Table stickyHeader sx={{ minWidth: 650 }}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell padding="checkbox">
+                                    <Checkbox
+                                        color="primary"
+                                        checked={filteredUsers.length > 0 && selectedRows.length === filteredUsers.length}
+                                        indeterminate={selectedRows.length > 0 && selectedRows.length < filteredUsers.length}
+                                        onChange={handleHeaderCheckbox}
+                                    />
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    Nombre
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    Email
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    Rol
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    Acciones
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {filteredUsers.map((user) => (
+                                <TableRow key={user.id} hover>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            color="primary"
+                                            checked={selectedRows.includes(user.id)}
+                                            onChange={() => handleRowCheckbox(user.id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell>{user.name}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>
+                                        {user.roles && user.roles.length > 0
+                                            ? user.roles.map((r) => r.name).join(', ')
+                                            : <span className="italic text-gray-400">Sin rol</span>}
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => openEditModal(user)}
+                                            aria-label="Editar"
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleDeleteUser(user.id)}
+                                            aria-label="Eliminar"
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Box>
+
+            {/* Modal Material UI */}
+            <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h6">
+                        {isEditMode ? 'Editar Usuario' : 'Crear Nuevo Usuario'}
+                    </Typography>
+                    <IconButton onClick={() => setShowModal(false)}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <TextField
+                        label="Nombre del usuario"
+                        variant="outlined"
+                        fullWidth
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        label="Email del usuario"
+                        variant="outlined"
+                        fullWidth
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                        sx={{ mb: 2 }}
+                    />
+                    {!isEditMode && (
+                        <TextField
+                            label="Contraseña"
+                            variant="outlined"
+                            fullWidth
+                            type="password"
+                            value={newUserPassword}
+                            onChange={(e) => setNewUserPassword(e.target.value)}
+                            sx={{ mb: 2 }}
                         />
-                        <input
-                            type="email"
-                            className="w-full rounded-md border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Email del usuario"
-                            value={newUserEmail}
-                            onChange={(e) => setNewUserEmail(e.target.value)}
-                        />
-                        {!isEditMode && (
-                            <input
-                                type="password"
-                                className="w-full rounded-md border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Contraseña"
-                                value={newUserPassword}
-                                onChange={(e) => setNewUserPassword(e.target.value)}
-                            />
-                        )}
-                        <select
-                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                    )}
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel id="select-role-label">Rol</InputLabel>
+                        <Select
+                            labelId="select-role-label"
                             value={selectedRole || ''}
+                            label="Rol"
                             onChange={(e) => setSelectedRole(e.target.value)}
                         >
-                            <option value="">Seleccionar rol</option>
+                            <MenuItem value="">
+                                <em>Seleccionar rol</em>
+                            </MenuItem>
                             {roles.map((role) => (
-                                <option key={role.id} value={role.name}>
+                                <MenuItem key={role.id} value={role.name}>
                                     {role.name}
-                                </option>
+                                </MenuItem>
                             ))}
-                        </select>
-                        <div className="flex justify-end gap-3 pt-2">
-                            <button
-                                className="rounded-md bg-gray-300 px-4 py-2 transition hover:bg-gray-400"
-                                onClick={() => setShowModal(false)}
-                                disabled={loading}
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                className={`rounded-md bg-blue-600 px-4 py-2 text-white shadow-md transition ${
-                                    loading ? 'cursor-not-allowed opacity-50' : 'hover:bg-blue-700'
-                                }`}
-                                onClick={handleSubmit}
-                                disabled={loading}
-                            >
-                                {loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        </Select>
+                    </FormControl>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setShowModal(false)}
+                        color="inherit"
+                        variant="outlined"
+                        disabled={loading}
+                        startIcon={<CloseIcon />}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        color="primary"
+                        variant="contained"
+                        disabled={loading}
+                    >
+                        {loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </AppLayout>
     );
 }
