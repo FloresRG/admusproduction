@@ -53,18 +53,13 @@ const InfluencerAvailabilityCrud = () => {
 
     // Función para obtener los días de la semana actual (lunes a domingo)
     const getCurrentWeekDates = () => {
-        const start = startOfWeek(new Date(), { weekStartsOn: 1 }); // lunes
-        const end = endOfWeek(new Date(), { weekStartsOn: 1 }); // domingo
+        const start = startOfWeek(new Date(), { weekStartsOn: 1 }); // Semana comienza en lunes
+        const end = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-        const weekDays: Date[] = [];
-        for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
-            const currentDay = new Date(day); // crear copia del objeto Date
-            const dayOfWeek = currentDay.getDay(); // 0 = domingo, 1 = lunes, ..., 6 = sábado
-            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-                weekDays.push(currentDay);
-            }
+        const weekDays = [];
+        for (let day = start; day <= end; day.setDate(day.getDate() + 1)) {
+            weekDays.push(new Date(day));
         }
-
         return weekDays;
     };
 
@@ -163,87 +158,73 @@ const InfluencerAvailabilityCrud = () => {
     };
 
     const handleAsignarEmpresa = async () => {
-        try {
-            const response = await axios.post(`/api/asignar-empresa`);
-            const { empresa_nombre } = response.data;
+    try {
+        const response = await axios.post(`/api/asignar-empresa`);
+        const { empresa_nombre } = response.data;
 
-            alert(`Empresas asignadas: ${empresa_nombre}`);
+        alert(`Empresas asignadas: ${empresa_nombre}`);
 
-            //Abrir el PDF en una nueva pestaña si todo salió bien
-            window.open('/api/reporte-empresas-asignadas', '_blank');
-        } catch (error: any) {
-            if (error.response?.data?.message) {
-                alert(`${error.response.data.message}`);
-            } else {
-                alert('Error desconocido al asignar empresa.');
-            }
-            console.error('Error al asignar empresa:', error);
+        // ✅ Abrir el PDF en una nueva pestaña si todo salió bien
+        window.open('/api/reporte-empresas-asignadas', '_blank');
+    } catch (error: any) {
+        if (error.response?.data?.message) {
+            alert(`${error.response.data.message}`);
+        } else {
+            alert('Error desconocido al asignar empresa.');
         }
-    };
+        console.error('Error al asignar empresa:', error);
+    }
+};
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             {/* Botón fuera del contenedor principal */}
             <div className="flex justify-end p-6">
-                <button
-                    onClick={handleAsignarEmpresa}
-                    className="rounded bg-gradient-to-r from-indigo-500 to-blue-600 px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:from-indigo-600 hover:to-blue-700"
-                >
+                <button onClick={handleAsignarEmpresa} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
                     Asignar Empresa
                 </button>
             </div>
-
-            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl bg-gradient-to-br from-white via-gray-100 to-gray-200 p-6 shadow-xl">
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl bg-gray-50 p-6">
                 <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold tracking-tight text-gray-800">Disponibilidad de Influencers</h1>
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-800">Disponibilidad de Influencers</h1>
                 </div>
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-medium tracking-tight text-gray-700">Agrega los días y turnos disponibles</h2>
+                    <h2 className="text-2xl tracking-tight text-gray-800">Agregar los dias y turnos disponibles</h2>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
-                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                        {calendarDates
-                            .filter((date) => {
-                                const dayNum = date.getDay(); // 1 = lunes, ..., 5 = viernes
-                                return dayNum >= 1 && dayNum <= 5;
-                            })
-                            .map((date, index) => {
-                                const dayOfWeek = format(date, 'EEEE').toLowerCase();
-                                const dayInSpanish = dayOfWeekInSpanish[dayOfWeek];
-
-                                return (
-                                    <div
-                                        key={index}
-                                        className="flex flex-col items-center rounded-2xl border border-gray-200 bg-gradient-to-tr from-white via-gray-50 to-gray-100 p-5 shadow-md transition-transform hover:scale-105 hover:shadow-xl"
-                                    >
-                                        <div className="mb-3 text-center text-lg font-semibold text-gray-700">{dayInSpanish}</div>
-
-                                        <div className="flex w-full flex-col space-y-3">
-                                            <button
-                                                onClick={() => handleTurnoSelection(dayOfWeek, 'mañana')}
-                                                className={`w-full rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                                                    isTurnoSelected(dayOfWeek, 'mañana')
-                                                        ? 'bg-gradient-to-r from-green-400 to-green-600 text-white shadow'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-green-100'
-                                                }`}
-                                            >
-                                                Mañana
-                                            </button>
-                                            <button
-                                                onClick={() => handleTurnoSelection(dayOfWeek, 'tarde')}
-                                                className={`w-full rounded-md px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                                                    isTurnoSelected(dayOfWeek, 'tarde')
-                                                        ? 'bg-gradient-to-r from-orange-400 to-orange-600 text-white shadow'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-orange-100'
-                                                }`}
-                                            >
-                                                Tarde
-                                            </button>
-                                        </div>
+                <div className="overflow-x-auto rounded-lg border bg-white p-6 shadow">
+                    <div className="grid grid-cols-7 gap-4">
+                        {calendarDates.map((date, index) => {
+                            const dayOfWeek = format(date, 'EEEE').toLowerCase(); // Día en inglés
+                            const dayInSpanish = dayOfWeekInSpanish[dayOfWeek]; // Ejemplo: 'lunes', 'martes', etc.
+                            return (
+                                <div key={index} className="flex flex-col items-center rounded-lg border border-gray-300 p-4">
+                                    <div className="mb-4 text-center font-semibold">
+                                        {dayInSpanish} {/* Muestra la fecha */}
                                     </div>
-                                );
-                            })}
+
+                                    <div className="flex flex-col space-y-2">
+                                        <button
+                                            onClick={() => handleTurnoSelection(dayOfWeek, 'mañana')}
+                                            className={`rounded-md px-4 py-2 ${
+                                                isTurnoSelected(dayOfWeek, 'mañana') ? 'bg-green-500 text-white' : 'bg-gray-200'
+                                            }`}
+                                        >
+                                            Mañana
+                                        </button>
+                                        <button
+                                            onClick={() => handleTurnoSelection(dayOfWeek, 'tarde')}
+                                            className={`rounded-md px-4 py-2 ${
+                                                isTurnoSelected(dayOfWeek, 'tarde') ? 'bg-orange-500 text-white' : 'bg-gray-200'
+                                            }`}
+                                        >
+                                            Tarde
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

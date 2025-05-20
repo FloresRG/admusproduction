@@ -13,7 +13,7 @@ type User = {
 
 const breadcrumbs = [
     {
-        title: 'Listado de influencers',
+        title: 'Usuarios',
         href: '/infuencersdatos',
     },
 ];
@@ -56,6 +56,7 @@ export default function UserList() {
         }
     };
 
+    // Editar campo específico
     // Editar el campo cantidad y manejar la creación de un nuevo dato si no existe
     const handleEditField = (id: number, field: string, value: string | number) => {
         setEditingId(id);
@@ -161,7 +162,7 @@ export default function UserList() {
                 },
             },
             {
-                header: 'Cantidad de videos asignados',
+                header: 'Cantidad',
                 cell: ({ row }) => {
                     const isEditing = editingId === row.original.id && editingField === 'cantidad';
                     return isEditing ? (
@@ -220,58 +221,50 @@ export default function UserList() {
         },
     });
 
-   return (
-    <AppLayout breadcrumbs={breadcrumbs}>
-        <Head title="Influencer" />
-        {notification && (
-            <div className="fixed top-6 right-6 z-50 rounded-lg border border-green-400 bg-green-100 px-6 py-3 text-green-800 shadow-lg transition duration-300">
-                {notification}
-            </div>
-        )}
-        <div className="container mx-auto p-6">
-            <h1 className="mb-6 text-3xl font-bold text-gray-800">Listado de influencer</h1>
-
-            <div className="mb-6 max-w-sm">
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Usuarios" />
+            {notification && (
+                <div className="fixed top-6 right-6 z-50 rounded-lg border border-gray-300 bg-white px-6 py-3 text-gray-800 shadow-md transition duration-300">
+                    {notification}
+                </div>
+            )}
+            <div className="container mx-auto p-4">
+                <h1 className="mb-4 text-2xl font-semibold text-gray-800">Usuarios</h1>
                 <input
                     type="text"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="🔍 Buscar por nombre o ID..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Buscar por nombre o ID..."
+                    className="w-full max-w-xs rounded border border-gray-300 px-3 py-2"
                 />
+                <div className="mt-4 overflow-x-auto">
+                    <table className="min-w-full border border-gray-300 bg-white shadow-md">
+                        <thead>
+                            {table.getHeaderGroups().map((headerGroup) => (
+                                <tr key={headerGroup.id}>
+                                    {headerGroup.headers.map((header) => (
+                                        <th key={header.id} className="cursor-pointer p-2 text-left">
+                                            {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </th>
+                                    ))}
+                                </tr>
+                            ))}
+                        </thead>
+                        <tbody>
+                            {table.getRowModel().rows.map((row) => (
+                                <tr key={row.id}>
+                                    {row.getVisibleCells().map((cell) => (
+                                        <td key={cell.id} className="p-2">
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-md">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gradient-to-r from-gray-100 to-gray-200">
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <tr key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => (
-                                    <th
-                                        key={header.id}
-                                        className="p-3 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide"
-                                    >
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </th>
-                                ))}
-                            </tr>
-                        ))}
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 bg-white">
-                        {table.getRowModel().rows.map((row) => (
-                            <tr key={row.id} className="hover:bg-gray-50 transition">
-                                {row.getVisibleCells().map((cell) => (
-                                    <td key={cell.id} className="p-3 text-sm text-gray-800">
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </AppLayout>
-);
-
+        </AppLayout>
+    );
 }
