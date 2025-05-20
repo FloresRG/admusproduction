@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
@@ -38,17 +39,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/users', function () {
         return Inertia::render('user');
     });
-    Route::prefix('weeks')->group(function () {
-        // Vista con Inertia.js (index)
-        Route::get('/', [WeekController::class, 'index'])->name('weeks.index');
 
-        // Rutas con JSON (Crear, Editar, Eliminar)
+
+    // —– Rutas para Weeks —–
+    Route::prefix('weeks')->group(function(){
+        // Listar semanas
+        Route::get('/', [WeekController::class, 'index'])->name('weeks.index');
         Route::post('/', [WeekController::class, 'store'])->name('weeks.store');
         Route::put('{week}', [WeekController::class, 'update'])->name('weeks.update');
         Route::delete('{week}', [WeekController::class, 'destroy'])->name('weeks.destroy');
 
-        Route::get('/{id}/bookings', [WeekController::class, 'bookingsByWeek'])->name('weeks.bookings');
+        // Listar bookings DE UNA semana concreta
+        // Nota el parametro se llama {week} para que exista coherencia de Binding
+        Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
+             ->name('weeks.bookings.index');
     });
+     // —– Rutas para Booking (UPDATE) —–
+    // ¡Esto SALE fuera del prefix('weeks')!
+    Route::patch('bookings/{booking}', [BookingController::class, 'update'])
+         ->name('bookings.update');
    
     Route::get('/api/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);

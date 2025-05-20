@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Influencer usando la tabla users
-            $table->timestamp('start_time');
+            $table->timestamp('start_time')->nullable();
             $table->timestamp('end_time')->nullable();
             $table->string('status');
             $table->string('turno');

@@ -20,7 +20,8 @@ class BookingFactory extends Factory
             'start_time' => $this->faker->dateTime(),
             'end_time' => $this->faker->dateTime(),
             'status' => $this->faker->randomElement(['pending', 'confirmed', 'completed']),
-            'turno' => $this->faker->word(),
+            'turno' => $this->faker->randomElement(['mañana', 'tarde']),
+            'day_of_week' => $this->faker->randomElement(['monday', 'tuesday', 'wednesday', 'truesday', 'friday']),
             'week_id' => Week::inRandomOrder()->first()->id,
         ];
     }

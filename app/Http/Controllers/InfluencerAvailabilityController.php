@@ -91,6 +91,9 @@ class InfluencerAvailabilityController extends Controller
 
         return response()->json(null, 204);
     }
+
+
+
     public function asignarEmpresa()
     {
         $userId = Auth::id();
@@ -222,6 +225,9 @@ class InfluencerAvailabilityController extends Controller
             'empresa_ids' => collect($bookingsCreados)->pluck('company_id')->unique(),
         ]);
     }
+
+
+    
 
     public function generarPdfEmpresasAsignadas()
     {
