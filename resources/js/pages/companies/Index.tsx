@@ -1,3 +1,43 @@
+import React, { useState, useMemo } from 'react';
+import {
+    Box,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    TextField,
+    IconButton,
+    Button,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Typography,
+    useTheme,
+    useMediaQuery,
+    Snackbar,
+    Alert,
+    TablePagination,
+    Card,
+    CardContent,
+    Grid,
+} from '@mui/material';
+import {
+    Search as SearchIcon,
+    Edit as EditIcon,
+    Delete as DeleteIcon,
+    Close as CloseIcon,
+    Business as BusinessIcon,
+    Category as CategoryIcon,
+    DateRange as DateRangeIcon,
+    EventAvailable as EventAvailableIcon,
+    CalendarToday as CalendarTodayIcon,
+    AccessTime as AccessTimeIcon,
+    ListAlt as ListAltIcon,
+} from '@mui/icons-material';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
@@ -5,7 +45,6 @@ import { useMemo, useState } from 'react';
 import { FaSearch, FaTrashAlt } from 'react-icons/fa';
 import Modal from 'react-modal';
 
-Modal.setAppElement('#app');
 type AvailabilityDay = {
     day_of_week: string;
     start_time: string;
@@ -21,15 +60,12 @@ type Company = {
     contract_duration: string;
     start_date?: string;
     end_date?: string;
-    // Acepta ambas variantes
     availabilityDays?: AvailabilityDay[];
     availability_days?: AvailabilityDay[];
 };
 type Props = {
     companies: Company[];
 };
-
-const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 function formatDay(day: string) {
     const dayMap: Record<string, string> = {
@@ -41,7 +77,6 @@ function formatDay(day: string) {
         saturday: 'Sábado',
         sunday: 'Domingo',
     };
-
     return dayMap[day] || day;
 }
 
@@ -51,6 +86,10 @@ const CompaniesIndex = ({ companies }: Props) => {
     const [notification, setNotification] = useState<string | null>(null);
     const [companiesList, setCompaniesList] = useState(companies);
     const [search, setSearch] = useState('');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Buscador reactivo
     const filteredCompanies = useMemo(() => {
@@ -59,56 +98,35 @@ const CompaniesIndex = ({ companies }: Props) => {
         return companiesList.filter((c) => c.name.toLowerCase().includes(s) || c.category?.name?.toLowerCase().includes(s));
     }, [search, companiesList]);
 
-    const columns = useMemo<ColumnDef<Company, any>[]>(
-        () => [
-            { header: 'Nombre', accessorKey: 'name' },
-            { header: 'Categoría', accessorKey: 'category.name' },
-            { header: 'Duración del contrato', accessorKey: 'contract_duration' },
-            { header: 'Fecha inicio', accessorKey: 'start_date' },
-            { header: 'Fecha fin', accessorKey: 'end_date' },
-            {
-                header: 'Días Disponibles',
-                cell: ({ row }) => {
-                    // Usa snake_case si así llega desde Laravel
-                    const availability = Array.isArray(row.original.availability_days) ? row.original.availability_days : [];
-                    return (
-                        <div className="flex flex-col gap-1">
-                            {availability.length === 0 && <span className="text-gray-400 italic">Sin disponibilidad</span>}
-                            {availability.map((d, i) => (
-                                <span
-                                    key={i}
-                                    className={`inline-block rounded px-2 py-1 text-xs font-semibold ${d.turno === 'mañana' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'} border border-gray-200`}
-                                >
-                                    {formatDay(d.day_of_week)}: {d.start_time} - {d.end_time} ({d.turno})
-                                </span>
-                            ))}
-                        </div>
-                    );
-                },
-            },
-            {
-                header: 'Acciones',
-                cell: ({ row }) => (
-                    <div className="flex space-x-2">
-                        <Link href={`/companies/${row.original.id}/edit`} className="text-black underline hover:text-gray-700">
-                            Editar
-                        </Link>
-                        <button className="text-red-600 hover:text-red-800" onClick={() => handleDelete(row.original)}>
-                            <FaTrashAlt />
-                        </button>
-                    </div>
-                ),
-            },
-        ],
-        [],
+    // Paginación
+    const paginatedCompanies = useMemo(
+        () =>
+            filteredCompanies.slice(
+                page * rowsPerPage,
+                page * rowsPerPage + rowsPerPage
+            ),
+        [filteredCompanies, page, rowsPerPage]
     );
 
-    const table = useReactTable({
-        data: filteredCompanies,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-    });
+    // Conteo de empresas por día
+    const dayCounts = useMemo(() => {
+        const counts: Record<string, number> = {
+            monday: 0,
+            tuesday: 0,
+            wednesday: 0,
+            thursday: 0,
+            friday: 0,
+        };
+        companiesList.forEach(company => {
+            const days = company.availability_days || [];
+            // Usar Set para evitar contar dos veces el mismo día en una empresa
+            const uniqueDays = new Set(days.map(d => d.day_of_week));
+            uniqueDays.forEach(day => {
+                if (counts[day] !== undefined) counts[day]++;
+            });
+        });
+        return counts;
+    }, [companiesList]);
 
     function handleDelete(company: Company) {
         setSelectedCompany(company);
@@ -126,8 +144,8 @@ const CompaniesIndex = ({ companies }: Props) => {
                     },
                 });
                 const data = await response.json();
-                setNotification(data.success);
-                setCompaniesList(companiesList.filter((c) => c.id !== selectedCompany.id));
+                setNotification(data.success || 'Compañía eliminada');
+                setCompaniesList(companiesList.filter(c => c.id !== selectedCompany.id));
             } catch (e) {
                 setNotification('Error al eliminar la compañía');
             }
@@ -141,120 +159,283 @@ const CompaniesIndex = ({ companies }: Props) => {
         setSelectedCompany(null);
     }
 
+    const handleChangePage = (_: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
     return (
         <AppLayout>
             <Head title="Compañías" />
-            {notification && (
-                <div className="fixed top-6 right-6 z-50 rounded-lg border border-green-300 bg-green-100 px-6 py-3 text-green-800 shadow-md transition duration-300">
-                    {notification}
-                </div>
-            )}
-            <div className="py-6">
-                <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <Link href="/companies/create" className="rounded bg-black px-4 py-2 font-semibold text-white hover:bg-gray-800">
-                        Crear nueva compañía
-                    </Link>
-                    <div className="relative w-full md:w-72">
-                        <input
-                            type="text"
-                            placeholder="Buscar por nombre o categoría..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full rounded border py-2 pr-4 pl-10 focus:ring-2 focus:ring-black focus:outline-none"
-                        />
-                        <FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
-                    </div>
-                </div>
-                <div className="overflow-x-auto rounded border border-gray-200 bg-white shadow">
-                    <table className="min-w-full table-auto text-black">
-                        <thead className="bg-gray-100">
-                            {table.getHeaderGroups().map((headerGroup) => (
-                                <tr key={headerGroup.id}>
-                                    {headerGroup.headers.map((header) => (
-                                        <th key={header.id} className="border-b px-4 py-2 text-left font-semibold">
-                                            {flexRender(header.column.columnDef.header, header.getContext())}
-                                        </th>
-                                    ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody>
-                            {table.getRowModel().rows.length === 0 && (
-                                <tr>
-                                    <td colSpan={columns.length} className="py-8 text-center text-gray-400">
-                                        No se encontraron compañías.
-                                    </td>
-                                </tr>
-                            )}
-                            {table.getRowModel().rows.map((row) => (
-                                <tr key={row.id} className="border-t transition hover:bg-gray-50">
-                                    {row.getVisibleCells().map((cell) => (
-                                        <td key={cell.id} className="px-4 py-2 align-top">
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="mt-4 flex items-center justify-between">
-                    <div className="flex space-x-2">
-                        <button
-                            className="rounded border bg-gray-100 px-4 py-2 text-sm"
-                            onClick={() => table.setPageIndex(0)}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            {'<<'}
-                        </button>
-                        <button
-                            className="rounded border bg-gray-100 px-4 py-2 text-sm"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            {'<'}
-                        </button>
-                        <button
-                            className="rounded border bg-gray-100 px-4 py-2 text-sm"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            {'>'}
-                        </button>
-                        <button
-                            className="rounded border bg-gray-100 px-4 py-2 text-sm"
-                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            {'>>'}
-                        </button>
-                    </div>
-                    <div>
-                        <span>
-                            Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <Modal
-                isOpen={modalOpen}
-                onRequestClose={cancelDelete}
-                className="mx-auto w-full max-w-xs rounded-lg border border-black bg-white p-6 shadow-lg focus:ring-2 focus:ring-black focus:outline-none"
-                overlayClassName="fixed inset-0 bg-black bg-opacity-50"
+            <Snackbar
+                open={!!notification}
+                autoHideDuration={4000}
+                onClose={() => setNotification(null)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-                <h2 className="text-lg font-bold text-black">Confirmar eliminación</h2>
-                <p className="mt-2 text-black">
-                    ¿Estás seguro de que deseas eliminar la compañía "<span className="font-semibold">{selectedCompany?.name}</span>"?
-                </p>
-                <div className="mt-4 flex justify-end space-x-2">
-                    <button className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400" onClick={cancelDelete}>
+                <Alert onClose={() => setNotification(null)} severity="success" sx={{ width: '100%' }}>
+                    {notification}
+                </Alert>
+            </Snackbar>
+            {/* Conteo de empresas por día */}
+            <Grid container spacing={2} sx={{ mb: 3, mx: { xs: 0, md: 4 } }}>
+                {Object.entries(dayCounts).map(([day, count]) => (
+                    <Grid item xs={12} sm={6} md={2.4} key={day}>
+                        <Card sx={{ background: theme.palette.grey[100], borderRadius: 2, boxShadow: 2 }}>
+                            <CardContent>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                    {formatDay(day)}
+                                </Typography>
+                                <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
+                                    {count}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    {count === 1 ? 'empresa' : 'empresas'}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
+            <Box sx={{ py: 6, mx: { xs: 0, md: 4 } }}>
+                <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, alignItems: { md: 'center' }, justifyContent: { md: 'space-between' } }}>
+                    <Button
+                        component={Link}
+                        href="/companies/create"
+                        variant="contained"
+                        color="primary"
+                        sx={{ fontWeight: 'bold' }}
+                        startIcon={<BusinessIcon />}
+                    >
+                        Crear nueva compañía
+                    </Button>
+                    <TextField
+                        placeholder="Buscar por nombre o categoría..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        size="small"
+                        fullWidth
+                        sx={{ maxWidth: 320 }}
+                        InputProps={{
+                            startAdornment: (
+                                <IconButton tabIndex={-1}>
+                                    <SearchIcon />
+                                </IconButton>
+                            ),
+                        }}
+                    />
+                </Box>
+                <TableContainer
+                    component={Paper}
+                    sx={{
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        overflowX: 'auto',
+                        border: '1px solid #e0e0e0',
+                        background: theme.palette.background.paper,
+                        mx: { xs: 0, md: 2 },
+                    }}
+                >
+                    <Table stickyHeader sx={{ minWidth: 900 }}>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <BusinessIcon fontSize="small" /> Nombre
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CategoryIcon fontSize="small" /> Categoría
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <ListAltIcon fontSize="small" /> Duración del contrato
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <DateRangeIcon fontSize="small" /> Fecha inicio
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CalendarTodayIcon fontSize="small" /> Fecha fin
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <EventAvailableIcon fontSize="small" /> Días Disponibles
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: isMobile ? '8px' : '16px',
+                                        fontSize: isMobile ? '0.875rem' : '1rem',
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <EditIcon fontSize="small" /> / <DeleteIcon fontSize="small" /> Acciones
+                                    </Box>
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {paginatedCompanies.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                                        No se encontraron compañías.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                            {paginatedCompanies.map((company) => (
+                                <TableRow key={company.id} hover>
+                                    <TableCell>{company.name}</TableCell>
+                                    <TableCell>{company.category?.name || <span style={{ color: '#aaa', fontStyle: 'italic' }}>Sin categoría</span>}</TableCell>
+                                    <TableCell>{company.contract_duration}</TableCell>
+                                    <TableCell>{company.start_date || '-'}</TableCell>
+                                    <TableCell>{company.end_date || '-'}</TableCell>
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                            {(Array.isArray(company.availability_days) && company.availability_days.length > 0) ? (
+                                                company.availability_days.map((d, i) => (
+                                                    <Box
+                                                        key={i}
+                                                        sx={{
+                                                            display: 'inline-block',
+                                                            px: 1,
+                                                            py: 0.5,
+                                                            borderRadius: 1,
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 600,
+                                                            bgcolor: d.turno === 'mañana' ? 'blue.100' : 'yellow.100',
+                                                            color: d.turno === 'mañana' ? 'blue.800' : 'yellow.800',
+                                                            border: '1px solid',
+                                                            borderColor: 'grey.200',
+                                                        }}
+                                                    >
+                                                        {formatDay(d.day_of_week)}: {d.start_time} - {d.end_time} ({d.turno})
+                                                    </Box>
+                                                ))
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                                                    Sin disponibilidad
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton
+                                            color="primary"
+                                            component={Link}
+                                            href={`/companies/${company.id}/edit`}
+                                            aria-label="Editar"
+                                        >
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleDelete(company)}
+                                            aria-label="Eliminar"
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    <TablePagination
+                        component="div"
+                        count={filteredCompanies.length}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
+                        labelRowsPerPage="Filas por página"
+                    />
+                </TableContainer>
+            </Box>
+            {/* Modal de confirmación */}
+            <Dialog open={modalOpen} onClose={cancelDelete} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h6">Confirmar eliminación</Typography>
+                    <IconButton onClick={cancelDelete}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Typography>
+                        ¿Estás seguro de que deseas eliminar la compañía{' '}
+                        <b>{selectedCompany?.name}</b>?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={cancelDelete} color="inherit" variant="outlined" startIcon={<CloseIcon />}>
                         Cancelar
-                    </button>
-                    <button className="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700" onClick={confirmDelete}>
+                    </Button>
+                    <Button onClick={confirmDelete} color="error" variant="contained" startIcon={<DeleteIcon />}>
                         Eliminar
-                    </button>
-                </div>
-            </Modal>
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </AppLayout>
     );
 };

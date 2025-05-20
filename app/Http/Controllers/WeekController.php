@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Week;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -88,11 +89,25 @@ class WeekController extends Controller
     }
     public function bookingsByWeek($id)
     {
-        $week = Week::with(['bookings.user', 'bookings.company'])->findOrFail($id);
+        $week = Week::with(['bookings.user', 'bookings.company'])
+        ->findOrFail($id);
 
+       // Carga las compañías y sus availabilityDays
+    $companies = Company::with('availabilityDays')->get()
+        ->map(fn($c) => [
+            'id'               => $c->id,
+            'name'             => $c->name,
+            // entregamos SOLO lo que necesitamos en el frontend
+            'availabilityDays' => $c->availabilityDays->map(fn($d) => [
+                'day_of_week' => $d->day_of_week,
+                'turno'       => $d->turno,
+            ])->toArray(),
+        ]);
+        
         return Inertia::render('weeks/BookingsByWeek', [
             'week' => $week,
             'bookings' => $week->bookings,
+            'companies' => $companies,        // <-- nuevo
         ]);
     }
   

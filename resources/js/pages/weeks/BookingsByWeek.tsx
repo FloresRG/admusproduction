@@ -1,34 +1,48 @@
-import { useState, useEffect } from 'react';
-import { Head, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
+import { Head, useForm, usePage } from '@inertiajs/react';
+// ⇡ en la zona de imports de BookingsByWeek.tsx
+
+import { Snackbar, Alert } from '@mui/material';
+
+import { useEffect } from 'react';
+
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import StatusIcon from '@mui/icons-material/CheckCircleOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
+import PeopleIcon from '@mui/icons-material/People';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import { useState } from 'react';
+
 import {
-    Box,
+    Box, // ← importa MenuItem
+    Button, // ← importa Button
+    Card,
+    CardContent,
+    CardHeader,
+    Checkbox,
+    Dialog, // ← importa DialogContent
+    DialogActions, // ← importa DialogTitle
+    DialogContent, // ← importa Dialog
+    DialogTitle, // ← importa DialogActions
+    FormControl, // ← AÑADIR
     Grid,
-    Typography,
-    TextField,
+    IconButton, // ← importa FormControl
+    InputLabel, // ← importa Select
+    MenuItem, // ← importa InputLabel
+    Select,
+    Stack,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
-    TableRow,
-    Checkbox,
     TablePagination,
-    Button,
-    IconButton,
-    Stack,
-    Card,
-    CardContent,
-    CardHeader,
-    useTheme
+    TableRow,
+    TextField,
+    Typography,
+    useTheme,
 } from '@mui/material';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PeopleIcon from '@mui/icons-material/People';
-import BusinessIcon from '@mui/icons-material/Business';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import StatusIcon from '@mui/icons-material/CheckCircleOutline';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'weeks', href: '/weeks' },
@@ -41,6 +55,7 @@ interface Booking {
     end_time: string;
     status: string;
     turno: string;
+    day_of_week: string;
     user: { name: string };
     company: { name: string };
 }
@@ -53,32 +68,83 @@ interface PageProps {
         end_date: string;
     };
     bookings: Booking[];
+    companies: {
+        id: number;
+        name: string;
+        availabilityDays: { day_of_week: string; turno: string }[];
+    }[];
+
     [key: string]: unknown;
 }
 
 export default function BookingsByWeek() {
     const theme = useTheme();
-    const { week, bookings } = usePage<PageProps>().props;
+    const { week, bookings, companies } = usePage<PageProps>().props;
+
+    // ← ESTADOS PARA EL MODAL DE SWAP
+    const [openSwap, setOpenSwap] = useState(false);
+    const [bookingToSwap, setBookingToSwap] = useState<Booking | null>(null);
+    const [availableCompanies, setAvailableCompanies] = useState<{ id: number; name: string }[]>([]);
+  const { flash } = usePage<{ flash: { success?: string } }>().props;
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+    // Inertia form para el PATCH
+    const form = useForm<{ company_id: number }>({ company_id: 0 });
+
+    const handleSwapSave = () => {
+        form.patch(`/bookings/${bookingToSwap!.id}`, {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                // al recibir el redirect Inertia, se hará la visita y actualizará props
+                setOpenSwap(false);
+            },
+        });
+    };
+
     const [search, setSearch] = useState('');
     const [selectedBookings, setSelectedBookings] = useState<number[]>([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
+    // helper: filtra localmente
+    function getAvailableCompanies(day: string, turno: string) {
+        return companies.filter((c) => c.availabilityDays.some((ad) => ad.day_of_week === day && ad.turno === turno));
+    }
+
+    console.log('📋 companies prop:', companies);
+    console.log(
+        '🔎 matching for',
+        selectedBooking?.day_of_week,
+        selectedBooking?.turno,
+        getAvailableCompanies(selectedBooking?.day_of_week || '', selectedBooking?.turno || ''),
+    );
+
+    // handler que abre el modal
+    const handleOpenSwap = (b: Booking) => {
+        setBookingToSwap(b);
+        const list = getAvailableCompanies(b.day_of_week, b.turno);
+        console.log('Empresas compatibles:', list);
+        setAvailableCompanies(list);
+        form.reset();
+        form.setData('company_id', list[0]?.id || 0);
+        setOpenSwap(true);
+    };
+
     // Filtro de búsqueda
-    const filteredBookings = bookings.filter((booking) =>
-        booking.user.name.toLowerCase().includes(search.toLowerCase()) ||
-        booking.company.name.toLowerCase().includes(search.toLowerCase()) ||
-        booking.turno.toLowerCase().includes(search.toLowerCase()) ||
-        booking.status.toLowerCase().includes(search.toLowerCase())
+    const filteredBookings = bookings.filter(
+        (booking) =>
+            booking.user.name.toLowerCase().includes(search.toLowerCase()) ||
+            booking.company.name.toLowerCase().includes(search.toLowerCase()) ||
+            booking.turno.toLowerCase().includes(search.toLowerCase()) ||
+            booking.status.toLowerCase().includes(search.toLowerCase()),
     );
 
     // Manejo de selección de checkboxes
     const handleSelectBooking = (id: number) => {
         setSelectedBookings((prevSelected) =>
-            prevSelected.includes(id)
-                ? prevSelected.filter((bookingId) => bookingId !== id)
-                : [...prevSelected, id]
+            prevSelected.includes(id) ? prevSelected.filter((bookingId) => bookingId !== id) : [...prevSelected, id],
         );
         const booking = bookings.find((booking) => booking.id === id);
         setSelectedBooking(booking || null); // Actualiza los detalles del booking seleccionado
@@ -107,10 +173,10 @@ export default function BookingsByWeek() {
                     {/* Izquierda: Tarjetas estadísticas sobre la semana */}
                     <Grid item xs={12} md={6}>
                         <Typography variant="h5" fontWeight="bold" gutterBottom>
-                            Semana:  Del {week.start_date} al {week.end_date}
+                            Semana: Del {week.start_date} al {week.end_date}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                            Del {week.name} 
+                            Del {week.name}
                         </Typography>
 
                         <Grid container spacing={2}>
@@ -186,27 +252,22 @@ export default function BookingsByWeek() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {filteredBookings
-                                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                        .map((booking) => (
-                                            <TableRow
-                                                key={booking.id}
-                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                                            >
-                                                <TableCell padding="checkbox">
-                                                    <Checkbox
-                                                        checked={selectedBookings.includes(booking.id)}
-                                                        onChange={() => handleSelectBooking(booking.id)}
-                                                    />
-                                                </TableCell>
-                                                <TableCell>{booking.user.name}</TableCell>
-                                                <TableCell>{booking.company.name}</TableCell>
-                                                <TableCell>{booking.turno}</TableCell>
-                                                <TableCell>{booking.status}</TableCell>
-                                                <TableCell>{booking.start_time}</TableCell>
-                                                <TableCell>{booking.end_time}</TableCell>
-                                            </TableRow>
-                                        ))}
+                                    {filteredBookings.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((booking) => (
+                                        <TableRow key={booking.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    checked={selectedBookings.includes(booking.id)}
+                                                    onChange={() => handleSelectBooking(booking.id)}
+                                                />
+                                            </TableCell>
+                                            <TableCell>{booking.user.name}</TableCell>
+                                            <TableCell>{booking.company.name}</TableCell>
+                                            <TableCell>{booking.turno}</TableCell>
+                                            <TableCell>{booking.status}</TableCell>
+                                            <TableCell>{booking.start_time}</TableCell>
+                                            <TableCell>{booking.end_time}</TableCell>
+                                        </TableRow>
+                                    ))}
                                 </TableBody>
                             </Table>
                         </TableContainer>
@@ -229,33 +290,20 @@ export default function BookingsByWeek() {
                     <Grid container spacing={2} sx={{ mt: 4 }}>
                         <Grid item xs={12}>
                             <Card variant="outlined">
-                                <CardHeader
-                                    title="Detalles del Booking"
-                                    sx={{ backgroundColor: theme.palette.grey[100] }}
-                                />
+                                <CardHeader title="Detalles del Booking" sx={{ backgroundColor: theme.palette.grey[100] }} />
                                 <CardContent>
                                     <Typography variant="h6" fontWeight="bold">
                                         Usuario: {selectedBooking.user.name}
                                     </Typography>
-                                    <Typography variant="body1">
-                                        Empresa: {selectedBooking.company.name}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Turno: {selectedBooking.turno}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Estado: {selectedBooking.status}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Inicio: {selectedBooking.start_time}
-                                    </Typography>
-                                    <Typography variant="body1">
-                                        Fin: {selectedBooking.end_time}
-                                    </Typography>
+                                    <Typography variant="body1">Empresa: {selectedBooking.company.name}</Typography>
+                                    <Typography variant="body1">Turno: {selectedBooking.turno}</Typography>
+                                    <Typography variant="body1">Estado: {selectedBooking.status}</Typography>
+                                    <Typography variant="body1">Inicio: {selectedBooking.start_time}</Typography>
+                                    <Typography variant="body1">Fin: {selectedBooking.end_time}</Typography>
                                 </CardContent>
                                 <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ p: 2 }}>
-                                    <IconButton color="primary">
-                                        <EditIcon />
+                                    <IconButton color="primary" onClick={() => handleOpenSwap(selectedBooking)}>
+                                        <SwapHorizIcon />
                                     </IconButton>
                                     <IconButton color="error">
                                         <DeleteIcon />
@@ -265,6 +313,34 @@ export default function BookingsByWeek() {
                         </Grid>
                     </Grid>
                 )}
+
+                {/* ——— MODAL DE SWAP ——— */}
+                <Dialog open={openSwap} onClose={() => setOpenSwap(false)}>
+                    <DialogTitle>Cambiar Empresa</DialogTitle>
+                    <DialogContent>
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="empresa-label">Empresa</InputLabel>
+                            <Select
+                                labelId="empresa-label"
+                                value={form.data.company_id}
+                                label="Empresa"
+                                onChange={(e) => form.setData('company_id', Number(e.target.value))}
+                            >
+                                {availableCompanies.map((c) => (
+                                    <MenuItem key={c.id} value={c.id}>
+                                        {c.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setOpenSwap(false)}>Cancelar</Button>
+                        <Button disabled={form.data.company_id === 0} onClick={handleSwapSave}>
+                            Guardar
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </Box>
         </AppLayout>
     );

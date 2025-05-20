@@ -20,7 +20,6 @@ class UserSeeder extends Seeder
             ]
         );
         $influencer->assignRole('influencer');
-
         // Usuario admin
         $admin = User::firstOrCreate(
             ['email' => 'admin@test.com'],
