@@ -189,7 +189,7 @@ export default function UserList() {
                     );
                 },
             },
-            {
+            /* {
                 header: 'Acciones',
                 cell: ({ row }) => (
                     <div className="flex space-x-2">
@@ -198,7 +198,7 @@ export default function UserList() {
                         </button>
                     </div>
                 ),
-            },
+            }, */
         ],
         [editingId, editingField, editingValue],
     );

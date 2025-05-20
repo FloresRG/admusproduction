@@ -94,6 +94,11 @@ Route::get('/api/influencer-availability', [InfluencerAvailabilityController::cl
 Route::post('/api/influencer-availability', [InfluencerAvailabilityController::class, 'store']);
 Route::put('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'update']);
 Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'destroy']);
+Route::post('/api/asignar-empresa', [InfluencerAvailabilityController::class, 'asignarEmpresa']);
+Route::get('/api/reporte-empresas-asignadas', [InfluencerAvailabilityController::class, 'generarPdfEmpresasAsignadas']);
+
+
+
 
 
 require __DIR__ . '/settings.php';

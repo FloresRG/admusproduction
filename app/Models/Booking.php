@@ -20,6 +20,7 @@ class Booking extends Model
         'status',
         'turno',
         'week_id',
+        'day_of_week',
     ];
 
     public function company()

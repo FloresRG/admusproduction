@@ -1,23 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import AppLayout from '@/layouts/app-layout'; // Suponiendo que tienes un layout similar
 import axios from 'axios';
-import AppLayout from '@/layouts/app-layout';
-import { startOfWeek, format, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
-import {
-    Button,
-    Grid,
-    Typography,
-    Box,
-    Card,
-    CardContent,
-    CardHeader,
-    useTheme
-} from '@mui/material';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import NightsStayIcon from '@mui/icons-material/NightsStay';
+import { endOfWeek, format, startOfWeek } from 'date-fns';
+import { useEffect, useState } from 'react';
+import 'react-calendar/dist/Calendar.css';
 
 const breadcrumbs = [
-    { title: 'Disponibilidad de Influencers', href: '/influencer-availability' },
+    {
+        title: 'Disponibilidad de Influencers',
+        href: '/influencer-availability',
+    },
 ];
 
 interface InfluencerAvailability {
@@ -28,156 +19,215 @@ interface InfluencerAvailability {
     end_time: string;
     turno: string;
 }
+const dayOfWeekInSpanish: { [key: string]: string } = {
+    monday: 'Lunes',
+    tuesday: 'Martes',
+    wednesday: 'Miércoles',
+    thursday: 'Jueves',
+    friday: 'Viernes',
+    saturday: 'Sábado',
+    sunday: 'Domingo',
+};
 
 const InfluencerAvailabilityCrud = () => {
-    const theme = useTheme();
     const [availabilities, setAvailabilities] = useState<InfluencerAvailability[]>([]);
-    const [calendarDates, setCalendarDates] = useState<Date[]>([]);
-    const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({});
-    const [userId, setUserId] = useState<number | null>(null);
+    const [calendarDates, setCalendarDates] = useState<Date[]>([]); // Para almacenar los 7 días de la semana
+    const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({}); // Para almacenar el turno seleccionado por día
+    const [userId, setUserId] = useState<number | null>(null); // Para almacenar el ID del usuario logueado
 
     useEffect(() => {
-        setCalendarDates(getCurrentWeekDays());
+        setCalendarDates(getCurrentWeekDates()); // Cargar los días de la semana actual
         fetchAvailabilities();
-        fetchUserId();
+        fetchUserId(); // Obtener el ID del usuario logueado
     }, []);
 
+    // Función para obtener el ID del usuario logueado
     const fetchUserId = () => {
-        axios.get('/api/auth/user')
-            .then(response => setUserId(response.data.id))
-            .catch(error => console.error('Error al obtener el usuario:', error));
-    };
-
-    const getCurrentWeekDays = () => {
-        const start = startOfWeek(new Date(), { weekStartsOn: 1 });
-        return Array.from({ length: 5 }, (_, i) => addDays(start, i)); // Lunes a viernes
-    };
-
-    const fetchAvailabilities = () => {
-        axios.get('/api/influencer-availability')
-            .then(response => {
-                setAvailabilities(response.data);
-                const initial: { [key: string]: string } = {};
-                response.data.forEach((avail: InfluencerAvailability) => {
-                    initial[avail.day_of_week] = avail.turno;
-                });
-                setTurnoSelection(initial);
+        axios
+            .get('/api/auth/user') // Aquí supongo que tienes un endpoint para obtener el usuario logueado
+            .then((response) => {
+                setUserId(response.data.id);
             })
-            .catch(error => console.error('Error al obtener disponibilidad:', error));
+            .catch((error) => console.error('Error fetching user id:', error));
     };
 
+    // Función para obtener los días de la semana actual (lunes a domingo)
+    const getCurrentWeekDates = () => {
+        const start = startOfWeek(new Date(), { weekStartsOn: 1 }); // Semana comienza en lunes
+        const end = endOfWeek(new Date(), { weekStartsOn: 1 });
+
+        const weekDays = [];
+        for (let day = start; day <= end; day.setDate(day.getDate() + 1)) {
+            weekDays.push(new Date(day));
+        }
+        return weekDays;
+    };
+
+    // Función para obtener las disponibilidades del usuario
+    const fetchAvailabilities = () => {
+        axios
+            .get('/api/influencer-availability')
+            .then((response) => {
+                setAvailabilities(response.data);
+                const initialTurnoSelection: { [key: string]: string } = {};
+                response.data.forEach((avail: InfluencerAvailability) => {
+                    initialTurnoSelection[avail.day_of_week] = avail.turno;
+                });
+                setTurnoSelection(initialTurnoSelection); // Establece los turnos seleccionados al cargar los datos
+            })
+            .catch((error) => console.error('Error fetching availabilities:', error));
+    };
+
+    // Función para manejar la selección de turno y guardar en base de datos
     const handleTurnoSelection = (day: string, turno: string) => {
-        const previous = turnoSelection[day];
-        if (previous === turno) {
-            deleteAvailability(day, previous);
+        const previousTurno = turnoSelection[day];
+
+        if (previousTurno === turno) {
+            // Si el turno ya está seleccionado, lo eliminamos (deseleccionamos)
+            deleteAvailability(day, previousTurno);
             return;
         }
-        setTurnoSelection(prev => ({ ...prev, [day]: turno }));
 
+        // Si no estaba seleccionado, lo seleccionamos
+        setTurnoSelection((prev) => ({
+            ...prev,
+            [day]: turno,
+        }));
+
+        // Asignar las horas dependiendo del turno
         const start_time = turno === 'mañana' ? '09:30' : '14:00';
         const end_time = turno === 'mañana' ? '13:00' : '18:00';
 
-        const existing = availabilities.find(
-            (a) => a.day_of_week === day && a.turno === previous
-        );
-        if (existing) deleteAvailability(day, previous);
+        // Si ya había un turno, lo eliminamos antes de agregar el nuevo
+        const existingAvailability = availabilities.find((avail) => avail.day_of_week === day && avail.turno === previousTurno);
 
-        const alreadyExists = availabilities.find(
-            (a) => a.day_of_week === day && a.turno === turno
-        );
-        if (alreadyExists) {
-            updateAvailability(alreadyExists.id, start_time, end_time);
+        if (existingAvailability) {
+            // Eliminar la disponibilidad anterior si se cambia de turno
+            deleteAvailability(day, previousTurno);
+        }
+
+        // Crear o actualizar la disponibilidad en la base de datos
+        const existingAvailabilityNewTurno = availabilities.find((avail) => avail.day_of_week === day && avail.turno === turno);
+
+        if (existingAvailabilityNewTurno) {
+            // Si existe, actualizamos
+            updateAvailability(existingAvailabilityNewTurno.id, start_time, end_time);
         } else {
+            // Si no existe, creamos una nueva disponibilidad
             createAvailability(day, turno, start_time, end_time);
         }
     };
 
-    const createAvailability = (day: string, turno: string, start: string, end: string) => {
-        axios.post('/api/influencer-availability', {
-            user_id: userId,
-            day_of_week: day,
-            turno,
-            start_time: start,
-            end_time: end
-        }).then(fetchAvailabilities)
-          .catch(err => console.error('Error al crear disponibilidad:', err));
+    // Crear una nueva disponibilidad
+    const createAvailability = (day: string, turno: string, start_time: string, end_time: string) => {
+        axios
+            .post('/api/influencer-availability', {
+                user_id: userId,
+                day_of_week: day,
+                turno,
+                start_time,
+                end_time,
+            })
+            .then(() => fetchAvailabilities())
+            .catch((error) => console.error('Error creating availability:', error));
     };
 
-    const updateAvailability = (id: number, start: string, end: string) => {
-        axios.put(`/api/influencer-availability/${id}`, {
-            start_time: start,
-            end_time: end
-        }).then(fetchAvailabilities)
-          .catch(err => console.error('Error al actualizar disponibilidad:', err));
+    // Actualizar una disponibilidad existente
+    const updateAvailability = (id: number, start_time: string, end_time: string) => {
+        axios
+            .put(`/api/influencer-availability/${id}`, { start_time, end_time })
+            .then(() => fetchAvailabilities())
+            .catch((error) => console.error('Error updating availability:', error));
     };
 
+    // Eliminar una disponibilidad
     const deleteAvailability = (day: string, turno: string) => {
-        const item = availabilities.find((a) => a.day_of_week === day && a.turno === turno);
-        if (item) {
-            axios.delete(`/api/influencer-availability/${item.id}`)
-                .then(fetchAvailabilities)
-                .catch(err => console.error('Error al eliminar disponibilidad:', err));
+        const existingAvailability = availabilities.find((avail) => avail.day_of_week === day && avail.turno === turno);
+
+        if (existingAvailability) {
+            axios
+                .delete(`/api/influencer-availability/${existingAvailability.id}`)
+                .then(() => fetchAvailabilities()) // Refrescar después de eliminar
+                .catch((error) => console.error('Error deleting availability:', error));
         }
     };
 
-    const isTurnoSelected = (day: string, turno: string) => turnoSelection[day] === turno;
+    // Verificar si un día y turno están seleccionados
+    const isTurnoSelected = (day: string, turno: string) => {
+        return turnoSelection[day] === turno;
+    };
+
+    const handleAsignarEmpresa = async () => {
+    try {
+        const response = await axios.post(`/api/asignar-empresa`);
+        const { empresa_nombre } = response.data;
+
+        alert(`Empresas asignadas: ${empresa_nombre}`);
+
+        // ✅ Abrir el PDF en una nueva pestaña si todo salió bien
+        window.open('/api/reporte-empresas-asignadas', '_blank');
+    } catch (error: any) {
+        if (error.response?.data?.message) {
+            alert(`${error.response.data.message}`);
+        } else {
+            alert('Error desconocido al asignar empresa.');
+        }
+        console.error('Error al asignar empresa:', error);
+    }
+};
+
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Box sx={{ p: 4 }}>
-                <Typography variant="h4" gutterBottom>
-                    Agregue sus dias disponibles (Lunes a Viernes)
-                </Typography>
+            {/* Botón fuera del contenedor principal */}
+            <div className="flex justify-end p-6">
+                <button onClick={handleAsignarEmpresa} className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700">
+                    Asignar Empresa
+                </button>
+            </div>
+            <div className="flex h-full flex-1 flex-col gap-6 rounded-xl bg-gray-50 p-6">
+                <div className="flex items-center justify-between">
+                    <h1 className="text-2xl font-semibold tracking-tight text-gray-800">Disponibilidad de Influencers</h1>
+                </div>
+                <div className="flex items-center justify-between">
+                    <h2 className="text-2xl tracking-tight text-gray-800">Agregar los dias y turnos disponibles</h2>
+                </div>
 
-                <Grid container spacing={3}>
-                    {calendarDates.map((date, index) => {
-                        const dayOfWeek = format(date, 'EEEE', { locale: es }).toLowerCase(); // ej: 'lunes'
-                        const dateLabel = format(date, 'dd MMM', { locale: es });
+                <div className="overflow-x-auto rounded-lg border bg-white p-6 shadow">
+                    <div className="grid grid-cols-7 gap-4">
+                        {calendarDates.map((date, index) => {
+                            const dayOfWeek = format(date, 'EEEE').toLowerCase(); // Día en inglés
+                            const dayInSpanish = dayOfWeekInSpanish[dayOfWeek]; // Ejemplo: 'lunes', 'martes', etc.
+                            return (
+                                <div key={index} className="flex flex-col items-center rounded-lg border border-gray-300 p-4">
+                                    <div className="mb-4 text-center font-semibold">
+                                        {dayInSpanish} {/* Muestra la fecha */}
+                                    </div>
 
-                        return (
-                            <Grid item xs={12} sm={6} md={4} lg={2.4} key={index}>
-                                <Card
-                                    variant="outlined"
-                                    sx={{
-                                        minHeight: 220,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        justifyContent: 'space-between',
-                                        backgroundColor: theme.palette.background.paper
-                                    }}
-                                >
-                                    <CardHeader
-                                        title={dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)}
-                                        subheader={dateLabel}
-                                        sx={{ textAlign: 'center', backgroundColor: theme.palette.grey[100] }}
-                                    />
-                                    <CardContent sx={{ textAlign: 'center' }}>
-                                        <Button
-                                            fullWidth
-                                            startIcon={<WbSunnyIcon />}
-                                            variant={isTurnoSelected(dayOfWeek, 'mañana') ? 'contained' : 'outlined'}
-                                            color="primary"
+                                    <div className="flex flex-col space-y-2">
+                                        <button
                                             onClick={() => handleTurnoSelection(dayOfWeek, 'mañana')}
-                                            sx={{ mb: 2 }}
+                                            className={`rounded-md px-4 py-2 ${
+                                                isTurnoSelected(dayOfWeek, 'mañana') ? 'bg-green-500 text-white' : 'bg-gray-200'
+                                            }`}
                                         >
-                                            Turno Mañana
-                                        </Button>
-                                        <Button
-                                            fullWidth
-                                            startIcon={<NightsStayIcon />}
-                                            variant={isTurnoSelected(dayOfWeek, 'tarde') ? 'contained' : 'outlined'}
-                                            color="secondary"
+                                            Mañana
+                                        </button>
+                                        <button
                                             onClick={() => handleTurnoSelection(dayOfWeek, 'tarde')}
+                                            className={`rounded-md px-4 py-2 ${
+                                                isTurnoSelected(dayOfWeek, 'tarde') ? 'bg-orange-500 text-white' : 'bg-gray-200'
+                                            }`}
                                         >
-                                            Turno Tarde
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        );
-                    })}
-                </Grid>
-            </Box>
+                                            Tarde
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
         </AppLayout>
     );
 };
