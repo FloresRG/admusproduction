@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
+use App\Http\Controllers\TareaController;
 use App\Http\Controllers\WeekController;
 
 Route::get('/', function () {
@@ -121,6 +122,15 @@ Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']
 Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/tareas', [TareaController::class, 'index'])->name('tareas.index');
+    Route::get('/tareas/create', [TareaController::class, 'create'])->name('tareas.create');
+    Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
+    Route::get('/tareas/{id}/edit', [TareaController::class, 'edit'])->name('tareas.edit');
+    Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
+    Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
+});
 
 
 require __DIR__ . '/settings.php';

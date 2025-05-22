@@ -1,7 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { useEffect, useMemo, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -143,11 +141,6 @@ export default function InfluencersDatos() {
             if (!response.ok) throw new Error('Error al actualizar el campo');
             const updatedUser = await response.json();
             setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: editingValue } : user)));
-            setRowData((prev) =>
-                prev.map((user) =>
-                    user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user
-                )
-            );
             setNotification('Campo actualizado exitosamente');
             setEditingId(null);
             setEditingField(null);
