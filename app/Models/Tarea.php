@@ -15,23 +15,27 @@ class Tarea extends Model
         'titulo',
         'prioridad',
         'descripcion',
+        'empresa',
         'fecha',
         'tipo_id',
-        'company_id',
+        'company_id'
     ];
 
+    // Relación: Tarea pertenece a un tipo
     public function tipo()
     {
-        return $this->belongsTo(Tipo::class, 'tipo_id');
+        return $this->belongsTo(Tipo::class);
     }
 
+    // Relación: Tarea pertenece a una empresa (si existe el modelo Company)
     public function company()
     {
-        return $this->belongsTo(Company::class, 'company_id');
+        return $this->belongsTo(Company::class);
     }
 
+    // Relación: Tarea tiene muchas asignaciones
     public function asignaciones()
     {
-        return $this->hasMany(AsignacionTarea::class, 'tarea_id');
+        return $this->hasMany(AsignacionTarea::class);
     }
 }

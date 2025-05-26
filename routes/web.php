@@ -14,6 +14,7 @@ use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\WeekController;
+use App\Models\Tarea;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -107,11 +108,29 @@ Route::post('/api/asignar-empresa', [InfluencerAvailabilityController::class, 'a
 Route::get('/api/reporte-empresas-asignadas', [InfluencerAvailabilityController::class, 'generarPdfEmpresasAsignadas']);
 
 
+Route::get('/vertareas', function () {
+    return Inertia::render('tareas/vertareas');
+});
+Route::get('/tareas', function () {
+    return Inertia::render('tareas/index');
+});
+Route::get('/api/vertareas', [TareaController::class, 'vertareas']);
+Route::get('/api/tareas', [TareaController::class, 'index']);
+Route::get('/api/tareas-por-fecha', [TareaController::class, 'tareasPorFecha']);
 
 
+Route::post('/create/tareas', [TareaController::class, 'store']);
+Route::put('/tareas/{tarea}', [TareaController::class, 'update']);
+Route::delete('/tareas/{tarea}', [TareaController::class, 'destroy']);
+Route::get('/api/tipos', function () {
+    return \App\Models\Tipo::select('id', 'nombre_tipo as nombre')->get();
+});
+Route::get('/api/companies', function () {
+    return \App\Models\Company::select('id', 'name as nombre')->get();
+});
+Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+
 Route::get('/infuencersdatos', function () {
     return Inertia::render('influencers/infuencersdatos');
 });
@@ -123,14 +142,8 @@ Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'des
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/tareas', [TareaController::class, 'index'])->name('tareas.index');
-    Route::get('/tareas/create', [TareaController::class, 'create'])->name('tareas.create');
-    Route::post('/tareas', [TareaController::class, 'store'])->name('tareas.store');
-    Route::get('/tareas/{id}/edit', [TareaController::class, 'edit'])->name('tareas.edit');
-    Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
-    Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
-});
+
+
 
 
 require __DIR__ . '/settings.php';

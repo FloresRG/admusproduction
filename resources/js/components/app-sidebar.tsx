@@ -56,6 +56,7 @@ export function AppSidebar() {
             { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
             { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
             { title: 'ver calendario', href: '/bookings', icon: DateRangeIcon },
+            { title: 'ver tareas', href: '/vertareas', icon: DateRangeIcon },
         );
     }
 
@@ -92,6 +93,11 @@ export function AppSidebar() {
         {
             title: 'categories',
             href: '/categories',
+            icon: LayoutGrid,
+        },
+         {
+            title: 'ver tareas',
+            href: '/vertareas',
             icon: LayoutGrid,
         },
         {

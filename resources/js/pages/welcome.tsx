@@ -210,9 +210,3 @@ export default function Welcome() {
         </>
     );
 }
-setRowData((prev) =>
-                prev.map((user) =>
-                    user.id === editingId ? { ...user, [editingField!]: updatedUser.dato[editingField!] } : user
-                )
-            );
-            setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: editingValue } : user)));
