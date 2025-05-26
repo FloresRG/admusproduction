@@ -51,4 +51,8 @@ class User extends Authenticatable
     {
         return $this->hasOne(Dato::class, 'id_user');  // Relación uno a uno con el modelo Dato
     }
+    public function tipos()
+    {
+        return $this->belongsToMany(Tipo::class, 'tipo_user', 'user_id', 'tipo_id');
+    }
 }
