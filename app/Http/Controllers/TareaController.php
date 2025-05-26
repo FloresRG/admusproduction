@@ -29,7 +29,8 @@ class TareaController extends Controller
 
         return response()->json($fechas);
     }
-    
+   
+
     public function tareasPorFecha(Request $request)
     {
         $fecha = $request->query('fecha');

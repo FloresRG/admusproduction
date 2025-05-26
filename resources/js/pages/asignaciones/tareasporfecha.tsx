@@ -2,11 +2,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
     Box,
     Button,
-    Checkbox,
     FormControl,
     Grid,
     IconButton,
@@ -23,18 +23,18 @@ import {
     TextField,
     Typography,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
-
 type Asignacion = {
-    id: string;
+    id: number;
     estado: string;
     detalle: string;
-    tarea: { id: string; titulo: string };
+    tarea: { id: number; titulo: string };
     user: { id: string; name: string; email: string };
 };
 
-type TareaOption = { id: string; titulo: string };
+type TareaOption = { id: number; titulo: string };
 
 export default function TareasPorFecha() {
     const { fecha, tareasAsignadas, todasTareas } = usePage<{
@@ -46,28 +46,37 @@ export default function TareasPorFecha() {
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [searchText, setSearchText] = useState('');
 
-    // Formulario Inertia para crear
+    // Inertia form para crear nueva asignación
     const form = useForm({
-        tarea_id: '',
-        estado: '',
+        tarea_id: null as number | null,
+        estado: 'pendiente',
         detalle: '',
     });
 
-    // Usuarios únicos y filtrados
+    // Usuarios únicos extraídos de las asignaciones
     const usuarios = useMemo(() => {
-        const map = new Map<string, { id: string; name: string; email: string }>();
+        const map = new Map<string, Asignacion['user']>();
         tareasAsignadas.forEach((a) => map.set(a.user.id, a.user));
         return Array.from(map.values());
     }, [tareasAsignadas]);
 
-    const usuariosFiltrados = usuarios.filter((u) => u.name.toLowerCase().includes(searchText) || u.email.toLowerCase().includes(searchText));
+    // Filtrado de usuarios por nombre/email
+    const usuariosFiltrados = usuarios.filter(
+        (u) => u.name.toLowerCase().includes(searchText.toLowerCase()) || u.email.toLowerCase().includes(searchText.toLowerCase()),
+    );
 
-    // Tareas ya asignadas de usuario y fecha
+    // Sólo las tareas del usuario y fecha seleccionados
     const tareasFiltradas = selectedUserId ? tareasAsignadas.filter((a) => a.user.id === selectedUserId) : [];
+
+    // Actualiza sólo el estado sin recargar
+    const handleEstadoChange = (id: number, nuevoEstado: string) => {
+        Inertia.patch(route('asignaciones.update', id), { estado: nuevoEstado }, { preserveScroll: true, preserveState: true });
+    };
 
     return (
         <AppLayout>
             <Head title="Tareas Asignadas por Día" />
+
             <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Link href={route('asignaciones.fechas')}>← Volver a Fechas</Link>
@@ -75,19 +84,20 @@ export default function TareasPorFecha() {
                 </Box>
 
                 <Grid container spacing={3}>
-                    {/* Usuarios + Buscador */}
+                    {/* Lista de Usuarios + buscador */}
                     <Grid item xs={12} md={4}>
                         <Typography variant="h6">Usuarios</Typography>
                         <TextField
                             fullWidth
                             placeholder="Buscar usuario"
+                            size="small"
+                            sx={{ mb: 2 }}
                             onChange={(e) => {
                                 setSearchText(e.target.value);
                                 setSelectedUserId(null);
                             }}
-                            size="small"
-                            sx={{ mb: 2 }}
                         />
+
                         <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                             <Table stickyHeader size="small">
                                 <TableHead>
@@ -106,9 +116,7 @@ export default function TareasPorFecha() {
                                             onClick={() => setSelectedUserId((prev) => (prev === u.id ? null : u.id))}
                                             sx={{ cursor: 'pointer' }}
                                         >
-                                            <TableCell padding="checkbox">
-                                                <Checkbox checked={selectedUserId === u.id} />
-                                            </TableCell>
+                                            <TableCell padding="checkbox">{selectedUserId === u.id && <CheckIcon />}</TableCell>
                                             <TableCell>{u.name}</TableCell>
                                             <TableCell>{u.email}</TableCell>
                                         </TableRow>
@@ -118,67 +126,79 @@ export default function TareasPorFecha() {
                         </TableContainer>
                     </Grid>
 
-                    {/* Tareas y Form para Agregar */}
+                    {/* Panel Tareas y Formulario inline */}
                     <Grid item xs={12} md={8}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography variant="h6">
                                 {selectedUserId ? `Tareas de ${usuarios.find((u) => u.id === selectedUserId)?.name}` : 'Seleccione un usuario'}
                             </Typography>
-                            {/* Botón Agregar, solo si hay usuario */}
-                            {selectedUserId && (
-                                <Button variant="contained" onClick={() => form.setData('tarea_id', '')}>
-                                    Agregar Tarea
-                                </Button>
-                            )}
                         </Box>
 
-                        {/* Formulario inline para crear asignación */}
                         {selectedUserId && (
                             <Box
                                 component="form"
                                 onSubmit={(e) => {
                                     e.preventDefault();
-                                    form.post(route('asignaciones.store', { fecha, user: selectedUserId }));
+                                    form.post(route('asignaciones.store', { fecha, user: selectedUserId }), {
+                                        preserveScroll: true,
+                                        preserveState: true,
+                                        onSuccess: () => form.reset(),
+                                    });
                                 }}
-                                sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}
+                                sx={{
+                                    mb: 2,
+                                    display: 'flex',
+                                    gap: 2,
+                                    flexWrap: 'wrap',
+                                    alignItems: 'center',
+                                }}
                             >
-                                <FormControl size="small">
-                                    <InputLabel id="tarea-label">Tarea</InputLabel>
+                                {/* Autocomplete para buscar tarea */}
+                                <Autocomplete
+                                    options={todasTareas}
+                                    getOptionLabel={(t) => t.titulo}
+                                    size="small"
+                                    sx={{ width: 250 }}
+                                    value={todasTareas.find((t) => t.id === form.data.tarea_id) || null}
+                                    onChange={(_, v) => form.setData('tarea_id', v?.id || null)}
+                                    renderInput={(params) => <TextField {...params} label="Buscar tarea" required />}
+                                />
+
+                                {/* Select para estado */}
+                                <FormControl size="small" sx={{ width: 160 }}>
+                                    <InputLabel id="estado-label">Estado</InputLabel>
                                     <Select
-                                        labelId="tarea-label"
-                                        label="Tarea"
-                                        value={form.data.tarea_id}
-                                        onChange={(e) => form.setData('tarea_id', e.target.value)}
+                                        labelId="estado-label"
+                                        label="Estado"
+                                        value={form.data.estado}
+                                        onChange={(e) => form.setData('estado', e.target.value)}
                                         required
                                     >
-                                        {todasTareas.map((t) => (
-                                            <MenuItem key={t.id} value={t.id}>
-                                                {t.titulo}
+                                        {['pendiente', 'en proceso', 'completado'].map((opt) => (
+                                            <MenuItem key={opt} value={opt}>
+                                                {opt.charAt(0).toUpperCase() + opt.slice(1)}
                                             </MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
-                                <TextField
-                                    label="Estado"
-                                    size="small"
-                                    value={form.data.estado}
-                                    onChange={(e) => form.setData('estado', e.target.value)}
-                                    required
-                                />
+
+                                {/* ④ Aquí agregas el TextField para 'detalle' */}
                                 <TextField
                                     label="Detalle"
                                     size="small"
                                     value={form.data.detalle}
                                     onChange={(e) => form.setData('detalle', e.target.value)}
+                                    sx={{ width: 250 }}
                                 />
-                                <Button type="submit" variant="contained" disabled={form.processing}>
-                                    Guardar
+
+                                <Button variant="contained" type="submit" disabled={form.processing}>
+                                    Añadir
                                 </Button>
                             </Box>
                         )}
 
                         {/* Tabla de tareas asignadas */}
-                        <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
+                        <TableContainer component={Paper} sx={{ maxHeight: 360 }}>
                             <Table stickyHeader size="small">
                                 <TableHead>
                                     <TableRow>
@@ -189,25 +209,50 @@ export default function TareasPorFecha() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {tareasFiltradas.map((a) => (
-                                        <TableRow key={a.id} hover>
-                                            <TableCell>{a.tarea.titulo}</TableCell>
-                                            <TableCell>{a.estado}</TableCell>
-                                            <TableCell>{a.detalle}</TableCell>
-                                            <TableCell>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => {
-                                                        if (confirm('¿Eliminar asignación?')) {
-                                                            Inertia.delete(route('asignaciones.destroy', a.id));
-                                                        }
-                                                    }}
-                                                >
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
+                                    {tareasFiltradas.length > 0 ? (
+                                        tareasFiltradas.map((a) => (
+                                            <TableRow key={a.id} hover>
+                                                <TableCell>{a.tarea.titulo}</TableCell>
+                                                <TableCell>
+                                                    <FormControl size="small" fullWidth>
+                                                        <Select
+                                                            value={a.estado}
+                                                            onChange={(e) => handleEstadoChange(a.id, e.target.value as string)}
+                                                            sx={{ minWidth: 120 }}
+                                                        >
+                                                            {['pendiente', 'en proceso', 'completado'].map((opt) => (
+                                                                <MenuItem key={opt} value={opt}>
+                                                                    {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                                                                </MenuItem>
+                                                            ))}
+                                                        </Select>
+                                                    </FormControl>
+                                                </TableCell>
+                                                <TableCell>{a.detalle || '—'}</TableCell>
+                                                <TableCell>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={() => {
+                                                            if (confirm('¿Eliminar asignación?')) {
+                                                                Inertia.delete(route('asignaciones.destroy', a.id), {
+                                                                    preserveScroll: true,
+                                                                    preserveState: true,
+                                                                });
+                                                            }
+                                                        }}
+                                                    >
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    ) : (
+                                        <TableRow>
+                                            <TableCell colSpan={4} align="center">
+                                                No hay tareas para este usuario en esta fecha.
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>

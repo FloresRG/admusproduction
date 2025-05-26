@@ -13,20 +13,18 @@ import AppLogo from './app-logo';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; // para roles
 import ApartmentIcon from '@mui/icons-material/Apartment'; // para empresas
 import AssignmentIcon from '@mui/icons-material/Assignment'; // para tareas asignadas
+import BusinessIcon from '@mui/icons-material/Business';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek'; // para semanas
 import CategoryIcon from '@mui/icons-material/Category';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople'; // para influencers
 import EventNoteIcon from '@mui/icons-material/EventNote'; // para ver calendario
+import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import GroupIcon from '@mui/icons-material/Group';
 import PeopleIcon from '@mui/icons-material/Groups'; // mejor para representar usuarios en grupo
-import PeopleIcon from '@mui/icons-material/People';
-import SecurityIcon from '@mui/icons-material/Security';
-import BusinessIcon from '@mui/icons-material/Business';
-import CategoryIcon from '@mui/icons-material/Category';
 import InsightsIcon from '@mui/icons-material/Insights';
-import DateRangeIcon from '@mui/icons-material/DateRange';
-import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
+import SecurityIcon from '@mui/icons-material/Security';
 
 type PageProps = {
     auth: {
@@ -65,23 +63,11 @@ export function AppSidebar() {
             { title: 'Semanas', href: '/weeks', icon: CalendarViewWeekIcon },
             { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
             { title: 'Tareas Asignadas', href: '/asignaciones/fechas', icon: AssignmentIcon },
-                { title: 'Usuarios', href: '/users', icon: PeopleIcon },
-                { title: 'Roles', href: '/roles', icon: SecurityIcon },
-                { title: 'Companies', href: '/companies', icon: BusinessIcon },
-                { title: 'Categories', href: '/categories', icon: CategoryIcon },
-                { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
-                { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
-                { title: 'ver calendario', href: '/bookings', icon: DateRangeIcon },
-                { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
-                { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
-            { title: 'Usuarios', href: '/users', icon: PeopleIcon },
-            { title: 'Roles', href: '/roles', icon: SecurityIcon },
             { title: 'Companies', href: '/companies', icon: BusinessIcon },
-            { title: 'Categories', href: '/categories', icon: CategoryIcon },
-            { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
-            { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
-            { title: 'ver calendario', href: '/bookings', icon: DateRangeIcon },
+            { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
+            { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
             { title: 'ver tareas', href: '/vertareas', icon: DateRangeIcon },
+            { title: 'tareas', href: '/tareas', icon: DateRangeIcon },
         );
     }
 
@@ -120,9 +106,14 @@ export function AppSidebar() {
             href: '/categories',
             icon: LayoutGrid,
         },
-         {
+        {
             title: 'ver tareas',
             href: '/vertareas',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'tareas',
+            href: '/tareas',
             icon: LayoutGrid,
         },
         {

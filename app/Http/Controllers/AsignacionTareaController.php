@@ -2,11 +2,12 @@
 // app/Http/Controllers/AsignacionTareaController.php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request; 
 use Inertia\Inertia;
 use App\Models\AsignacionTarea;
 use App\Models\Tarea;
+use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
 class AsignacionTareaController extends Controller
@@ -76,5 +77,63 @@ class AsignacionTareaController extends Controller
         $asignacion->delete();
         return redirect()->back();
     }
+
+     public function update(Request $request, AsignacionTarea $asignacion)
+    {
+        $data = $request->validate([
+            'estado' => ['required', Rule::in(['pendiente','en proceso','completado'])],
+        ]);
+
+        $asignacion->update(['estado' => $data['estado']]);
+
+        // Si vienes de Inertia, mejor devolver un redirect back manteniendo props
+        return back();
+    }
+
+    /**
+     * Lista las fechas en que el usuario autenticado tiene asignaciones.
+     */
+    public function myDatesIndex()
+    {
+        $userId = Auth::id();
+
+        $fechas = AsignacionTarea::query()
+            ->where('user_id', $userId)
+            ->select('fecha')
+            ->distinct()
+            ->orderBy('fecha', 'desc')
+            ->pluck('fecha')
+            ->map(fn($f) => \Carbon\Carbon::parse($f)->format('Y-m-d'));
+
+        return Inertia::render('asignaciones/misfechaslist', [
+            'fechas' => $fechas,
+        ]);
+    }
+
+    /**
+     * Muestra sólo mis tareas para la fecha indicada.
+     */
+    public function myShowByFecha($fecha)
+    {
+        $userId = Auth::id();
+
+        $tareasAsignadas = AsignacionTarea::with('tarea')
+            ->where('user_id', $userId)
+            ->whereDate('fecha', $fecha)
+            ->get();
+
+        // Opcional: si quieres permitir añadir nuevas tareas a ti mismo,
+        // carga también el listado de Tarea para el dropdown:
+        $todasTareas = Tarea::select('id', 'titulo')->get();
+
+        return Inertia::render('asignaciones/mistareasporfecha', [
+            'fecha'           => $fecha,
+            'tareasAsignadas' => $tareasAsignadas,
+            'todasTareas'     => $todasTareas,
+        ]);
+    }
+
+
+
 
 }

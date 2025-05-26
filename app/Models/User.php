@@ -56,11 +56,6 @@ class User extends Authenticatable
         return $this->belongsToMany(Tipo::class, 'tipo_user', 'user_id', 'tipo_id');
     }
 
-    public function tipos()
-    {
-        return $this->belongsToMany(Tipo::class, 'tipo_user');
-    }
-
     public function asignaciones()
     {
         return $this->hasMany(AsignacionTarea::class);

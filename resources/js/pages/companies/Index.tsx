@@ -43,6 +43,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { FaSearch, FaTrashAlt } from 'react-icons/fa';
 import Modal from 'react-modal';
+import { useMemo, useState } from 'react';
 
 type AvailabilityDay = {
     day_of_week: string;

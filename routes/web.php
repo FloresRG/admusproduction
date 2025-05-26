@@ -99,6 +99,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/pasante', [PasanteController::class, 'index'])->name('pasante.index');
     Route::get('/pasante/historial', [PasanteController::class, 'historial'])->name('pasante.historial');
     Route::put('/pasante/actualizar/{tareaId}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
+
+    // Listado global de asignaciones
+    Route::get('/asignaciones', [AsignacionTareaController::class, 'index'])
+        ->name('asignaciones.index');
+
+    // Lista de fechas con asignaciones
+    Route::get('/asignaciones/fechas', [AsignacionTareaController::class, 'datesIndex'])
+        ->name('asignaciones.fechas');
+
+    // Mostrar tareas asignadas para una fecha concreta
+    Route::get('/asignaciones/fechas/{fecha}', [AsignacionTareaController::class, 'showByFecha'])
+        ->name('asignaciones.porFecha');
+
+    // Crear una nueva asignación para un usuario en una fecha
+    Route::post('/asignaciones/fechas/{fecha}/user/{user}', [AsignacionTareaController::class, 'store'])
+        ->name('asignaciones.store');
+
+    // Eliminar una asignación
+    Route::delete('/asignaciones/{asignacion}', [AsignacionTareaController::class, 'destroy'])
+        ->name('asignaciones.destroy');
+    // Cambiar asignacion estado
+    Route::patch('/asignaciones/{asignacion}', [AsignacionTareaController::class, 'update'])
+     ->name('asignaciones.update');
+// Grupo para “mis asignaciones”
+     // Lista de fechas en que yo tengo asignaciones
+    Route::get('/mis-asignaciones/fechas', 
+        [AsignacionTareaController::class, 'myDatesIndex'])
+        ->name('mis.asignaciones.fechas');
+
+    // Mis tareas para una fecha concreta
+    Route::get('/mis-asignaciones/{fecha}', 
+        [AsignacionTareaController::class, 'myShowByFecha'])
+        ->name('mis.asignaciones.porFecha');
+     
+
+
+
 });
 Route::get('/users', function () {
     return Inertia::render('user');
@@ -165,6 +202,7 @@ Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']
 Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
+
 
 
 
