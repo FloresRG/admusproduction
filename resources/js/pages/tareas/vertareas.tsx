@@ -26,24 +26,50 @@ export default function Tareas() {
     const [fechaSeleccionada, setFechaSeleccionada] = useState<string | null>(null);
     const [tareas, setTareas] = useState<Tarea[]>([]);
 
-    useEffect(() => {
-        axios
-            .get('/api/vertareas')
-            .then((res) => setFechas(res.data))
-            .catch((err) => console.error('Error al cargar fechas:', err));
-    }, []);
+   useEffect(() => {
+    axios
+        .get('/api/vertareas')
+        .then((res) => {
+            const fechasDesdeAPI = res.data;
+            const fechasCompletas = getDiasSemanaLaboral();
+
+            // Si la fecha existe en la semana, la usamos; si no, igual la mostramos
+            const fechasUnificadas = fechasCompletas.map((dia) => dia);
+            setFechas(fechasUnificadas);
+        })
+        .catch((err) => console.error('Error al cargar fechas:', err));
+}, []);
+
 
     const handleFechaClick = (fecha: string) => {
         router.visit(`/tareas?fecha=${fecha}`);
     };
     const formatFechaConDia = (fechaStr: string): string => {
-        const fecha = new Date(fechaStr);
+        const fecha = new Date(fechaStr + 'T00:00:00'); // Forzar zona horaria local
         return fecha.toLocaleDateString('es-ES', {
             weekday: 'long',
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
         });
+    };
+    const getDiasSemanaLaboral = (): string[] => {
+        const fechasSemana: string[] = [];
+        const hoy = new Date();
+        const diaSemana = hoy.getDay(); // 0 (domingo) - 6 (sábado)
+
+        // Obtener lunes (día 1) de esta semana
+        const lunes = new Date(hoy);
+        const offset = diaSemana === 0 ? -7 : 1 - diaSemana; // Si es domingo, ir 6 días atrás
+        lunes.setDate(hoy.getDate() + offset);
+
+        for (let i = 0; i < 5; i++) {
+            const fecha = new Date(lunes);
+            fecha.setDate(lunes.getDate() + i);
+            fechasSemana.push(fecha.toISOString().split('T')[0]); // 'YYYY-MM-DD'
+        }
+
+        return fechasSemana;
     };
 
     return (
@@ -53,7 +79,7 @@ export default function Tareas() {
                 {!fechaSeleccionada && (
                     <>
                         <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
-                            Fechas disponibles
+                            Dias de la semana
                         </Typography>
                         <Grid container spacing={2}>
                             {fechas.map((fecha, index) => (
@@ -72,7 +98,7 @@ export default function Tareas() {
                                     >
                                         <CardContent>
                                             <Typography variant="h6" align="center">
-                                                 {formatFechaConDia(fecha)}
+                                                {formatFechaConDia(fecha)}
                                             </Typography>
                                         </CardContent>
                                     </Card>
@@ -104,23 +130,6 @@ export default function Tareas() {
                                 </CardContent>
                             </Card>
                         </Box>
-                        {tareas.length === 0 ? (
-                            <Typography>No hay tareas para esta fecha.</Typography>
-                        ) : (
-                            tareas.map((tarea) => (
-                                <Card key={tarea.id} sx={{ mb: 2, backgroundColor: '#fafafa' }}>
-                                    <CardContent>
-                                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                            {tarea.titulo}
-                                        </Typography>
-                                        <Typography>📅 {tarea.fecha}</Typography>
-                                        <Typography>📝 {tarea.descripcion}</Typography>
-                                        <Typography>🏷️ Tipo: {tarea.tipo?.nombre_tipo || '—'}</Typography>
-                                        <Typography>🏢 Empresa: {tarea.company?.name || '—'}</Typography>
-                                    </CardContent>
-                                </Card>
-                            ))
-                        )}
                     </>
                 )}
             </Box>

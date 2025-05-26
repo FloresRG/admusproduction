@@ -1,25 +1,12 @@
 import AppLayout from '@/layouts/app-layout';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import Brightness2Icon from '@mui/icons-material/Brightness2';
+import BusinessIcon from '@mui/icons-material/Business';
+import WbSunnyIcon from '@mui/icons-material/WbSunny';
+import { Alert, Box, Button, Card, CardContent, Chip, Fade, Grid, Snackbar, Stack, Typography, useTheme } from '@mui/material';
 import axios from 'axios';
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { useEffect, useState } from 'react';
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Grid,
-    Typography,
-    useTheme,
-    Snackbar,
-    Alert,
-    Stack,
-    Chip,
-    Fade,
-} from '@mui/material';
-import BusinessIcon from '@mui/icons-material/Business';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import Brightness2Icon from '@mui/icons-material/Brightness2';
 
 const breadcrumbs = [
     {
@@ -52,7 +39,11 @@ const InfluencerAvailabilityCrud = () => {
     const [calendarDates, setCalendarDates] = useState<Date[]>([]);
     const [turnoSelection, setTurnoSelection] = useState<{ [key: string]: string }>({});
     const [userId, setUserId] = useState<number | null>(null);
-    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+        open: false,
+        message: '',
+        severity: 'success',
+    });
 
     useEffect(() => {
         setCalendarDates(getCurrentWeekDates());
@@ -64,7 +55,7 @@ const InfluencerAvailabilityCrud = () => {
         axios
             .get('/api/auth/user')
             .then((response) => setUserId(response.data.id))
-            .catch(() => setSnackbar({ open: true, message: 'Error obteniendo usuario', severity: 'error' }));
+            /* .catch(() => setSnackbar({ open: true, message: 'Error obteniendo usuario', severity: 'error' })); */
     };
 
     const getCurrentWeekDates = () => {
@@ -74,7 +65,7 @@ const InfluencerAvailabilityCrud = () => {
         for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
             const currentDay = new Date(day);
             const dayOfWeek = currentDay.getDay();
-            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+            if (dayOfWeek >= 1 && dayOfWeek <= 6) {
                 weekDays.push(currentDay);
             }
         }
@@ -212,7 +203,7 @@ const InfluencerAvailabilityCrud = () => {
                     {calendarDates
                         .filter((date) => {
                             const dayNum = date.getDay();
-                            return dayNum >= 1 && dayNum <= 5;
+                            return dayNum >= 1 && dayNum <= 6;
                         })
                         .map((date, index) => {
                             const dayOfWeek = format(date, 'EEEE').toLowerCase();
@@ -224,14 +215,15 @@ const InfluencerAvailabilityCrud = () => {
                                             elevation={isTurnoSelected(dayOfWeek, 'mañana') || isTurnoSelected(dayOfWeek, 'tarde') ? 8 : 2}
                                             sx={{
                                                 borderRadius: 3,
-                                                border: isTurnoSelected(dayOfWeek, 'mañana') || isTurnoSelected(dayOfWeek, 'tarde')
-                                                    ? `2px solid ${theme.palette.primary.main}`
-                                                    : `1px solid ${theme.palette.grey[200]}`,
+                                                border:
+                                                    isTurnoSelected(dayOfWeek, 'mañana') || isTurnoSelected(dayOfWeek, 'tarde')
+                                                        ? `2px solid ${theme.palette.primary.main}`
+                                                        : `1px solid ${theme.palette.grey[200]}`,
                                                 background: isTurnoSelected(dayOfWeek, 'mañana')
                                                     ? 'linear-gradient(135deg, #e3fcec 60%, #b2f2e5)'
                                                     : isTurnoSelected(dayOfWeek, 'tarde')
-                                                    ? 'linear-gradient(135deg, #fff3e0 60%, #ffe0b2)'
-                                                    : theme.palette.background.paper,
+                                                      ? 'linear-gradient(135deg, #fff3e0 60%, #ffe0b2)'
+                                                      : theme.palette.background.paper,
                                                 transition: 'all 0.3s',
                                             }}
                                         >
@@ -288,11 +280,7 @@ const InfluencerAvailabilityCrud = () => {
                                                     {turnoSelection[dayOfWeek] && (
                                                         <Chip
                                                             icon={<AccessTimeIcon />}
-                                                            label={
-                                                                turnoSelection[dayOfWeek] === 'mañana'
-                                                                    ? '09:30 - 13:00'
-                                                                    : '14:00 - 18:00'
-                                                            }
+                                                            label={turnoSelection[dayOfWeek] === 'mañana' ? '09:30 - 13:00' : '14:00 - 18:00'}
                                                             color={turnoSelection[dayOfWeek] === 'mañana' ? 'success' : 'warning'}
                                                             sx={{ fontWeight: 500 }}
                                                         />

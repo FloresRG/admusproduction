@@ -166,7 +166,7 @@ export default function Tareas() {
     };
 
     const handleAsignarTareas = () => {
-        if (!confirm('¿Asignar 2 tareas a cada pasante?')) return;
+        if (!confirm('¿Asignar tareas a cada pasante?')) return;
 
         axios
             .post('/asignar-tareas')

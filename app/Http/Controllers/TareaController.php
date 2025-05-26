@@ -29,7 +29,8 @@ class TareaController extends Controller
 
         return response()->json($fechas);
     }
-    
+
+
     public function tareasPorFecha(Request $request)
     {
         $fecha = $request->query('fecha');
@@ -85,13 +86,16 @@ class TareaController extends Controller
     }
     public function asignarTareas()
     {
-        $pasantes = User::role('pasante')->get();
+        $pasantes = User::role('Pasante')->get();
 
         if ($pasantes->isEmpty()) {
             return response()->json(['message' => 'No hay pasantes disponibles.'], 400);
         }
 
         $fechaActual = Carbon::now()->toDateString();
+        // Obtener IDs de tareas ya asignadas en la fecha actual
+        $tareasYaAsignadas = AsignacionTarea::whereDate('fecha', $fechaActual)->pluck('tarea_id')->toArray();
+
 
         // Preparar estructura: id => [user, tipos, tareas]
         $pasantesTipos = [];
@@ -117,8 +121,11 @@ class TareaController extends Controller
         };
 
         // 1. Obtener solo las tareas de la fecha actual y ordenarlas por prioridad
-        $todasTareas = Tarea::whereDate('fecha', $fechaActual)->get()->sortBy(fn($tarea) => $mapPrioridad($tarea->prioridad));
+        $todasTareas = Tarea::whereDate('fecha', $fechaActual)->whereNotIn('id', $tareasYaAsignadas)->get()->sortBy(fn($tarea) => $mapPrioridad($tarea->prioridad));
 
+        if ($todasTareas->isEmpty()) {
+            return response()->json(['message' => 'No hay tareas nuevas para asignar hoy.'], 200);
+        }
         if ($todasTareas->isEmpty()) {
             return response()->json(['message' => 'No hay tareas disponibles para hoy.'], 400);
         }
@@ -202,7 +209,7 @@ class TareaController extends Controller
         }
 
         return response()->json([
-            'message' => 'Tareas asignadas por prioridad, tipo, y fecha actual. Equilibrio entre pasantes respetado.',
+            'message' => 'Tareas asignadas con exito',
             'fecha' => $fechaActual,
             'total_tareas_asignadas' => count($tareasAsignadas),
             'tareas_por_pasante' => collect($pasantesTipos)->mapWithKeys(fn($info) => [$info['user']->name => count($info['tareas'])]),

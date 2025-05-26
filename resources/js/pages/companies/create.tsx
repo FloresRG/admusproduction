@@ -185,6 +185,7 @@ export default function Create({ categories }: Props) {
                                         <option value={3}>Miércoles</option>
                                         <option value={4}>Jueves</option>
                                         <option value={5}>Viernes</option>
+                                        <option value={6}>Sabado</option>
                                     </select>
 
                                     {/* Turno */}

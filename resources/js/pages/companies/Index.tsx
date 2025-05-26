@@ -1,49 +1,44 @@
-
+import AppLayout from '@/layouts/app-layout';
+import { Head, Link } from '@inertiajs/react';
 import {
+    Business as BusinessIcon,
+    CalendarToday as CalendarTodayIcon,
+    Category as CategoryIcon,
+    Close as CloseIcon,
+    DateRange as DateRangeIcon,
+    Delete as DeleteIcon,
+    Edit as EditIcon,
+    EventAvailable as EventAvailableIcon,
+    ListAlt as ListAltIcon,
+    Search as SearchIcon,
+} from '@mui/icons-material';
+import {
+    Alert,
     Box,
+    Button,
+    Card,
+    CardContent,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Grid,
+    IconButton,
+    Paper,
+    Snackbar,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
-    TableRow,
-    Paper,
-    TextField,
-    IconButton,
-    Button,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Typography,
-    useTheme,
-    useMediaQuery,
-    Snackbar,
-    Alert,
     TablePagination,
-    Card,
-    CardContent,
-    Grid,
+    TableRow,
+    TextField,
+    Typography,
+    useMediaQuery,
+    useTheme,
 } from '@mui/material';
-import {
-    Search as SearchIcon,
-    Edit as EditIcon,
-    Delete as DeleteIcon,
-    Close as CloseIcon,
-    Business as BusinessIcon,
-    Category as CategoryIcon,
-    DateRange as DateRangeIcon,
-    EventAvailable as EventAvailableIcon,
-    CalendarToday as CalendarTodayIcon,
-    AccessTime as AccessTimeIcon,
-    ListAlt as ListAltIcon,
-} from '@mui/icons-material';
-import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
-import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { FaSearch, FaTrashAlt } from 'react-icons/fa';
-import Modal from 'react-modal';
 
 type AvailabilityDay = {
     day_of_week: string;
@@ -100,12 +95,8 @@ const CompaniesIndex = ({ companies }: Props) => {
 
     // Paginación
     const paginatedCompanies = useMemo(
-        () =>
-            filteredCompanies.slice(
-                page * rowsPerPage,
-                page * rowsPerPage + rowsPerPage
-            ),
-        [filteredCompanies, page, rowsPerPage]
+        () => filteredCompanies.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
+        [filteredCompanies, page, rowsPerPage],
     );
 
     // Conteo de empresas por día
@@ -117,11 +108,11 @@ const CompaniesIndex = ({ companies }: Props) => {
             thursday: 0,
             friday: 0,
         };
-        companiesList.forEach(company => {
+        companiesList.forEach((company) => {
             const days = company.availability_days || [];
             // Usar Set para evitar contar dos veces el mismo día en una empresa
-            const uniqueDays = new Set(days.map(d => d.day_of_week));
-            uniqueDays.forEach(day => {
+            const uniqueDays = new Set(days.map((d) => d.day_of_week));
+            uniqueDays.forEach((day) => {
                 if (counts[day] !== undefined) counts[day]++;
             });
         });
@@ -145,7 +136,7 @@ const CompaniesIndex = ({ companies }: Props) => {
                 });
                 const data = await response.json();
                 setNotification(data.success || 'Compañía eliminada');
-                setCompaniesList(companiesList.filter(c => c.id !== selectedCompany.id));
+                setCompaniesList(companiesList.filter((c) => c.id !== selectedCompany.id));
             } catch (e) {
                 setNotification('Error al eliminar la compañía');
             }
@@ -202,7 +193,16 @@ const CompaniesIndex = ({ companies }: Props) => {
                 ))}
             </Grid>
             <Box sx={{ py: 6, mx: { xs: 0, md: 4 } }}>
-                <Box sx={{ mb: 4, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, alignItems: { md: 'center' }, justifyContent: { md: 'space-between' } }}>
+                <Box
+                    sx={{
+                        mb: 4,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        gap: 2,
+                        alignItems: { md: 'center' },
+                        justifyContent: { md: 'space-between' },
+                    }}
+                >
                     <Button
                         component={Link}
                         href="/companies/create"
@@ -216,7 +216,7 @@ const CompaniesIndex = ({ companies }: Props) => {
                     <TextField
                         placeholder="Buscar por nombre o categoría..."
                         value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        onChange={(e) => setSearch(e.target.value)}
                         size="small"
                         fullWidth
                         sx={{ maxWidth: 320 }}
@@ -347,13 +347,15 @@ const CompaniesIndex = ({ companies }: Props) => {
                             {paginatedCompanies.map((company) => (
                                 <TableRow key={company.id} hover>
                                     <TableCell>{company.name}</TableCell>
-                                    <TableCell>{company.category?.name || <span style={{ color: '#aaa', fontStyle: 'italic' }}>Sin categoría</span>}</TableCell>
+                                    <TableCell>
+                                        {company.category?.name || <span style={{ color: '#aaa', fontStyle: 'italic' }}>Sin categoría</span>}
+                                    </TableCell>
                                     <TableCell>{company.contract_duration}</TableCell>
                                     <TableCell>{company.start_date || '-'}</TableCell>
                                     <TableCell>{company.end_date || '-'}</TableCell>
                                     <TableCell>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                            {(Array.isArray(company.availability_days) && company.availability_days.length > 0) ? (
+                                            {Array.isArray(company.availability_days) && company.availability_days.length > 0 ? (
                                                 company.availability_days.map((d, i) => (
                                                     <Box
                                                         key={i}
@@ -381,19 +383,10 @@ const CompaniesIndex = ({ companies }: Props) => {
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        <IconButton
-                                            color="primary"
-                                            component={Link}
-                                            href={`/companies/${company.id}/edit`}
-                                            aria-label="Editar"
-                                        >
+                                        <IconButton color="primary" component={Link} href={`/companies/${company.id}/edit`} aria-label="Editar">
                                             <EditIcon />
                                         </IconButton>
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => handleDelete(company)}
-                                            aria-label="Eliminar"
-                                        >
+                                        <IconButton color="error" onClick={() => handleDelete(company)} aria-label="Eliminar">
                                             <DeleteIcon />
                                         </IconButton>
                                     </TableCell>
@@ -423,8 +416,7 @@ const CompaniesIndex = ({ companies }: Props) => {
                 </DialogTitle>
                 <DialogContent dividers>
                     <Typography>
-                        ¿Estás seguro de que deseas eliminar la compañía{' '}
-                        <b>{selectedCompany?.name}</b>?
+                        ¿Estás seguro de que deseas eliminar la compañía <b>{selectedCompany?.name}</b>?
                     </Typography>
                 </DialogContent>
                 <DialogActions>

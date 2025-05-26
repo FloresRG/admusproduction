@@ -19,7 +19,6 @@ import BusinessIcon from '@mui/icons-material/Business';
 import CategoryIcon from '@mui/icons-material/Category';
 import InsightsIcon from '@mui/icons-material/Insights';
 import DateRangeIcon from '@mui/icons-material/DateRange';
-import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 
 type PageProps = {
     auth: {
@@ -50,15 +49,6 @@ export function AppSidebar() {
     // Solo admin ve Usuarios, Roles, Companies y Categories
     if (isAdmin) {
         items.push(
-                { title: 'Usuarios', href: '/users', icon: PeopleIcon },
-                { title: 'Roles', href: '/roles', icon: SecurityIcon },
-                { title: 'Companies', href: '/companies', icon: BusinessIcon },
-                { title: 'Categories', href: '/categories', icon: CategoryIcon },
-                { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
-                { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
-                { title: 'ver calendario', href: '/bookings', icon: DateRangeIcon },
-                { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
-                { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
             { title: 'Usuarios', href: '/users', icon: PeopleIcon },
             { title: 'Roles', href: '/roles', icon: SecurityIcon },
             { title: 'Companies', href: '/companies', icon: BusinessIcon },
@@ -66,6 +56,7 @@ export function AppSidebar() {
             { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
             { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
             { title: 'ver calendario', href: '/bookings', icon: DateRangeIcon },
+            { title: 'tareas', href: '/tareas', icon: DateRangeIcon },
             { title: 'ver tareas', href: '/vertareas', icon: DateRangeIcon },
         );
     }
@@ -103,6 +94,11 @@ export function AppSidebar() {
         {
             title: 'categories',
             href: '/categories',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'tareas',
+            href: '/tareas',
             icon: LayoutGrid,
         },
          {
