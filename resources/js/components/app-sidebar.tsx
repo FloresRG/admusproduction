@@ -23,8 +23,6 @@ import EventNoteIcon from '@mui/icons-material/EventNote'; // para ver calendari
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import GroupIcon from '@mui/icons-material/Group';
 import PeopleIcon from '@mui/icons-material/Groups'; // mejor para representar usuarios en grupo
-import InsightsIcon from '@mui/icons-material/Insights';
-import SecurityIcon from '@mui/icons-material/Security';
 
 type PageProps = {
     auth: {
@@ -68,6 +66,7 @@ export function AppSidebar() {
             { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
             { title: 'ver tareas', href: '/vertareas', icon: DateRangeIcon },
             { title: 'tareas', href: '/tareas', icon: DateRangeIcon },
+            { title: 'Mis tareas', href: '/mis-asignaciones/fechas', icon: DateRangeIcon },
         );
     }
 
@@ -122,6 +121,9 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
     ];
+    if (isInfluencer) {
+        items.push({ title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon });
+    }
 
     return (
         <Sidebar collapsible="icon" variant="inset">
