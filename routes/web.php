@@ -12,7 +12,9 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
+use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\TareaController;
+use App\Http\Controllers\TipoController;
 use App\Http\Controllers\WeekController;
 use App\Models\Tarea;
 
@@ -75,6 +77,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/roles/{role}', [RoleController::class, 'update']);
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
     Route::get('/bookings', [BookingController::class, 'bookingsThisWeekForAuthenticatedUser']);
+
+
+
+    Route::post('tipos', [TipoController::class, 'store']); // Crear un nuevo tipo
+    Route::get('tipos', [TipoController::class, 'index']); // Mostrar todos los usuarios y tipos usando Inertia
+    Route::get('tipos/{userId}/tipos', [TipoController::class, 'getTiposByUserId']); // Obtener tipos de un usuario
+    Route::put('tipos/{userId}/tipos', [TipoController::class, 'updateTiposByUserId']); // Actualizar tipos de un usuario
+
+    Route::put('tipos/{tipoId}', [TipoController::class, 'editTipo']); // Editar un tipo
+    Route::delete('tipos/{tipoId}', [TipoController::class, 'destroyTipo']); // Eliminar un tipo
+    Route::get('/pasante', [PasanteController::class, 'index'])->name('pasante.index');
+    Route::get('/pasante/historial', [PasanteController::class, 'historial'])->name('pasante.historial');
+    Route::put('/pasante/actualizar/{tareaId}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
 });
 Route::get('/users', function () {
     return Inertia::render('user');
