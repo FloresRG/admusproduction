@@ -130,6 +130,18 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={items} />
+
+                {
+                    title: 'Dashboard',
+                href: '/dashboard',
+                icon: LayoutGrid,
+    },
+                {
+                    title: 'Dashboard',
+                href: '/dashboard',
+                icon: LayoutGrid,
+    },
+
             </SidebarContent>
 
             <SidebarFooter>
