@@ -226,9 +226,9 @@ class InfluencerAvailabilityController extends Controller
     }
 
 
-    
 
-    
+
+
     public function generarPdfEmpresasAsignadas()
     {
         $userId = Auth::id();

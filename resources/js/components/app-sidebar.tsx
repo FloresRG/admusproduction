@@ -20,7 +20,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople'; // para influencers
 import EventNoteIcon from '@mui/icons-material/EventNote'; // para ver calendario
-import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import GroupIcon from '@mui/icons-material/Group';
 import PeopleIcon from '@mui/icons-material/Groups'; // mejor para representar usuarios en grupo
 
