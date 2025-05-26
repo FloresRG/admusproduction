@@ -1,24 +1,27 @@
 // resources/js/Layouts/AppSidebar.tsx
 
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import type { NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 import { useEffect } from 'react';
 import AppLogo from './app-logo';
 // Importa los iconos al inicio del archivo
 // Importa los iconos al inicio del archivo
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import GroupIcon from '@mui/icons-material/Group';
-import PeopleIcon from '@mui/icons-material/People';
-import SecurityIcon from '@mui/icons-material/Security';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings'; // para roles
+import ApartmentIcon from '@mui/icons-material/Apartment'; // para empresas
+import AssignmentIcon from '@mui/icons-material/Assignment'; // para tareas asignadas
 import BusinessIcon from '@mui/icons-material/Business';
+import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek'; // para semanas
 import CategoryIcon from '@mui/icons-material/Category';
-import InsightsIcon from '@mui/icons-material/Insights';
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import DateRangeIcon from '@mui/icons-material/DateRange';
+import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople'; // para influencers
+import EventNoteIcon from '@mui/icons-material/EventNote'; // para ver calendario
+import GroupIcon from '@mui/icons-material/Group';
+import PeopleIcon from '@mui/icons-material/Groups'; // mejor para representar usuarios en grupo
 
 type PageProps = {
     auth: {
@@ -33,7 +36,7 @@ export function AppSidebar() {
     // rawRoles es [{id,name,…},…]
     const rawRoles = auth?.user?.roles || [];
     // ahora sí: ['admin', 'influencer', …]
-    const roles = rawRoles.map(r => r.name);
+    const roles = rawRoles.map((r) => r.name);
 
     // DEBUG: imprime roles en consola
     useEffect(() => {
@@ -50,14 +53,18 @@ export function AppSidebar() {
     if (isAdmin) {
         items.push(
             { title: 'Usuarios', href: '/users', icon: PeopleIcon },
-            { title: 'Roles', href: '/roles', icon: SecurityIcon },
+            { title: 'Roles', href: '/roles', icon: AdminPanelSettingsIcon },
+            { title: 'Empresas', href: '/companies', icon: ApartmentIcon },
+            { title: 'Categorías', href: '/categories', icon: CategoryIcon },
+            { title: 'Datos de Influencers', href: '/infuencersdatos', icon: EmojiPeopleIcon },
+            { title: 'Semanas', href: '/weeks', icon: CalendarViewWeekIcon },
+            { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
+            { title: 'Tareas Asignadas', href: '/asignaciones/fechas', icon: AssignmentIcon },
             { title: 'Companies', href: '/companies', icon: BusinessIcon },
-            { title: 'Categories', href: '/categories', icon: CategoryIcon },
-            { title: 'Influencers Datos', href: '/infuencersdatos', icon: InsightsIcon },
-            { title: 'Semanas', href: '/weeks', icon: DateRangeIcon },
-            { title: 'ver calendario', href: '/bookings', icon: DateRangeIcon },
-            { title: 'tareas', href: '/tareas', icon: DateRangeIcon },
+            { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
+            { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
             { title: 'ver tareas', href: '/vertareas', icon: DateRangeIcon },
+            { title: 'tareas', href: '/tareas', icon: DateRangeIcon },
         );
     }
 
@@ -97,32 +104,19 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
-            title: 'tareas',
-            href: '/tareas',
-            icon: LayoutGrid,
-        },
-         {
             title: 'ver tareas',
             href: '/vertareas',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'tareas',
+            href: '/tareas',
             icon: LayoutGrid,
         },
         {
             title: 'Influencers Datos',
             href: '/infuencersdatos',
             icon: LayoutGrid,
-        },
-    ];
-
-    const footerNavItems: NavItem[] = [
-        {
-            title: 'Repository',
-            href: 'https://github.com/laravel/react-starter-kit',
-            icon: Folder,
-        },
-        {
-            title: 'Documentation',
-            href: 'https://laravel.com/docs/starter-kits#react',
-            icon: BookOpen,
         },
     ];
 
@@ -145,7 +139,6 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

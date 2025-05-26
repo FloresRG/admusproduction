@@ -62,35 +62,81 @@ class BookingController extends Controller
             'weeks' => $weeks
         ]);
     }
+    private function getDateForDayOfWeek(string $baseDate, string $dayOfWeek): string
+{
+    $days = [
+        'monday'    => 0,
+        'tuesday'   => 1,
+        'wednesday' => 2,
+        'thursday'  => 3,
+        'friday'    => 4,
+        'saturday'  => 5,
+        'sunday'    => 6,
+        'lunes'     => 0,
+        'martes'    => 1,
+        'miércoles' => 2,
+        'jueves'    => 3,
+        'viernes'   => 4,
+        'sábado'    => 5,
+        'domingo'   => 6,
+    ];
 
-    public function store(Request $request)
+    return \Carbon\Carbon::parse($baseDate)
+        ->addDays($days[strtolower($dayOfWeek)] ?? 0)
+        ->toDateString();
+}
+
+
+
+    // CREA la nueva reserva en la semana $week
+    public function store(Request $request, Week $week)
     {
         $request->validate([
-            'company_id' => 'required',
-            'user_id' => 'required',
-            'start_time' => 'required',
-            'end_time' => 'required',
-            'status' => 'required',
-            'turno' => 'required',
-            'week_id' => 'required',
+            'user_id'     => 'required|exists:users,id',
+            'company_id'  => 'required|exists:companies,id',
+            'day_of_week' => 'required|string',
+            'turno'       => 'required|string',
         ]);
 
-        Booking::create($request->all());
-        return redirect('/bookings');
+        // Obtenemos la fecha correspondiente al día dentro de la semana
+    $fecha = $this->getDateForDayOfWeek($week->start_date, $request->day_of_week);
+
+    // Asignamos horas según turno
+    $start_time = $request->turno === 'Morning'   ? '08:00:00'
+                 : ($request->turno === 'Afternoon' ? '14:00:00' : '18:00:00');
+
+    $end_time = $request->turno === 'Morning'   ? '12:00:00'
+               : ($request->turno === 'Afternoon' ? '18:00:00' : '22:00:00');
+
+
+        Booking::create([
+        'week_id'     => $week->id,
+        'user_id'     => $request->user_id,
+        'company_id'  => $request->company_id,
+        'day_of_week' => $request->day_of_week,
+        'turno'       => $request->turno,
+        'status'      => 'Active',
+        'start_time'  => "$fecha $start_time",
+        'end_time'    => "$fecha $end_time",
+    ]);
+
+        // Regresa a la misma lista de reservas de la semana
+        return redirect()->route('weeks.bookings.index', $week);
     }
 
-    public function edit(Booking $booking)
+ 
+    public function edit(Booking $booking, Week $week )
     {
         $users = User::all();
         $companies = Company::all();
         $weeks = Week::all();
 
-        return Inertia::render('Bookings/Edit', [
-            'booking' => $booking,
-            'users' => $users,
-            'companies' => $companies,
-            'weeks' => $weeks
-        ]);
+        return Inertia::render('weeks/BookingsByWeek', [
+  'week'      => $week,
+  'bookings'  => $week->bookings,
+  'companies' => $companies,
+]);
+
     }
 
     
@@ -116,11 +162,14 @@ public function update(Request $request, Booking $booking)
 
 
 
-    public function destroy(Booking $booking)
-    {
-        $booking->delete();
-        return redirect('/bookings');
-    }
+   // Corrección: recibes primero la semana, luego la reserva
+public function destroy(Week $week, Booking $booking)
+{
+    $booking->delete();
+    // Redirige de nuevo a la lista de bookings de esa semana
+    return redirect()->route('weeks.bookings.index', $week);
+}
+
     public function bookingsThisWeekForAuthenticatedUser()
     {
          $bookings = \App\Models\Booking::with([
