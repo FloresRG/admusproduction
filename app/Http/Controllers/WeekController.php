@@ -14,6 +14,7 @@ class WeekController extends Controller
      *
      * @return \Inertia\Response
      */
+    
     public function index(Request $request)
     {
         $search = $request->input('search', '');
@@ -87,27 +88,28 @@ class WeekController extends Controller
             'message' => 'Semana eliminada con éxito',
         ]);
     }
-    public function bookingsByWeek($id)
+    public function bookingsByWeek(Week $week)
     {
-        $week = Week::with(['bookings.user', 'bookings.company'])
-        ->findOrFail($id);
+        // 1. Carga los bookings (con usuario y compañía)
+        $week->load(['bookings.user', 'bookings.company']);
 
-       // Carga las compañías y sus availabilityDays
-    $companies = Company::with('availabilityDays')->get()
-        ->map(fn($c) => [
-            'id'               => $c->id,
-            'name'             => $c->name,
-            // entregamos SOLO lo que necesitamos en el frontend
-            'availabilityDays' => $c->availabilityDays->map(fn($d) => [
-                'day_of_week' => $d->day_of_week,
-                'turno'       => $d->turno,
-            ])->toArray(),
-        ]);
-        
+        // 2. Trae TODAS las compañías con sus availabilityDays
+        $companies = Company::with('availabilityDays')->get()
+            ->map(fn($c) => [
+                'id'               => $c->id,
+                'name'             => $c->name,
+                'availabilityDays' => $c->availabilityDays
+                    ->map(fn($d) => [
+                        'day_of_week' => $d->day_of_week,
+                        'turno'       => $d->turno,
+                    ])->toArray(),
+            ]);
+
+        // 3. Render de la vista React con Inertia
         return Inertia::render('weeks/BookingsByWeek', [
-            'week' => $week,
-            'bookings' => $week->bookings,
-            'companies' => $companies,        // <-- nuevo
+            'week'      => $week,
+            'bookings'  => $week->bookings,
+            'companies' => $companies,
         ]);
     }
   

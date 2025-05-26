@@ -41,7 +41,6 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import { ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { useMemo, useState } from 'react';
 import { FaSearch, FaTrashAlt } from 'react-icons/fa';
 import Modal from 'react-modal';
 

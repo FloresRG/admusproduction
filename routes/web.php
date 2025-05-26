@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AsignacionTareaController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -51,14 +52,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('{week}', [WeekController::class, 'destroy'])->name('weeks.destroy');
 
         // Listar bookings DE UNA semana concreta
-        // Nota el parametro se llama {week} para que exista coherencia de Binding
-        Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
-            ->name('weeks.bookings.index');
+        // 1. Mostrar la vista de bookings para una semana
+    Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
+         ->name('weeks.bookings.index');
+
+    // 2. Crear (añadir) un booking en esa semana
+    Route::post('{week}/bookings', [BookingController::class, 'store'])
+         ->name('weeks.bookings.store');
+
+    // 3. Eliminar un booking de esa semana
+    Route::delete('{week}/bookings/{booking}', [BookingController::class, 'destroy'])
+         ->name('weeks.bookings.destroy');
     });
     // —– Rutas para Booking (UPDATE) —–
     // ¡Esto SALE fuera del prefix('weeks')!
     Route::patch('bookings/{booking}', [BookingController::class, 'update'])
-        ->name('bookings.update');
+        ->name('weeks.bookings.update');
 
     Route::get('/api/users', [UserController::class, 'index']);
     Route::post('/users', [UserController::class, 'store']);
@@ -74,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/roles/{role}', [RoleController::class, 'update']);
     Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
     Route::get('/bookings', [BookingController::class, 'bookingsThisWeekForAuthenticatedUser']);
+    
 });
 Route::get('/users', function () {
     return Inertia::render('user');
@@ -131,6 +141,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/tareas/{id}', [TareaController::class, 'update'])->name('tareas.update');
     Route::delete('/tareas/{id}', [TareaController::class, 'destroy'])->name('tareas.destroy');
 });
+
+
+///rutas guadalupe:
+
+Route::get('/asignaciones', [AsignacionTareaController::class, 'index'])
+     ->name('asignaciones.index');
+
+Route::get('/asignaciones/fechas', [AsignacionTareaController::class, 'datesIndex'])
+     ->name('asignaciones.fechas');
+
+Route::get('/asignaciones/fechas/{fecha}', [AsignacionTareaController::class, 'showByFecha'])
+     ->name('asignaciones.porFecha');
+
+// Crear asignación (POST)
+Route::post('/asignaciones/fechas/{fecha}/usuarios/{user}/store', 
+    [AsignacionTareaController::class, 'store'])
+    ->name('asignaciones.store');
+
+// Eliminar asignación (DELETE)
+Route::delete('/asignaciones/{asignacion}', 
+    [AsignacionTareaController::class, 'destroy'])
+    ->name('asignaciones.destroy');
 
 
 require __DIR__ . '/settings.php';
