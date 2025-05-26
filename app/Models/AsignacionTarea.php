@@ -16,16 +16,18 @@ class AsignacionTarea extends Model
         'tarea_id',
         'estado',
         'detalle',
-        'fecha',
+        'fecha'
     ];
 
+    // Relación: pertenece a un usuario
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
+    // Relación: pertenece a una tarea
     public function tarea()
     {
-        return $this->belongsTo(Tarea::class, 'tarea_id');
+        return $this->belongsTo(Tarea::class);
     }
 }

@@ -12,18 +12,6 @@ class RoleController extends Controller
         $roles = Role::with('permissions')->get();
         return response()->json($roles);
     }
-
-    /* public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name',
-        ]);
-
-        // Crear un nuevo rol
-        $role = Role::create(['name' => $request->name]);
-
-        return response()->json($role, 201); // Respuesta JSON para el frontend
-    } */
     public function store(Request $request)
     {
         $request->validate([
