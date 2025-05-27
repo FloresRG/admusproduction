@@ -5,7 +5,7 @@ export default function AppLogoIcon(props: HTMLAttributes<HTMLImageElement>) {
         // Aquí agregamos el logo PNG como una imagen
         <img
             {...props} 
-            src="/logo.jpeg" // Ruta del logo en la carpeta public
+            src="/Gflores/logo.png" // Ruta del logo en la carpeta public
             alt="Logo"
             className="h-14 w-14 object-contain" // Estilo (ajustable)
         />
