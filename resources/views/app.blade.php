@@ -22,7 +22,7 @@
         })();
     </script>
     @routes   {{-- esto inyecta window.route(...) --}}
-<script src="{{ mix('js/app.js') }}" defer></script>
+
 
 
     {{-- Inline style to set the HTML background color based on our theme in app.css --}}
