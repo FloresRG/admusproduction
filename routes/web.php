@@ -11,6 +11,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 use App\Http\Controllers\CompanyCategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\PasanteController;
@@ -24,9 +25,9 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+   Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
     Route::prefix('categories')->group(function () {
         Route::get('/', [CompanyCategoryController::class, 'index']);
         Route::post('/', [CompanyCategoryController::class, 'store']);
