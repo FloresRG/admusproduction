@@ -17,6 +17,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek'; // para semanas
 import CategoryIcon from '@mui/icons-material/Category';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import FormatIndentIncreaseIcon from '@mui/icons-material/Dashboard';
 import DateRangeIcon from '@mui/icons-material/DateRange';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople'; // para influencers
 import EventNoteIcon from '@mui/icons-material/EventNote'; // para ver calendario

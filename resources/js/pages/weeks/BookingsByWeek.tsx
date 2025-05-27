@@ -30,6 +30,7 @@ import {
     Typography,
     useTheme,
 } from '@mui/material';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import { useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -69,6 +70,7 @@ interface Props {
 
 export default function BookingsByWeek() {
     const theme = useTheme();
+    const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
     const { week, bookings, companies } = usePage<Props>().props;
 
     // Estado para el diálogo de Creación
@@ -142,6 +144,17 @@ export default function BookingsByWeek() {
     const total = bookings.length;
     const activos = bookings.filter((b) => b.status === 'Active').length;
     const completos = bookings.filter((b) => b.status === 'Completed').length;
+
+    // src/Pages/BookingsByWeek.tsx (o donde esté tu componente)
+    const DAY_TRANSLATIONS: Record<string, string> = {
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo',
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -232,20 +245,18 @@ export default function BookingsByWeek() {
                                         <TableCell>Empresa</TableCell>
                                         <TableCell>Turno</TableCell>
                                         <TableCell>Estado</TableCell>
-                                        <TableCell>Inicio</TableCell>
-                                        <TableCell>Fin</TableCell>
+
                                         <TableCell>Acción</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {userBookings.map((b) => (
                                         <TableRow key={b.id} hover>
-                                            <TableCell>{b.day_of_week}</TableCell>
+                                            <TableCell>{DAY_TRANSLATIONS[b.day_of_week] ?? b.day_of_week}</TableCell>
                                             <TableCell>{b.company.name}</TableCell>
                                             <TableCell>{b.turno}</TableCell>
                                             <TableCell>{b.status}</TableCell>
-                                            <TableCell>{b.start_time}</TableCell>
-                                            <TableCell>{b.end_time}</TableCell>
+
                                             <TableCell>
                                                 <IconButton onClick={() => deleteBooking(b.id)}>
                                                     <Delete />
@@ -260,13 +271,49 @@ export default function BookingsByWeek() {
                 )}
 
                 {/* Diálogo para crear */}
-                <Dialog open={open} onClose={closeDialog}>
-                    <DialogTitle>Nueva reserva</DialogTitle>
-                    <DialogContent>
-                        <FormControl fullWidth margin="normal">
-                            <InputLabel>Compañía</InputLabel>
+                <Dialog
+                    open={open}
+                    onClose={closeDialog}
+                    fullWidth
+                    maxWidth="sm"
+                    PaperProps={{
+                        sx: {
+                            borderRadius: 3,
+                            boxShadow: 6,
+                        },
+                    }}
+                >
+                    {/* Encabezado con fondo azul suave */}
+                    <DialogTitle
+                        sx={{
+                            backgroundColor: 'primary.light',
+                            color: 'primary.contrastText',
+                            px: 3,
+                            py: 2,
+                            borderTopLeftRadius: 12,
+                            borderTopRightRadius: 12,
+                        }}
+                    >
+                        <Typography variant="h6" fontWeight="bold">
+                            Nueva reserva
+                        </Typography>
+                    </DialogTitle>
+
+                    <DialogContent
+                        dividers
+                        sx={{
+                            px: 3,
+                            py: 2,
+                            bgcolor: 'grey.50',
+                        }}
+                    >
+                        {/* Empresa */}
+                        <FormControl fullWidth margin="dense">
+                            <InputLabel id="label-empresa">Empresa</InputLabel>
                             <Select
+                                labelId="label-empresa"
                                 value={form.companyId}
+                                label="Empresa"
                                 onChange={(e) =>
                                     setForm((f) => ({
                                         ...f,
@@ -283,33 +330,74 @@ export default function BookingsByWeek() {
                                 ))}
                             </Select>
                         </FormControl>
-                        <FormControl fullWidth margin="normal" disabled={!form.companyId}>
-                            <InputLabel>Día</InputLabel>
-                            <Select value={form.dayOfWeek} onChange={(e) => setForm((f) => ({ ...f, dayOfWeek: e.target.value, turno: '' }))}>
-                                {dayOptions.map((d) => (
-                                    <MenuItem key={d} value={d}>
-                                        {d}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                        <FormControl fullWidth margin="normal" disabled={!form.dayOfWeek}>
-                            <InputLabel>Turno</InputLabel>
-                            <Select value={form.turno} onChange={(e) => setForm((f) => ({ ...f, turno: e.target.value }))}>
-                                {turnoOptions.map((t) => (
-                                    <MenuItem key={t} value={t}>
-                                        {t}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
+
+                        {/* Día y Turno en dos columnas */}
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth margin="dense" disabled={!form.companyId}>
+                                    <InputLabel id="label-dia">Día</InputLabel>
+                                    <Select
+                                        labelId="label-dia"
+                                        value={form.dayOfWeek}
+                                        label="Día"
+                                        onChange={(e) =>
+                                            setForm((f) => ({
+                                                ...f,
+                                                dayOfWeek: e.target.value,
+                                                turno: '',
+                                            }))
+                                        }
+                                    >
+                                        {dayOptions.map((d) => (
+                                            <MenuItem key={d} value={d}>
+                                                {DAY_TRANSLATIONS[d] ?? d}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth margin="dense" disabled={!form.dayOfWeek}>
+                                    <InputLabel id="label-turno">Turno</InputLabel>
+                                    <Select
+                                        labelId="label-turno"
+                                        value={form.turno}
+                                        label="Turno"
+                                        onChange={(e) => setForm((f) => ({ ...f, turno: e.target.value }))}
+                                    >
+                                        {turnoOptions.map((t) => (
+                                            <MenuItem key={t} value={t}>
+                                                {t}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                        </Grid>
                     </DialogContent>
-                    <DialogActions>
-                        <Button onClick={closeDialog}>Cancelar</Button>
+
+                    {/* Acciones con botones estilizados */}
+                    <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'flex-end' }}>
+                        <Button
+                            variant="outlined"
+                            onClick={closeDialog}
+                            sx={{
+                                borderColor: 'primary.main',
+                                color: 'primary.main',
+                                '&:hover': { backgroundColor: 'primary.light' },
+                            }}
+                        >
+                            Cancelar
+                        </Button>
                         <Button
                             variant="contained"
                             onClick={createBooking}
                             disabled={!(form.userId && form.companyId && form.dayOfWeek && form.turno)}
+                            sx={{
+                                ml: 2,
+                                backgroundColor: 'primary.main',
+                                '&:hover': { backgroundColor: 'primary.dark' },
+                            }}
                         >
                             Crear
                         </Button>
