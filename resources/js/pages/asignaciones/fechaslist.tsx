@@ -1,9 +1,21 @@
+// resources/js/pages/Asignaciones/FechasList.tsx
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Card, CardContent, Grid, InputAdornment, TextField, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
+
+// Mapeo para traducir los días al español
+const diasEnEspanol: Record<string, string> = {
+    Monday: 'Lunes',
+    Tuesday: 'Martes',
+    Wednesday: 'Miércoles',
+    Thursday: 'Jueves',
+    Friday: 'Viernes',
+    Saturday: 'Sábado',
+    Sunday: 'Domingo',
+};
 
 export default function FechasList() {
     const { fechas } = usePage<{ fechas: string[] }>().props;
@@ -54,7 +66,8 @@ export default function FechasList() {
                 <Grid container spacing={3} justifyContent="center" alignItems="stretch">
                     {fechasOrdenadas.length > 0 ? (
                         fechasOrdenadas.map((fecha) => {
-                            const dia = dayjs(fecha).format('dddd').toUpperCase();
+                            const nombreIngles = dayjs(fecha).format('dddd');
+                            const dia = (diasEnEspanol[nombreIngles] || nombreIngles).toUpperCase();
                             const fechaFmt = dayjs(fecha).format('DD MMMM YYYY');
 
                             return (
@@ -70,18 +83,18 @@ export default function FechasList() {
                                         <Card
                                             sx={{
                                                 width: 240,
-                                                height: 140,
+                                                height: 160,
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 justifyContent: 'center',
-                                                border: 2,
-                                                borderColor: 'primary.main',
-                                                borderRadius: 2,
-                                                transition: '0.3s',
+                                                borderRadius: 3,
+                                                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                                                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                                                color: '#fff',
+                                                transition: 'transform 0.3s, box-shadow 0.3s',
                                                 '&:hover': {
-                                                    transform: 'translateY(-6px)',
-                                                    boxShadow: 6,
-                                                    bgcolor: 'action.hover',
+                                                    transform: 'translateY(-8px)',
+                                                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.2)',
                                                 },
                                             }}
                                         >
@@ -95,10 +108,10 @@ export default function FechasList() {
                                                     px: 1,
                                                 }}
                                             >
-                                                <Typography variant="h6" fontWeight={700} color="primary" gutterBottom>
+                                                <Typography variant="h6" fontWeight={700} gutterBottom>
                                                     {dia}
                                                 </Typography>
-                                                <Typography variant="body2" color="text.secondary">
+                                                <Typography variant="body2" sx={{ opacity: 0.9 }}>
                                                     {fechaFmt}
                                                 </Typography>
                                             </CardContent>

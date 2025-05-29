@@ -174,7 +174,7 @@ export default function TareasPorFecha() {
                                         onChange={(e) => form.setData('estado', e.target.value)}
                                         required
                                     >
-                                        {['pendiente', 'en proceso', 'completado'].map((opt) => (
+                                        {['pendiente', 'en_proceso', 'completada'].map((opt) => (
                                             <MenuItem key={opt} value={opt}>
                                                 {opt.charAt(0).toUpperCase() + opt.slice(1)}
                                             </MenuItem>
@@ -220,7 +220,7 @@ export default function TareasPorFecha() {
                                                             onChange={(e) => handleEstadoChange(a.id, e.target.value as string)}
                                                             sx={{ minWidth: 120 }}
                                                         >
-                                                            {['pendiente', 'en proceso', 'completado'].map((opt) => (
+                                                            {['pendiente', 'en_proceso', 'completada'].map((opt) => (
                                                                 <MenuItem key={opt} value={opt}>
                                                                     {opt.charAt(0).toUpperCase() + opt.slice(1)}
                                                                 </MenuItem>

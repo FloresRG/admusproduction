@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { BreadcrumbItem } from '@/types';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, usePage } from '@inertiajs/react';
-import { AccessTime, Add, CheckCircleOutline, Delete, People } from '@mui/icons-material';
+import { AccessTime, CheckCircleOutline, Delete, People } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -163,7 +163,7 @@ export default function BookingsByWeek() {
             <Box p={3} maxWidth={1200} mx="auto">
                 {/* Título */}
                 <Typography variant="h4" color="primary" gutterBottom>
-                    Bookings — {week.start_date} al {week.end_date}
+                    Semanas — {week.start_date} al {week.end_date}
                 </Typography>
 
                 {/* Cards de estadística */}
@@ -195,7 +195,7 @@ export default function BookingsByWeek() {
                 </Grid>
 
                 {/* Tabla de Usuarios */}
-                <Typography variant="h6">Usuarios ({usuarios.length})</Typography>
+                <Typography variant="h6">Numero de Influencer ({usuarios.length})</Typography>
                 <TableContainer component={Paper} sx={{ maxHeight: 300, mb: 4 }}>
                     <Table stickyHeader size="small">
                         <TableHead>
@@ -218,14 +218,16 @@ export default function BookingsByWeek() {
                                     </TableCell>
                                     <TableCell>{u.name}</TableCell>
                                     <TableCell>
-                                        <IconButton
+                                        <Button
+                                            variant="text"
+                                            size="small"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 openDialog(u.id);
                                             }}
                                         >
-                                            <Add />
-                                        </IconButton>
+                                            Agregar Empresa
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))}
@@ -236,7 +238,7 @@ export default function BookingsByWeek() {
                 {/* Tabla de Bookings del usuario */}
                 {selectedUser && (
                     <>
-                        <Typography variant="h6">Bookings de {usuarios.find((u) => u.id === selectedUser)?.name}</Typography>
+                        <Typography variant="h6">Semana de {usuarios.find((u) => u.id === selectedUser)?.name}</Typography>
                         <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                             <Table stickyHeader size="small">
                                 <TableHead>

@@ -81,7 +81,7 @@ class AsignacionTareaController extends Controller
      public function update(Request $request, AsignacionTarea $asignacion)
     {
         $data = $request->validate([
-            'estado' => ['required', Rule::in(['pendiente','en proceso','completado'])],
+            'estado' => ['required', Rule::in(['pendiente', 'en_proceso', 'completada'])],
         ]);
 
         $asignacion->update(['estado' => $data['estado']]);
