@@ -67,7 +67,7 @@ export default function BookingsSummary() {
         <Stack direction="row" alignItems="center" spacing={2} mb={3}>
           <SummarizeIcon color="primary" sx={{ fontSize: 40 }} />
           <Typography variant="h4" fontWeight="bold">
-            Resumen de Tareas para <span style={{ color: '#1976d2' }}>{user.name}</span>
+            Mis Actividades de la Semana de:  <span style={{ color: '#1976d2' }}>{user.name}</span>
           </Typography>
         </Stack>
 

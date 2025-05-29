@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 const breadcrumbs = [
     {
-        title: 'Disponibilidad de Influencers',
+        title: 'Agregar Empresas',
         href: '/influencer-availability',
     },
 ];
@@ -52,10 +52,8 @@ const InfluencerAvailabilityCrud = () => {
     }, []);
 
     const fetchUserId = () => {
-        axios
-            .get('/api/auth/user')
-            .then((response) => setUserId(response.data.id))
-            /* .catch(() => setSnackbar({ open: true, message: 'Error obteniendo usuario', severity: 'error' })); */
+        axios.get('/api/auth/user').then((response) => setUserId(response.data.id));
+        /* .catch(() => setSnackbar({ open: true, message: 'Error obteniendo usuario', severity: 'error' })); */
     };
 
     const getCurrentWeekDates = () => {
@@ -179,7 +177,7 @@ const InfluencerAvailabilityCrud = () => {
                         py: 1.5,
                     }}
                 >
-                    Asignar Empresa
+                    Asignarme Empresas
                 </Button>
             </Box>
 
@@ -193,7 +191,7 @@ const InfluencerAvailabilityCrud = () => {
                 }}
             >
                 <Typography variant="h4" fontWeight="bold" color="primary" gutterBottom>
-                    Disponibilidad de Influencers
+                    Mi Dias Disponibles
                 </Typography>
                 <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
                     Agrega los días y turnos disponibles para la semana actual

@@ -1,16 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-    Button,
+    Box,
     Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
     IconButton,
     Paper,
     Snackbar,
@@ -26,7 +21,6 @@ import {
     Toolbar,
     Typography,
     useTheme,
-    Box,
 } from '@mui/material';
 import React, { useEffect, useMemo, useState } from 'react';
 
@@ -50,9 +44,7 @@ function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
     return b[orderBy] < a[orderBy] ? -1 : b[orderBy] > a[orderBy] ? 1 : 0;
 }
 function getComparator<Key extends keyof any>(order: Order, orderBy: Key): (a: { [key in Key]: any }, b: { [key in Key]: any }) => number {
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
+    return order === 'desc' ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
 }
 function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
     const stabilized = array.map((el, idx) => [el, idx] as [T, number]);
@@ -152,24 +144,13 @@ export default function InfluencersDatos() {
 
     // Filtrado de búsqueda
     const filtered = useMemo(
-        () =>
-            rowData.filter(
-                (user) =>
-                    user.name.toLowerCase().includes(search.toLowerCase()) ||
-                    String(user.id).includes(search)
-            ),
-        [rowData, search]
+        () => rowData.filter((user) => user.name.toLowerCase().includes(search.toLowerCase()) || String(user.id).includes(search)),
+        [rowData, search],
     );
 
     // Ordenación estable + paginación
-    const sortedData = useMemo(
-        () => stableSort(filtered, getComparator(order, orderBy)),
-        [filtered, order, orderBy]
-    );
-    const paginatedData = useMemo(
-        () => sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-        [sortedData, page, rowsPerPage]
-    );
+    const sortedData = useMemo(() => stableSort(filtered, getComparator(order, orderBy)), [filtered, order, orderBy]);
+    const paginatedData = useMemo(() => sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage), [sortedData, page, rowsPerPage]);
 
     // Sorting & selecting handlers
     const handleRequestSort = (property: keyof User) => {
@@ -199,6 +180,10 @@ export default function InfluencersDatos() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Influencer" />
+
+            <Typography variant="h4" color="primary" gutterBottom>
+                Agregar la cantidad de videos que tendrá el influencer
+            </Typography>
 
             {/* Buscador */}
             <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
@@ -246,10 +231,13 @@ export default function InfluencersDatos() {
                 <Table size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell padding="checkbox" sx={{
-                                backgroundColor: theme.palette.primary.main,
-                                color: theme.palette.common.white,
-                            }}>
+                            <TableCell
+                                padding="checkbox"
+                                sx={{
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: theme.palette.common.white,
+                                }}
+                            >
                                 <Checkbox
                                     indeterminate={selected.length > 0 && selected.length < filtered.length}
                                     checked={filtered.length > 0 && selected.length === filtered.length}
@@ -360,7 +348,15 @@ export default function InfluencersDatos() {
                                             />
                                         ) : (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleEditField(row.id, 'name', row.name); }} />
+                                                <EditIcon
+                                                    fontSize="small"
+                                                    color="action"
+                                                    sx={{ cursor: 'pointer' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditField(row.id, 'name', row.name);
+                                                    }}
+                                                />
                                                 <span
                                                     onDoubleClick={() => handleEditField(row.id, 'name', row.name)}
                                                     style={{ cursor: 'pointer' }}
@@ -386,7 +382,15 @@ export default function InfluencersDatos() {
                                             />
                                         ) : (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleEditField(row.id, 'email', row.email); }} />
+                                                <EditIcon
+                                                    fontSize="small"
+                                                    color="action"
+                                                    sx={{ cursor: 'pointer' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditField(row.id, 'email', row.email);
+                                                    }}
+                                                />
                                                 <span
                                                     onDoubleClick={() => handleEditField(row.id, 'email', row.email)}
                                                     style={{ cursor: 'pointer' }}
@@ -413,7 +417,15 @@ export default function InfluencersDatos() {
                                             />
                                         ) : (
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <EditIcon fontSize="small" color="action" sx={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); handleEditField(row.id, 'cantidad', row.cantidad); }} />
+                                                <EditIcon
+                                                    fontSize="small"
+                                                    color="action"
+                                                    sx={{ cursor: 'pointer' }}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleEditField(row.id, 'cantidad', row.cantidad);
+                                                    }}
+                                                />
                                                 <span
                                                     onDoubleClick={() => handleEditField(row.id, 'cantidad', row.cantidad)}
                                                     style={{ cursor: 'pointer' }}
