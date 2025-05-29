@@ -46,13 +46,13 @@ export default function Header() {
             title: 'Desarrollo Web',
             description: 'Sitios web modernos y aplicaciones personalizadas',
             icon: '💻',
-            href: '/diseño',
+            href: '#desarrollo-web',
         },
         {
             title: 'Diseño Gráfico',
             description: 'Branding y diseño visual para tu marca',
             icon: '🎨',
-            href: '/diseño',
+            href: '#diseno-grafico',
         },
         {
             title: 'Producción Audiovisual',
