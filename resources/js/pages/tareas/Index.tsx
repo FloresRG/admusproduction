@@ -1,6 +1,15 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { Close as CloseIcon, Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon } from '@mui/icons-material';
+import {
+    Business as BusinessIcon,
+    CalendarToday as CalendarTodayIcon,
+    Category as CategoryIcon,
+    Close as CloseIcon,
+    Delete as DeleteIcon,
+    Edit as EditIcon,
+    ListAlt as ListAltIcon,
+    Search as SearchIcon,
+} from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -19,10 +28,12 @@ import {
     RadioGroup,
     Table,
     TableBody,
+    TableFooter,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
+    TablePagination,
     TextField,
     Typography,
     useMediaQuery,
@@ -58,6 +69,8 @@ export default function Tareas() {
     const [editId, setEditId] = useState<number | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -77,6 +90,17 @@ export default function Tareas() {
         axios.get('/api/companies').then((res) => setEmpresas(res.data));
     }, [fechaParam]);
 
+    useEffect(() => {
+        setPage(0);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        const maxPage = Math.max(0, Math.ceil(filteredTareas.length / rowsPerPage) - 1);
+        if (page > maxPage) {
+            setPage(maxPage);
+        }
+    }, [rowsPerPage, page]);
+
     const fetchTareas = () => {
         const url = fechaParam ? `/api/tareas-por-fecha?fecha=${fechaParam}` : '/api/tareas';
 
@@ -84,6 +108,15 @@ export default function Tareas() {
             .get(url)
             .then((res) => setTareas(res.data))
             .catch((err) => console.error('Error al cargar tareas:', err));
+    };
+
+    const handleChangePage = (event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
     };
 
     const openCreateModal = () => {
@@ -183,89 +216,233 @@ export default function Tareas() {
         <AppLayout breadcrumbs={[{ title: 'Tareas', href: '/tareas' }]}>
             <Head title="Tareas" />
 
-            <Box sx={{ padding: 2 }}>
+            <Box sx={{ py: 6, mx: { xs: 0, md: 4 } }}>
                 {fechaParam && (
-                    <Typography variant="h6" sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 3 }}>
                         Tareas del día: {fechaParam}
                     </Typography>
                 )}
 
                 {/* Buscador y botones */}
-                <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+                <Box
+                    sx={{
+                        mb: 4,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', md: 'row' },
+                        gap: 2,
+                        alignItems: { md: 'center' },
+                        justifyContent: { md: 'space-between' },
+                    }}
+                >
                     <TextField
-                        label="Buscar por título"
-                        variant="outlined"
-                        size="small"
-                        fullWidth
+                        placeholder="Buscar por título..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        sx={{ marginRight: 2 }}
+                        size="small"
+                        fullWidth
+                        sx={{ maxWidth: 320 }}
                         InputProps={{
                             startAdornment: (
-                                <IconButton>
+                                <IconButton tabIndex={-1}>
                                     <SearchIcon />
                                 </IconButton>
                             ),
                         }}
                     />
-                    <Button variant="contained" color="primary" onClick={openCreateModal} startIcon={<EditIcon />}>
-                        Nueva Tarea
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <Button variant="contained" color="primary" onClick={openCreateModal} startIcon={<EditIcon />} sx={{ fontWeight: 'bold' }}>
+                            Nueva Tarea
+                        </Button>
+
+                        {esHoy && (
+                            <Button variant="contained" color="secondary" onClick={handleAsignarTareas} sx={{ fontWeight: 'bold' }}>
+                                Asignar Tareas a Pasantes
+                            </Button>
+                        )}
+                    </Box>
                 </Box>
 
-                {/*  <Button variant="contained" color="secondary" onClick={handleAsignarTareas} sx={{ ml: 2 }}>
-                    Asignar Tareas a Pasantes
-                </Button> */}
-                {esHoy && (
-                    <Button variant="contained" color="secondary" onClick={handleAsignarTareas} sx={{ ml: 2 }}>
-                        Asignar Tareas a Pasantes
-                    </Button>
-                )}
-
                 {/* Tabla de tareas */}
-                <TableContainer component={Paper} sx={{ borderRadius: 2, boxShadow: 3, overflowX: 'auto', mt: 2 }}>
-                    <Table stickyHeader>
+                <TableContainer
+                    component={Paper}
+                    sx={{
+                        borderRadius: 2,
+                        boxShadow: 3,
+                        overflowX: 'auto',
+                        border: '1px solid #e0e0e0',
+                        background: (theme) => theme.palette.background.paper,
+                        mx: { xs: 0, md: 2 },
+                    }}
+                >
+                    <Table stickyHeader sx={{ minWidth: 900 }}>
                         <TableHead>
                             <TableRow>
-                                <TableCell padding="checkbox">
+                                <TableCell
+                                    padding="checkbox"
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
                                     <Checkbox
                                         checked={filteredTareas.length > 0 && selectedRows.length === filteredTareas.length}
                                         indeterminate={selectedRows.length > 0 && selectedRows.length < filteredTareas.length}
                                         onChange={handleHeaderCheckbox}
                                     />
                                 </TableCell>
-                                <TableCell>Título</TableCell>
-                                <TableCell>Prioridad</TableCell>
-                                <TableCell>Fecha</TableCell>
-                                <TableCell>Descripción</TableCell>
-                                <TableCell>Tipo</TableCell>
-                                <TableCell>Empresa</TableCell>
-                                <TableCell>Acciones</TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <BusinessIcon fontSize="small" /> Titulo
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CategoryIcon fontSize="small" /> Prioridad
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <CalendarTodayIcon fontSize="small" /> Fecha
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <BusinessIcon fontSize="small" /> Descripcion
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <ListAltIcon fontSize="small" /> Tipo
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <BusinessIcon fontSize="small" /> Empresa
+                                    </Box>
+                                </TableCell>
+                                <TableCell
+                                    sx={(theme) => ({
+                                        fontWeight: 'bold',
+                                        backgroundColor: theme.palette.primary.main,
+                                        color: theme.palette.common.white,
+                                        padding: { xs: '8px', md: '16px' },
+                                        fontSize: { xs: '0.875rem', md: '1rem' },
+                                    })}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <EditIcon fontSize="small" /> / <DeleteIcon fontSize="small" /> Acciones
+                                    </Box>
+                                </TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredTareas.map((tarea) => (
-                                <TableRow key={tarea.id}>
-                                    <TableCell padding="checkbox">
-                                        <Checkbox checked={selectedRows.includes(tarea.id)} onChange={() => handleRowCheckbox(tarea.id)} />
-                                    </TableCell>
-                                    <TableCell>{tarea.titulo}</TableCell>
-                                    <TableCell>{tarea.prioridad || '-'}</TableCell>
-                                    <TableCell>{tarea.fecha || '-'}</TableCell>
-                                    <TableCell>{tarea.descripcion || '-'}</TableCell>
-                                    <TableCell>{tarea.tipo?.nombre_tipo || '—'}</TableCell>
-                                    <TableCell>{tarea.company?.name || '—'}</TableCell>
-                                    <TableCell>
-                                        <IconButton color="primary" onClick={() => openEditModal(tarea)}>
-                                            <EditIcon />
-                                        </IconButton>
-                                        <IconButton color="error" onClick={() => handleDelete(tarea.id)}>
-                                            <DeleteIcon />
-                                        </IconButton>
+                            {filteredTareas
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((tarea) => (
+                                    <TableRow key={tarea.id} hover>
+                                        <TableCell padding="checkbox">
+                                            <Checkbox 
+                                                checked={selectedRows.includes(tarea.id)} 
+                                                onChange={() => handleRowCheckbox(tarea.id)} 
+                                            />
+                                        </TableCell>
+                                        <TableCell>{tarea.titulo}</TableCell>
+                                        <TableCell>{tarea.prioridad || '-'}</TableCell>
+                                        <TableCell>{tarea.fecha || '-'}</TableCell>
+                                        <TableCell>{tarea.descripcion || '-'}</TableCell>
+                                        <TableCell>{tarea.tipo?.nombre_tipo || '—'}</TableCell>
+                                        <TableCell>{tarea.company?.name || '—'}</TableCell>
+                                        <TableCell>
+                                            <IconButton color="primary" onClick={() => openEditModal(tarea)} aria-label="Editar">
+                                                <EditIcon />
+                                            </IconButton>
+                                            <IconButton color="error" onClick={() => handleDelete(tarea.id)} aria-label="Eliminar">
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            {filteredTareas.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                                        No se encontraron tareas.
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            )}
                         </TableBody>
+                        <TableFooter>
+                            <TableRow>
+                                <TableCell colSpan={8} sx={{ p: 0 }}>
+                                    <TablePagination
+                                        rowsPerPageOptions={[5, 10, 25]}
+                                        component="div"
+                                        count={filteredTareas.length}
+                                        rowsPerPage={rowsPerPage}
+                                        page={page}
+                                        onPageChange={handleChangePage}
+                                        onRowsPerPageChange={handleChangeRowsPerPage}
+                                        labelRowsPerPage="Filas por página:"
+                                        labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`}
+                                        sx={{
+                                            '.MuiTablePagination-toolbar': {
+                                                background: theme.palette.background.paper,
+                                            }
+                                        }}
+                                    />
+                                </TableCell>
+                            </TableRow>
+                        </TableFooter>
                     </Table>
                 </TableContainer>
             </Box>

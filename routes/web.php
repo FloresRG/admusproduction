@@ -98,7 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('tipos/{tipoId}', [TipoController::class, 'destroyTipo']); // Eliminar un tipo
     Route::get('/pasante', [PasanteController::class, 'index'])->name('pasante.index');
     Route::get('/pasante/historial', [PasanteController::class, 'historial'])->name('pasante.historial');
-    Route::put('/pasante/actualizar/{tareaId}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
+    Route::put('/pasante/actualizar/{id}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
 
     // Listado global de asignaciones
     Route::get('/asignaciones', [AsignacionTareaController::class, 'index'])

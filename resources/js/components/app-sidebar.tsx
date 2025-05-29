@@ -61,8 +61,8 @@ export function AppSidebar() {
             { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
             { title: 'Tareas Asignadas', href: '/asignaciones/fechas', icon: AssignmentIcon },
             { title: 'Companies', href: '/companies', icon: BusinessIcon },
-            { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
-            { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
+            { title: 'Personal', href: '/tipos', icon:BusinessIcon  },
+            { title: 'Pasante', href: '/pasante', icon: BusinessIcon },
             { title: 'ver tareas', href: '/vertareas', icon: DateRangeIcon },
             { title: 'tareas', href: '/tareas', icon: DateRangeIcon },
         );

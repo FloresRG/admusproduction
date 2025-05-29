@@ -2,8 +2,9 @@
 // app/Http/Controllers/AsignacionTareaController.php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Validation\Rule;
-use Illuminate\Http\Request; 
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\AsignacionTarea;
 use App\Models\Tarea;
@@ -22,14 +23,14 @@ class AsignacionTareaController extends Controller
             'asignaciones' => $asignaciones,
         ]);
     }
-     public function datesIndex()
+    public function datesIndex()
     {
         // Trae los días distintos ordenados de más reciente a más antiguo
         $fechas = AsignacionTarea::select('fecha')
             ->distinct()
             ->orderBy('fecha', 'desc')
             ->pluck('fecha')
-            ->map(fn($f) => \Carbon\Carbon::parse($f)->format('Y-m-d')); 
+            ->map(fn($f) => \Carbon\Carbon::parse($f)->format('Y-m-d'));
 
         return Inertia::render('asignaciones/fechaslist', [
             'fechas' => $fechas,
@@ -37,14 +38,14 @@ class AsignacionTareaController extends Controller
     }
 
     // 2️⃣ Tareas de una fecha concreta
-     public function showByFecha($fecha)
+    public function showByFecha($fecha)
     {
-        $tareasAsignadas = AsignacionTarea::with('tarea','user')
+        $tareasAsignadas = AsignacionTarea::with('tarea', 'user')
             ->whereDate('fecha', $fecha)
             ->get();
 
         // Lista de todas las posibles tareas (para el dropdown)
-        $todasTareas = Tarea::select('id','titulo')->get();
+        $todasTareas = Tarea::select('id', 'titulo')->get();
 
         return Inertia::render('asignaciones/tareasporfecha', [
             'fecha'           => $fecha,
@@ -56,17 +57,17 @@ class AsignacionTareaController extends Controller
     public function store(Request $request, $fecha, User $user)
     {
         $data = $request->validate([
-           'tarea_id' => 'required|exists:tareas,id',
-           'estado'   => 'required|string',
-           'detalle'  => 'nullable|string',
+            'tarea_id' => 'required|exists:tareas,id',
+            'estado'   => 'required|string',
+            'detalle'  => 'nullable|string',
         ]);
 
         AsignacionTarea::create([
-          'user_id'  => $user->id,
-          'tarea_id' => $data['tarea_id'],
-          'estado'   => $data['estado'],
-          'detalle'  => $data['detalle'] ?? '',
-          'fecha'    => $fecha,
+            'user_id'  => $user->id,
+            'tarea_id' => $data['tarea_id'],
+            'estado'   => $data['estado'],
+            'detalle'  => $data['detalle'] ?? '',
+            'fecha'    => $fecha,
         ]);
 
         return redirect()->back();
@@ -78,10 +79,10 @@ class AsignacionTareaController extends Controller
         return redirect()->back();
     }
 
-     public function update(Request $request, AsignacionTarea $asignacion)
+    public function update(Request $request, AsignacionTarea $asignacion)
     {
         $data = $request->validate([
-            'estado' => ['required', Rule::in(['pendiente','en proceso','completado'])],
+            'estado' => ['required', Rule::in(['pendiente', 'en_proceso', 'completada'])],
         ]);
 
         $asignacion->update(['estado' => $data['estado']]);
@@ -132,8 +133,4 @@ class AsignacionTareaController extends Controller
             'todasTareas'     => $todasTareas,
         ]);
     }
-
-
-
-
 }

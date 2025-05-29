@@ -63,7 +63,7 @@ class PasanteController extends Controller
             'filters' => $request->only('search'),
         ]);
     }
-    public function actualizarEstado(Request $request, $tareaId)
+    public function actualizarEstado(Request $request, $id)
     {
         $request->validate([
             'estado' => 'required|string|max:255',
@@ -72,7 +72,7 @@ class PasanteController extends Controller
 
         $userId = Auth::id();
 
-        $asignacion = AsignacionTarea::where('tarea_id', $tareaId)
+        $asignacion = AsignacionTarea::where('tarea_id', $id)
             ->where('user_id', $userId)
             ->first();
 
