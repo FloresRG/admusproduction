@@ -31,7 +31,7 @@ export default function Header() {
         { title: 'Marketing Digital', description: 'Estrategias digitales...', icon: '📱', href: '#marketing-digital' },
         { title: 'Desarrollo Web', description: 'Sitios web modernos...', icon: '💻', href: '#desarrollo-web' },
         { title: 'Diseño Gráfico', description: 'Branding y diseño...', icon: '🎨', href: '#diseno-grafico' },
-        { title: 'Producción Audiovisual', description: 'Videos profesionales...', icon: '🎬', href: '/servicios/produccion-audiovisual' },
+        { title: 'Producción Audiovisual', description: 'Videos profesionales...', icon: '🎬', href: '#produccion-audiovisual' },
         { title: 'Fotografía', description: 'Fotografía profesional...', icon: '📸', href: '/fotografias' },
         { title: 'Consultorías', description: 'Asesoramiento estratégico...', icon: '📊', href: '/consultorias' },
         { title: 'Eventos Digitales', description: 'Organización de eventos...', icon: '🎪', href: '/eventos-digitales' },
