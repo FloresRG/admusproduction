@@ -83,7 +83,7 @@ export default function Header() {
     if (!mounted) return null;
 
     return (
-        <header
+         <header
             className={`fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-in-out ${
                 scrolled ? 'bg-black/80 backdrop-blur-sm' : 'bg-transparent'
             }`}
@@ -127,7 +127,7 @@ export default function Header() {
                                             <div className="text-sm font-medium">{s.title}</div>
                                             <div className="mt-1 text-xs text-white/70">{s.description}</div>
                                         </div>
-                                    </a>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -287,9 +287,9 @@ interface NavLinkProps {
     children: React.ReactNode;
 }
 
-function NavLink({ href, active, onClick, children }: NavLinkProps) {
+function NavLink({ href, active, children }: NavLinkProps) {
     return (
-        <a
+        <Link
             href={href}
             onClick={onClick}
             className={`group relative py-2 font-['Montserrat'] tracking-wide transition-all duration-300 hover:text-red-200 ${active ? 'font-medium text-red-200' : 'text-white'}`}
@@ -302,13 +302,13 @@ function NavLink({ href, active, onClick, children }: NavLinkProps) {
                 className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full'}`}
                 style={{ boxShadow: '0 0 10px rgba(255,0,0,0.5)' }}
             />
-        </a>
+        </Link>
     );
 }
 
 function MobileNavLink({ href, active, onClick, children }: NavLinkProps) {
     return (
-        <a
+        <Link
             href={href}
             onClick={onClick}
             className={`block py-2 font-['Montserrat'] text-lg tracking-wide transition-colors duration-300 ${
@@ -319,6 +319,6 @@ function MobileNavLink({ href, active, onClick, children }: NavLinkProps) {
             }}
         >
             {children}
-        </a>
+        </Link>
     );
 }
