@@ -24,6 +24,12 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/fotografias', fn() => Inertia::render('fotografias/fotografia'))
+     ->name('fotografias');
+
+Route::get('/servicios/produccion-audiovisual', fn() => Inertia::render('servicios/produccion-audiovisual'))
+     ->name('servicios.produccion-audiovisual');
+
 Route::middleware(['auth', 'verified'])->group(function () {
    Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -203,10 +209,6 @@ Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']
 Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
-
-
-
-
 
 
 require __DIR__ . '/settings.php';
