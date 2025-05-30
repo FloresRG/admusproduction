@@ -1,9 +1,5 @@
 'use client';
 
-import type React from 'react';
-import { Link } from '@inertiajs/react';
-
-import { useEffect, useState } from 'react';
 import React, { useEffect, useState } from 'react';
 
 // Simulación de usePage para el ejemplo
@@ -32,48 +28,6 @@ export default function Header() {
     const { auth } = usePage().props;
 
     const services = [
-        {
-            title: 'Marketing Digital',
-            description: 'Estrategias digitales para aumentar tu presencia online',
-            icon: '📱',
-            href: '/marketing',
-        },
-        {
-            title: 'Desarrollo Web',
-            description: 'Sitios web modernos y aplicaciones personalizadas',
-            icon: '💻',
-            href: '/diseño',
-        },
-        {
-            title: 'Diseño Gráfico',
-            description: 'Branding y diseño visual para tu marca',
-            icon: '🎨',
-            href: '/diseño',
-        },
-        {
-            title: 'Producción Audiovisual',
-            description: 'Videos profesionales y contenido multimedia',
-            icon: '🎬',
-            href: '#produccion-audiovisual',
-        },
-        {
-            title: 'Fotografía',
-            description: 'Fotografía profesional para eventos y productos',
-            icon: '📸',
-            href: '#fotografia',
-        },
-        {
-            title: 'Consultorías',
-            description: 'Asesoramiento estratégico para tu negocio',
-            icon: '📊',
-            href: '#consultorias',
-        },
-        {
-            title: 'Eventos Digitales',
-            description: 'Organización de eventos virtuales y presenciales',
-            icon: '🎪',
-            href: '#eventos-digitales',
-        },
         { title: 'Marketing Digital', description: 'Estrategias digitales...', icon: '📱', href: '#marketing-digital' },
         { title: 'Desarrollo Web', description: 'Sitios web modernos...', icon: '💻', href: '#desarrollo-web' },
         { title: 'Diseño Gráfico', description: 'Branding y diseño...', icon: '🎨', href: '#diseno-grafico' },
@@ -129,13 +83,8 @@ export default function Header() {
     if (!mounted) return null;
 
     return (
-         <header
+        <header
             className={`fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-in-out ${
-                scrolled ? 'bg-black/80 backdrop-blur-sm' : 'bg-black/50'
-            } `}
-            style={{
-                boxShadow: scrolled ? '0 4px 30px rgba(255, 0, 0, 0.15)' : 'none',
-            }}
                 scrolled ? 'bg-black/80 backdrop-blur-sm' : 'bg-transparent'
             }`}
             style={{ boxShadow: scrolled ? '0 4px 30px rgba(255,0,0,0.15)' : 'none' }}
@@ -166,11 +115,6 @@ export default function Header() {
                                 <div className="border-b border-red-500/20 px-4 py-2">
                                     <h3 className="text-sm font-bold text-red-400 uppercase">Nuestros Servicios</h3>
                                 </div>
-                                {services.map((service, index) => (
-                                    <Link
-                                        key={index}
-                                        href={service.href}
-                                        className="flex items-center border-l-2 border-transparent px-4 py-3 text-white transition-all duration-300 hover:border-red-500 hover:bg-red-600/20 hover:text-red-300"
                                 {services.map((s, i) => (
                                     <a
                                         key={i}
@@ -183,7 +127,7 @@ export default function Header() {
                                             <div className="text-sm font-medium">{s.title}</div>
                                             <div className="mt-1 text-xs text-white/70">{s.description}</div>
                                         </div>
-                                    </Link>
+                                    </a>
                                 ))}
                             </div>
                         </div>
@@ -343,13 +287,10 @@ interface NavLinkProps {
     children: React.ReactNode;
 }
 
-function NavLink({ href, active, children }: NavLinkProps) {
+function NavLink({ href, active, onClick, children }: NavLinkProps) {
     return (
-        <Link
+        <a
             href={href}
-            className={`group relative cursor-pointer py-2 text-white transition-all duration-300 hover:text-red-200 ${
-                active ? 'font-medium text-red-200' : ''
-            } font-['Montserrat'] tracking-wide`}
             onClick={onClick}
             className={`group relative py-2 font-['Montserrat'] tracking-wide transition-all duration-300 hover:text-red-200 ${active ? 'font-medium text-red-200' : 'text-white'}`}
             style={{
@@ -361,13 +302,13 @@ function NavLink({ href, active, children }: NavLinkProps) {
                 className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full'}`}
                 style={{ boxShadow: '0 0 10px rgba(255,0,0,0.5)' }}
             />
-        </Link>
+        </a>
     );
 }
 
 function MobileNavLink({ href, active, onClick, children }: NavLinkProps) {
     return (
-        <Link
+        <a
             href={href}
             onClick={onClick}
             className={`block py-2 font-['Montserrat'] text-lg tracking-wide transition-colors duration-300 ${
@@ -378,6 +319,6 @@ function MobileNavLink({ href, active, onClick, children }: NavLinkProps) {
             }}
         >
             {children}
-        </Link>
+        </a>
     );
 }
