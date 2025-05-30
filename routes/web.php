@@ -7,6 +7,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -30,6 +31,19 @@ Route::get('/fotografias', fn() => Inertia::render('fotografias/fotografia'))
 Route::get('/servicios/produccion-audiovisual', fn() => Inertia::render('servicios/produccion-audiovisual'))
      ->name('servicios.produccion-audiovisual');
 
+// ——— Rutas públicas para React/Inertia ———
+
+Route::get('/consultorias', fn() => Inertia::render('paginas/Consultorias'))
+     ->name('consultorias');
+
+Route::get('/eventos-digitales', fn() => Inertia::render('paginas/EventosDigitales'))
+     ->name('eventos.digitales');
+
+
+
+
+
+     
 Route::middleware(['auth', 'verified'])->group(function () {
    Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -146,6 +160,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/users', function () {
     return Inertia::render('user');
 });
+
+
+
+
+
+
     //para la vista de marketing
 Route::get('/marketing', function () {
     return Inertia::render('Marketing'); // Note the capital 'M'
@@ -154,6 +174,13 @@ Route::get('/marketing', function () {
 Route::get('/diseño', function () {
     return Inertia::render('Diseño'); // Note the capital 'M'
 });
+
+
+
+
+
+
+
 Route::get('/api/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);
 Route::put('/users/{user}', [UserController::class, 'update']);
