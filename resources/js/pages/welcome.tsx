@@ -10,6 +10,7 @@ import ComoTrabajamos from './home/como-trabajamos';
 import Contactanos from './home/contactanos';
 import Footer from './home/footer';
 import QuienesSomos from './home/quienes-somos';
+import ProduccionAudiovisual from './servicios/produccion-audiovisual';
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
@@ -191,6 +192,9 @@ export default function Welcome() {
                     <div className="relative z-10">
                         <section id="quienes-somos" className="bg-black/80 py-16 text-white">
                             <QuienesSomos />
+                        </section>
+                        <section id="produccion-audivisual" className="bg-black/80 py-16 text-white">
+                            <ProduccionAudiovisual />
                         </section>
 
                         <section id="como-trabajamos" className="bg-black/90 py-16 text-white">
