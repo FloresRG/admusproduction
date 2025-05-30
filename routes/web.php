@@ -24,6 +24,19 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+// ——— Rutas públicas para React/Inertia ———
+
+Route::get('/consultorias', fn() => Inertia::render('paginas/Consultorias'))
+     ->name('consultorias');
+
+Route::get('/eventos-digitales', fn() => Inertia::render('paginas/EventosDigitales'))
+     ->name('eventos.digitales');
+
+
+
+
+
+     
 Route::middleware(['auth', 'verified'])->group(function () {
    Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])

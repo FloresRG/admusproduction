@@ -1,12 +1,11 @@
 // app.tsx
 
-import '../css/app.css';
 import { createInertiaApp } from '@inertiajs/react';
+import axios from 'axios';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
+import '../css/app.css';
 import { initializeTheme } from './hooks/use-appearance';
-import { ModuleRegistry } from 'ag-grid-community';
-import axios from 'axios';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -23,8 +22,9 @@ if (csrfToken) {
 // ✅ 2. Inicializar Inertia
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) =>
-        resolvePageComponent(`./pages/${name}.tsx`, import.meta.glob('./pages/**/*.tsx')),
+    resolve: (name) => resolvePageComponent(
+        `./pages/${name}.tsx`, 
+        import.meta.glob('./pages/**/*.tsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
         root.render(<App {...props} />);
