@@ -72,7 +72,7 @@ class PasanteController extends Controller
 
         $userId = Auth::id();
 
-        $asignacion = AsignacionTarea::where('tarea_id', $id)
+        $asignacion = AsignacionTarea::where('id', $id)
             ->where('user_id', $userId)
             ->first();
 

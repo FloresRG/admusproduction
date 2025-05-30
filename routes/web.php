@@ -25,7 +25,7 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::get('/fotografias', fn() => Inertia::render('fotografias/fotografias'))
+Route::get('/fotografias', fn() => Inertia::render('fotografias/fotografia'))
      ->name('fotografias');
 
 Route::get('/servicios/produccion-audiovisual', fn() => Inertia::render('servicios/produccion-audiovisual'))
@@ -118,6 +118,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('tipos/{tipoId}', [TipoController::class, 'editTipo']); // Editar un tipo
     Route::delete('tipos/{tipoId}', [TipoController::class, 'destroyTipo']); // Eliminar un tipo
     Route::get('/pasante', [PasanteController::class, 'index'])->name('pasante.index');
+
+    
     Route::get('/pasante/historial', [PasanteController::class, 'historial'])->name('pasante.historial');
     Route::put('/pasante/actualizar/{id}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
 

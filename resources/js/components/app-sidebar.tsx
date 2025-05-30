@@ -149,7 +149,7 @@ export function AppSidebar() {
     const roles = auth?.user?.roles.map((r) => r.name) || [];
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
-    const isPasante = roles.includes('pasante');
+    const isPasante = roles.includes('Pasante');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);

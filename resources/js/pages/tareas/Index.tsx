@@ -28,12 +28,12 @@ import {
     RadioGroup,
     Table,
     TableBody,
-    TableFooter,
     TableCell,
     TableContainer,
+    TableFooter,
     TableHead,
-    TableRow,
     TablePagination,
+    TableRow,
     TextField,
     Typography,
     useMediaQuery,
@@ -387,32 +387,27 @@ export default function Tareas() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredTareas
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((tarea) => (
-                                    <TableRow key={tarea.id} hover>
-                                        <TableCell padding="checkbox">
-                                            <Checkbox 
-                                                checked={selectedRows.includes(tarea.id)} 
-                                                onChange={() => handleRowCheckbox(tarea.id)} 
-                                            />
-                                        </TableCell>
-                                        <TableCell>{tarea.titulo}</TableCell>
-                                        <TableCell>{tarea.prioridad || '-'}</TableCell>
-                                        <TableCell>{tarea.fecha || '-'}</TableCell>
-                                        <TableCell>{tarea.descripcion || '-'}</TableCell>
-                                        <TableCell>{tarea.tipo?.nombre_tipo || '—'}</TableCell>
-                                        <TableCell>{tarea.company?.name || '—'}</TableCell>
-                                        <TableCell>
-                                            <IconButton color="primary" onClick={() => openEditModal(tarea)} aria-label="Editar">
-                                                <EditIcon />
-                                            </IconButton>
-                                            <IconButton color="error" onClick={() => handleDelete(tarea.id)} aria-label="Eliminar">
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                            {filteredTareas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tarea) => (
+                                <TableRow key={tarea.id} hover>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox checked={selectedRows.includes(tarea.id)} onChange={() => handleRowCheckbox(tarea.id)} />
+                                    </TableCell>
+                                    <TableCell>{tarea.titulo}</TableCell>
+                                    <TableCell>{tarea.prioridad || '-'}</TableCell>
+                                    <TableCell>{tarea.fecha || '-'}</TableCell>
+                                    <TableCell>{tarea.descripcion || '-'}</TableCell>
+                                    <TableCell>{tarea.tipo?.nombre_tipo || '—'}</TableCell>
+                                    <TableCell>{tarea.company?.name || '—'}</TableCell>
+                                    <TableCell>
+                                        <IconButton color="primary" onClick={() => openEditModal(tarea)} aria-label="Editar">
+                                            <EditIcon />
+                                        </IconButton>
+                                        <IconButton color="error" onClick={() => handleDelete(tarea.id)} aria-label="Eliminar">
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                             {filteredTareas.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
@@ -437,7 +432,7 @@ export default function Tareas() {
                                         sx={{
                                             '.MuiTablePagination-toolbar': {
                                                 background: theme.palette.background.paper,
-                                            }
+                                            },
                                         }}
                                     />
                                 </TableCell>

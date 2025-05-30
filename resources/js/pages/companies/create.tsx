@@ -74,7 +74,6 @@ export default function Create({ categories }: Props) {
     return (
         <AppLayout>
             <Head title="Crear Empresa" />
-
             <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-lg">
                 <h1 className="mb-6 text-center text-2xl font-bold">Crear nueva Empresa</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -173,10 +172,14 @@ export default function Create({ categories }: Props) {
 
                         {data.availability.map((avail, idx) => (
                             <div key={idx} className="mb-4 flex justify-center">
-                                <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-3">
+
+
+
+
+                                <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-4">
                                     {/* Día de la semana */}
                                     <select
-                                        className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="col-span-1 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                         value={avail.day_of_week}
                                         onChange={(e) => handleAvailabilityChange(idx, 'day_of_week', parseInt(e.target.value))}
                                     >
@@ -190,7 +193,7 @@ export default function Create({ categories }: Props) {
 
                                     {/* Turno */}
                                     <select
-                                        className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        className="col-span-1 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                         value={avail.turno}
                                         onChange={(e) => {
                                             const turno = e.target.value as 'mañana' | 'tarde';
@@ -212,8 +215,27 @@ export default function Create({ categories }: Props) {
                                         <option value="tarde">Tarde</option>
                                     </select>
 
+                                    {/* Cantidad (2 fracciones) */}
+ <div className="col-span-2">
+   <label className="sr-only">Cantidad</label>
+   <input
+     type="number"
+     min="0"
+     className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+     placeholder="Cantidad"
+     value={avail.cantidad ?? ''}
+     onChange={(e) =>
+       handleAvailabilityChange(
+         idx,
+         'cantidad',
+         e.target.value === '' ? null : parseInt(e.target.value, 10)
+       )
+     }
+   />
+ </div>
+
                                     {/* Botón eliminar */}
-                                    <div className="flex items-center justify-center">
+                                    <div className="col-span-1 flex items-center justify-center">
                                         <button
                                             type="button"
                                             className="text-xl font-bold text-red-600"
