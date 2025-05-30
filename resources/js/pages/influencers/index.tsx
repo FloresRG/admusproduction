@@ -278,7 +278,7 @@ const InfluencerAvailabilityCrud = () => {
                                                     {turnoSelection[dayOfWeek] && (
                                                         <Chip
                                                             icon={<AccessTimeIcon />}
-                                                            label={turnoSelection[dayOfWeek] === 'mañana' ? '09:30 - 13:00' : '14:00 - 18:00'}
+                                                            label={turnoSelection[dayOfWeek] === 'mañana' ? '10:30 - 13:00' : '15:00 - 18:00'}
                                                             color={turnoSelection[dayOfWeek] === 'mañana' ? 'success' : 'warning'}
                                                             sx={{ fontWeight: 500 }}
                                                         />

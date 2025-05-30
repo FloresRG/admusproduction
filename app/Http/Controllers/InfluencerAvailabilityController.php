@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AvailabilityDay;
 use App\Models\Booking;
 use App\Models\Company;
 use App\Models\Dato;
@@ -187,16 +188,26 @@ class InfluencerAvailabilityController extends Controller
         // Creamos los bookings con el week_id de la nueva semana o la semana existente
         foreach ($seleccionadas as $item) {
             // Verificar si ya existe un booking para esa empresa, día y turno en la misma semana
-            $existingBooking = Booking::where('company_id', $item['empresa']->id)
+            // Contar cuántos bookings existen ya para esa empresa en ese día, turno y semana
+            // Contar cuántos bookings ya existen para esa empresa en ese día, turno y semana
+            $existingBookingsCount = Booking::where('company_id', $item['empresa']->id)
                 ->where('day_of_week', $item['day_of_week'])
                 ->where('turno', $item['turno'])
-                ->where('week_id', $week->id)  // Verificar en la semana específica
-                ->first();
+                ->where('week_id', $week->id)
+                ->count();
 
-            // Si ya existe un booking, no lo creamos
-            if ($existingBooking) {
-                continue; // Saltamos a la siguiente iteración
+            // Obtener la cantidad máxima permitida para ese día y turno
+            $cantidadMaxima = AvailabilityDay::where('company_id', $item['empresa']->id)
+                ->where('day_of_week', $item['day_of_week'])
+                ->where('turno', $item['turno'])
+                ->value('cantidad') ?? 1; // fallback a 1 si es null
+
+            // Validar correctamente
+            if ($existingBookingsCount >= (int) $cantidadMaxima) {
+                continue;
             }
+
+
 
             // Crear el nuevo booking si no existe
             $booking = Booking::create([

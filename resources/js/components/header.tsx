@@ -27,15 +27,15 @@ export default function Header() {
   const [showServicesCarousel, setShowServicesCarousel] = useState(false);
   const { auth } = usePage().props;
 
-  const services = [
-    { title: 'Marketing Digital', description: 'Estrategias digitales...', icon: '📱', href: '/marketing' },
-    { title: 'Desarrollo Web', description: 'Sitios web modernos...', icon: '💻', href: '#desarrollo-web' },
-    { title: 'Diseño Gráfico', description: 'Branding y diseño...', icon: '🎨', href: '/diseño' },
-    { title: 'Producción Audiovisual', description: 'Videos profesionales...', icon: '🎬', href: '/servicios/produccion-audiovisual' },
-    { title: 'Fotografía', description: 'Fotografía profesional...', icon: '📸', href: '/fotografias' },
-    { title: 'Consultorías', description: 'Asesoramiento estratégico...', icon: '📊', href: '/consultorias' },
-    { title: 'Eventos Digitales', description: 'Organización de eventos...', icon: '🎪', href: '/eventos-digitales' },
-  ];
+    const services = [
+        { title: 'Marketing Digital', description: 'Estrategias digitales...', icon: '📱', href: '/marketing' },
+        { title: 'Desarrollo Web', description: 'Sitios web modernos...', icon: '💻', href: '#desarrollo-web' },
+        { title: 'Diseño Gráfico', description: 'Branding y diseño...', icon: '🎨', href: '/diseño' },
+        { title: 'Producción Audiovisual', description: 'Videos profesionales...', icon: '🎬', href: '/servicios/produccion-audiovisual' },
+        { title: 'Fotografía', description: 'Fotografía profesional...', icon: '📸', href: '/fotografias' },
+        { title: 'Consultorías', description: 'Asesoramiento estratégico...', icon: '📊', href: '/consultorias' },
+        { title: 'Eventos Digitales', description: 'Organización de eventos...', icon: '🎪', href: '/eventos-digitales' },
+    ];
 
   useEffect(() => {
     setMounted(true);
@@ -80,32 +80,24 @@ export default function Header() {
 
   if (!mounted) return null;
 
-  return (
-    <header
-      className={`fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-in-out ${
-        scrolled ? 'bg-black/80 backdrop-blur-sm' : 'bg-transparent'
-      }`}
-      style={{ boxShadow: scrolled ? '0 4px 30px rgba(255,0,0,0.15)' : 'none' }}
-    >
-      <div className="container mx-auto flex items-center justify-between px-4 py-4">
-        {/* Logo */}
-        <div className="flex items-center">
-          <svg width="50" height="50" viewBox="0 0 300 150" className="mr-2">
-            <path d="M80 20 L150 20 L190 130 L120 130 Z" fill="#ff0000" />
-            <text
-              x="150"
-              y="120"
-              fontFamily="'Bebas Neue'"
-              fontSize="60"
-              fontWeight="bold"
-              fill="white"
-              textAnchor="middle"
-            >
-              ADMUS
-            </text>
-          </svg>
-          <span className="font-['Bebas_Neue'] text-xl font-bold text-white">ADMUS</span>
-        </div>
+    return (
+        <header
+            className={`fixed top-0 left-0 z-50 w-full transition-all duration-500 ease-in-out ${
+                scrolled ? 'bg-black/80 backdrop-blur-sm' : 'bg-transparent'
+            }`}
+            style={{ boxShadow: scrolled ? '0 4px 30px rgba(255,0,0,0.15)' : 'none' }}
+        >
+            <div className="container mx-auto flex items-center justify-between px-4 py-4">
+                {/* Logo */}
+                <div className="flex items-center">
+                    <svg width="50" height="50" viewBox="0 0 300 150" className="mr-2">
+                        <path d="M80 20 L150 20 L190 130 L120 130 Z" fill="#ff0000" />
+                        <text x="150" y="120" fontFamily="'Bebas Neue'" fontSize="60" fontWeight="bold" fill="white" textAnchor="middle">
+                            ADMUS
+                        </text>
+                    </svg>
+                    <span className="font-['Bebas_Neue'] text-xl font-bold text-white">ADMUS</span>
+                </div>
 
         {/* Menú Desktop */}
         <nav className="hidden items-center space-x-8 md:flex">
@@ -284,37 +276,37 @@ interface NavLinkProps {
 }
 
 function NavLink({ href, active, onClick, children }: NavLinkProps) {
-  return (
-    <a
-      href={href}
-      onClick={onClick}
-      className={`group relative py-2 font-['Montserrat'] tracking-wide transition-all duration-300 hover:text-red-200 ${
-        active ? 'font-medium text-red-200' : 'text-white'
-      }`}
-      style={{ textShadow: active ? '0 0 10px rgba(255,255,255,0.4)' : '0 0 5px rgba(255,255,255,0.2)' }}
-    >
-      {children}
-      <span
-        className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-300 ${
-          active ? 'w-full' : 'w-0 group-hover:w-full'
-        }`}
-        style={{ boxShadow: '0 0 10px rgba(255,0,0,0.5)' }}
-      />
-    </a>
-  );
+    return (
+        <a
+            href={href}
+            onClick={onClick}
+            className={`group relative py-2 font-['Montserrat'] tracking-wide transition-all duration-300 hover:text-red-200 ${active ? 'font-medium text-red-200' : 'text-white'}`}
+            style={{
+                textShadow: active ? '0 0 10px rgba(255,255,255,0.4)' : '0 0 5px rgba(255,255,255,0.2)',
+            }}
+        >
+            {children}
+            <span
+                className={`absolute bottom-0 left-0 h-0.5 bg-red-500 transition-all duration-300 ${active ? 'w-full' : 'w-0 group-hover:w-full'}`}
+                style={{ boxShadow: '0 0 10px rgba(255,0,0,0.5)' }}
+            />
+        </a>
+    );
 }
 
 function MobileNavLink({ href, active, onClick, children }: NavLinkProps) {
-  return (
-    <a
-      href={href}
-      onClick={onClick}
-      className={`block py-2 font-['Montserrat'] text-lg tracking-wide transition-colors duration-300 ${
-        active ? 'font-medium text-red-400' : 'text-white'
-      } hover:text-red-300`}
-      style={{ textShadow: active ? '0 0 10px rgba(255,0,0,0.4)' : '0 0 5px rgba(255,255,255,0.2)' }}
-    >
-      {children}
-    </a>
-  );
+    return (
+        <a
+            href={href}
+            onClick={onClick}
+            className={`block py-2 font-['Montserrat'] text-lg tracking-wide transition-colors duration-300 ${
+                active ? 'font-medium text-red-400' : 'text-white'
+            } hover:text-red-300`}
+            style={{
+                textShadow: active ? '0 0 10px rgba(255,0,0,0.4)' : '0 0 5px rgba(255,255,255,0.2)',
+            }}
+        >
+            {children}
+        </a>
+    );
 }
