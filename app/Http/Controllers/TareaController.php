@@ -114,9 +114,9 @@ class TareaController extends Controller
 
         // Función para mapear prioridades a números
         $mapPrioridad = fn($prioridad) => match (strtolower($prioridad)) {
-            'alto' => 1,
-            'medio' => 2,
-            'bajo' => 3,
+            'alta' => 1,
+            'media' => 2,
+            'baja' => 3,
             default => 99,
         };
 

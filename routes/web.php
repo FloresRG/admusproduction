@@ -16,6 +16,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\PasanteController;
+use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
 use App\Http\Controllers\WeekController;
@@ -244,6 +245,8 @@ Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']
 Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
+
+Route::get('/semana', [SemanaController::class, 'index']);
 
 
 require __DIR__ . '/settings.php';
