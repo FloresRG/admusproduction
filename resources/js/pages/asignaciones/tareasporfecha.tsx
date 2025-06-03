@@ -2,7 +2,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import CheckIcon from '@mui/icons-material/Check';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
     Box,
@@ -26,6 +25,7 @@ import {
 import Autocomplete from '@mui/material/Autocomplete';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
+
 type Asignacion = {
     id: number;
     estado: string;
@@ -73,6 +73,11 @@ export default function TareasPorFecha() {
         Inertia.patch(route('asignaciones.update', id), { estado: nuevoEstado }, { preserveScroll: true, preserveState: true });
     };
 
+    // Nueva función para actualizar SOLO el 'detalle'
+    const handleDetalleChange = (id: number, nuevoDetalle: string) => {
+        Inertia.patch(route('asignaciones.update', id), { detalle: nuevoDetalle }, { preserveScroll: true, preserveState: true });
+    };
+
     return (
         <AppLayout>
             <Head title="Tareas Asignadas por Día" />
@@ -84,7 +89,9 @@ export default function TareasPorFecha() {
                 </Box>
 
                 <Grid container spacing={3}>
-                    {/* Lista de Usuarios + buscador */}
+                    {/* =============================================== */}
+                    {/* Columna izquierda: LISTA DE USUARIOS (md=4)     */}
+                    {/* =============================================== */}
                     <Grid item xs={12} md={4}>
                         <Typography variant="h6">Usuarios</Typography>
                         <TextField
@@ -116,7 +123,7 @@ export default function TareasPorFecha() {
                                             onClick={() => setSelectedUserId((prev) => (prev === u.id ? null : u.id))}
                                             sx={{ cursor: 'pointer' }}
                                         >
-                                            <TableCell padding="checkbox">{selectedUserId === u.id && <CheckIcon />}</TableCell>
+                                            <TableCell padding="checkbox">{selectedUserId === u.id && <Typography>✓</Typography>}</TableCell>
                                             <TableCell>{u.name}</TableCell>
                                             <TableCell>{u.email}</TableCell>
                                         </TableRow>
@@ -126,7 +133,9 @@ export default function TareasPorFecha() {
                         </TableContainer>
                     </Grid>
 
-                    {/* Panel Tareas y Formulario inline */}
+                    {/* =============================================== */}
+                    {/* Columna derecha: INFORMACIÓN DE TAREAS (md=8)    */}
+                    {/* =============================================== */}
                     <Grid item xs={12} md={8}>
                         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                             <Typography variant="h6">
@@ -134,6 +143,7 @@ export default function TareasPorFecha() {
                             </Typography>
                         </Box>
 
+                        {/* Formulario inline para crear nueva asignación */}
                         {selectedUserId && (
                             <Box
                                 component="form"
@@ -174,7 +184,7 @@ export default function TareasPorFecha() {
                                         onChange={(e) => form.setData('estado', e.target.value)}
                                         required
                                     >
-                                        {['pendiente', 'en_proceso', 'completada'].map((opt) => (
+                                        {['pendiente', 'en_revision', 'publicada'].map((opt) => (
                                             <MenuItem key={opt} value={opt}>
                                                 {opt.charAt(0).toUpperCase() + opt.slice(1)}
                                             </MenuItem>
@@ -182,7 +192,7 @@ export default function TareasPorFecha() {
                                     </Select>
                                 </FormControl>
 
-                                {/* ④ Aquí agregas el TextField para 'detalle' */}
+                                {/* TextField para 'detalle' */}
                                 <TextField
                                     label="Detalle"
                                     size="small"
@@ -197,7 +207,7 @@ export default function TareasPorFecha() {
                             </Box>
                         )}
 
-                        {/* Tabla de tareas asignadas */}
+                        {/* Tabla de tareas asignadas (editable) */}
                         <TableContainer component={Paper} sx={{ maxHeight: 360 }}>
                             <Table stickyHeader size="small">
                                 <TableHead>
@@ -212,7 +222,10 @@ export default function TareasPorFecha() {
                                     {tareasFiltradas.length > 0 ? (
                                         tareasFiltradas.map((a) => (
                                             <TableRow key={a.id} hover>
+                                                {/* Columna Título */}
                                                 <TableCell>{a.tarea.titulo}</TableCell>
+
+                                                {/* Columna Estado (editable) */}
                                                 <TableCell>
                                                     <FormControl size="small" fullWidth>
                                                         <Select
@@ -220,7 +233,7 @@ export default function TareasPorFecha() {
                                                             onChange={(e) => handleEstadoChange(a.id, e.target.value as string)}
                                                             sx={{ minWidth: 120 }}
                                                         >
-                                                            {['pendiente', 'en_proceso', 'completada'].map((opt) => (
+                                                            {['pendiente', 'en_revision', 'publicada'].map((opt) => (
                                                                 <MenuItem key={opt} value={opt}>
                                                                     {opt.charAt(0).toUpperCase() + opt.slice(1)}
                                                                 </MenuItem>
@@ -228,7 +241,23 @@ export default function TareasPorFecha() {
                                                         </Select>
                                                     </FormControl>
                                                 </TableCell>
-                                                <TableCell>{a.detalle || '—'}</TableCell>
+
+                                                {/* Columna Detalle (editable) */}
+                                                <TableCell>
+                                                    <TextField
+                                                        defaultValue={a.detalle}
+                                                        size="small"
+                                                        fullWidth
+                                                        onBlur={(e) => {
+                                                            const valor = e.target.value;
+                                                            if (valor !== a.detalle) {
+                                                                handleDetalleChange(a.id, valor);
+                                                            }
+                                                        }}
+                                                    />
+                                                </TableCell>
+
+                                                {/* Columna Acciones (eliminar) */}
                                                 <TableCell>
                                                     <IconButton
                                                         size="small"

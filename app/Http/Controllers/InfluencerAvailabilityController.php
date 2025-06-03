@@ -185,7 +185,7 @@ class InfluencerAvailabilityController extends Controller
             ]);
         }
 
-        // Creamos los bookings con el week_id de la nueva semana o la semana existente
+        // Creamos los bookings con el week_id de la nueva semana o la semVolver a Fechasana existente
         foreach ($seleccionadas as $item) {
             // Verificar si ya existe un booking para esa empresa, día y turno en la misma semana
             // Contar cuántos bookings existen ya para esa empresa en ese día, turno y semana
