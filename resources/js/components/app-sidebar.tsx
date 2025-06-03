@@ -167,6 +167,7 @@ export function AppSidebar() {
                     { title: 'Usuarios', href: '/users', icon: PersonIcon },
                     { title: 'Roles', href: '/roles', icon: AdminPanelSettingsIcon },
                     { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
+                    { title: 'Semana', href: '/semana', icon: FormatIndentIncreaseIcon },
                 ],
                 isCollapsible: true,
             },
