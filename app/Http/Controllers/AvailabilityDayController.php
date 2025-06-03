@@ -29,6 +29,8 @@ class AvailabilityDayController extends Controller
             'start_time' => 'required',
             'end_time' => 'required',
             'turno' => 'required',
+            'cantidad'    => 'nullable|integer|min:0',
+            
         ]);
 
         AvailabilityDay::create($request->all());

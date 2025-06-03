@@ -119,6 +119,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('tipos/{tipoId}', [TipoController::class, 'editTipo']); // Editar un tipo
     Route::delete('tipos/{tipoId}', [TipoController::class, 'destroyTipo']); // Eliminar un tipo
     Route::get('/pasante', [PasanteController::class, 'index'])->name('pasante.index');
+
+    
     Route::get('/pasante/historial', [PasanteController::class, 'historial'])->name('pasante.historial');
     Route::put('/pasante/actualizar/{id}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
 

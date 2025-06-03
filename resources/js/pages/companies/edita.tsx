@@ -57,11 +57,7 @@ export default function Edit({ company, categories, availability }: Props) {
         setData('availability', [...data.availability, createEmptyAvailability()]);
     };
 
-    const handleAvailabilityChange = (
-        index: number,
-        field: keyof Availability,
-        value: Availability[keyof Availability],
-    ) => {
+    const handleAvailabilityChange = (index: number, field: keyof Availability, value: Availability[keyof Availability]) => {
         const updated = [...data.availability];
         updated[index] = { ...updated[index], [field]: value };
         setData('availability', updated);
@@ -174,7 +170,7 @@ export default function Edit({ company, categories, availability }: Props) {
 
                         {data.availability.map((avail, idx) => (
                             <div key={idx} className="mb-4 flex justify-center">
-                                <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-3">
+                                <div className="grid w-full max-w-3xl grid-cols-1 gap-4 md:grid-cols-4">
                                     <select
                                         className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                         value={avail.day_of_week}
@@ -194,9 +190,10 @@ export default function Edit({ company, categories, availability }: Props) {
                                         value={avail.turno}
                                         onChange={(e) => {
                                             const turno = e.target.value as 'mañana' | 'tarde';
-                                            const times = turno === 'mañana'
-                                                ? { start_time: '09:30', end_time: '13:00' }
-                                                : { start_time: '14:00', end_time: '18:00' };
+                                            const times =
+                                                turno === 'mañana'
+                                                    ? { start_time: '09:30', end_time: '13:00' }
+                                                    : { start_time: '14:00', end_time: '18:00' };
 
                                             handleAvailabilityChange(idx, 'turno', turno);
                                             handleAvailabilityChange(idx, 'start_time', times.start_time);
@@ -206,6 +203,21 @@ export default function Edit({ company, categories, availability }: Props) {
                                         <option value="mañana">Mañana</option>
                                         <option value="tarde">Tarde</option>
                                     </select>
+
+                                    {/* Cantidad */}
+                                    <div className="col-span-1">
+                                        <label className="sr-only">Cantidad</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            placeholder="Cantidad"
+                                            value={avail.cantidad ?? ''}
+                                            onChange={(e) =>
+                                                handleAvailabilityChange(idx, 'cantidad', e.target.value === '' ? null : parseInt(e.target.value, 10))
+                                            }
+                                        />
+                                    </div>
 
                                     <div className="flex items-center justify-center">
                                         <button
