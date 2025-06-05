@@ -40,20 +40,28 @@ import {
     useTheme,
 } from '@mui/material';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-interface Tarea {
+interface Asignado {
+    user_id: number;
+    user_name: string;
+    estado: string;
+    detalle: string;
+}
+
+interface TareaAsignada {
     id: number;
     titulo: string;
     prioridad: string;
     descripcion: string;
-    fecha: string;
+    fecha: string; // "YYYY-MM-DD"
     tipo?: { id: number; nombre_tipo: string };
     company?: { id: number; name: string };
+    asignados: Asignado[];
 }
 
 export default function Tareas() {
-    const [tareas, setTareas] = useState<Tarea[]>([]);
+    const [tareas, setTareas] = useState<TareaAsignada[]>([]);
     const [asignarEmpresa, setAsignarEmpresa] = useState('no');
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({
@@ -72,42 +80,91 @@ export default function Tareas() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    const [filterMode, setFilterMode] = useState<'todos' | 'semana' | 'mes'>('todos');
+    const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     const [tipos, setTipos] = useState<{ id: number; nombre: string }[]>([]);
     const [empresas, setEmpresas] = useState<{ id: number; nombre: string }[]>([]);
 
-    // Obtener la fecha desde la URL
+    // Obtener la fecha desde la URL (si se usa en otra parte)
     const queryParams = new URLSearchParams(window.location.search);
     const fechaParam = queryParams.get('fecha');
     const today = new Date().toISOString().split('T')[0];
     const esHoy = !fechaParam || fechaParam === today;
 
+    // Estilo común para celdas de encabezado
+    const headerCellSx = {
+        fontWeight: 'bold',
+        backgroundColor: theme.palette.primary.main,
+        color: theme.palette.common.white,
+        padding: { xs: '8px', md: '16px' },
+        fontSize: { xs: '0.875rem', md: '1rem' },
+    };
+
+    // Auxiliar: interpretar "YYYY-MM-DD" como fecha LOCAL
+    const parseLocalDate = (dateStr: string): Date => {
+        const [year, month, day] = dateStr.split('-').map((p) => parseInt(p, 10));
+        return new Date(year, month - 1, day);
+    };
+
+    // 1. Chequear si "dateStr" está en la SEMANA ACTUAL (Lun→Dom)
+    const isDateInCurrentWeek = (dateStr: string) => {
+        const date = parseLocalDate(dateStr);
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0–6
+        const diffToMonday = (dayOfWeek + 6) % 7;
+        const thisMonday = new Date(now);
+        thisMonday.setDate(now.getDate() - diffToMonday);
+        thisMonday.setHours(0, 0, 0, 0);
+
+        const thisSunday = new Date(thisMonday);
+        thisSunday.setDate(thisMonday.getDate() + 6);
+        thisSunday.setHours(23, 59, 59, 999);
+
+        return date >= thisMonday && date <= thisSunday;
+    };
+
+    // 2. Construir el array de 7 fechas (YYYY-MM-DD) de Lunes→Domingo de la SEMANA ACTUAL
+    const weekDates = useMemo(() => {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const diffToMonday = (dayOfWeek + 6) % 7;
+        const thisMonday = new Date(now);
+        thisMonday.setDate(now.getDate() - diffToMonday);
+        thisMonday.setHours(0, 0, 0, 0);
+
+        const dates: string[] = [];
+        for (let i = 0; i < 7; i++) {
+            const d = new Date(thisMonday);
+            d.setDate(thisMonday.getDate() + i);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            dates.push(`${yyyy}-${mm}-${dd}`);
+        }
+        return dates;
+    }, []);
+
     useEffect(() => {
-        fetchTareas();
+        fetchTareasAsignadas();
         axios.get('/api/tipos').then((res) => setTipos(res.data));
         axios.get('/api/companies').then((res) => setEmpresas(res.data));
     }, [fechaParam]);
 
+    // Reset de página y day cuando cambian searchTerm o filterMode
     useEffect(() => {
         setPage(0);
-    }, [searchTerm]);
+        setSelectedDay(null);
+    }, [searchTerm, filterMode]);
 
-    useEffect(() => {
-        const maxPage = Math.max(0, Math.ceil(filteredTareas.length / rowsPerPage) - 1);
-        if (page > maxPage) {
-            setPage(maxPage);
-        }
-    }, [rowsPerPage, page]);
-
-    const fetchTareas = () => {
-        const url = fechaParam ? `/api/tareas-por-fecha?fecha=${fechaParam}` : '/api/tareas';
-
+    const fetchTareasAsignadas = () => {
         axios
-            .get(url)
+            .get('/api/tareas-asignadas')
             .then((res) => setTareas(res.data))
-            .catch((err) => console.error('Error al cargar tareas:', err));
+            .catch((err) => console.error('Error al cargar tareas asignadas:', err));
     };
 
     const handleChangePage = (event: unknown, newPage: number) => {
@@ -134,7 +191,7 @@ export default function Tareas() {
         setShowModal(true);
     };
 
-    const openEditModal = (tarea: Tarea) => {
+    const openEditModal = (tarea: TareaAsignada) => {
         setIsEditMode(true);
         setEditId(tarea.id);
         setFormData({
@@ -164,7 +221,7 @@ export default function Tareas() {
         request
             .then(() => {
                 setShowModal(false);
-                fetchTareas();
+                fetchTareasAsignadas();
             })
             .catch((err) => {
                 console.error('Error al guardar tarea:', err);
@@ -177,40 +234,44 @@ export default function Tareas() {
         if (!confirm('¿Eliminar esta tarea?')) return;
         axios
             .delete(`/tareas/${id}`)
-            .then(() => fetchTareas())
+            .then(() => fetchTareasAsignadas())
             .catch((err) => {
                 console.error('Error al eliminar tarea:', err);
                 alert('Hubo un error al eliminar la tarea');
             });
     };
 
-    const filteredTareas = tareas.filter((t) => t.titulo.toLowerCase().includes(searchTerm.toLowerCase()));
-
     const handleRowCheckbox = (id: number) => {
         setSelectedRows((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
     };
 
     const handleHeaderCheckbox = () => {
-        if (selectedRows.length === filteredTareas.length) {
+        if (selectedRows.length === finalFilteredTareas.length) {
             setSelectedRows([]);
         } else {
-            setSelectedRows(filteredTareas.map((t) => t.id));
+            setSelectedRows(finalFilteredTareas.map((t) => t.id));
         }
     };
 
-    const handleAsignarTareas = () => {
-        if (!confirm('¿Asignar tareas a cada pasante?')) return;
+    // 3. Filtrado por búsqueda
+    const filteredTareas = tareas.filter((t) => t.titulo.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        axios
-            .post('/asignar-tareas')
-            .then((res) => {
-                alert(res.data.message);
-            })
-            .catch((err) => {
-                console.error('Error al asignar tareas:', err);
-                alert(err.response?.data?.message || 'Error al asignar tareas');
-            });
-    };
+    // 4. Filtrar según modo (“todos”, “semana” o “mes”), y en “semana” filtrar día si lo hay
+    const finalFilteredTareas = filteredTareas.filter((t) => {
+        if (filterMode === 'semana') {
+            if (!isDateInCurrentWeek(t.fecha)) return false;
+            if (selectedDay) {
+                return t.fecha === selectedDay;
+            }
+            return true;
+        }
+        if (filterMode === 'mes') {
+            const date = parseLocalDate(t.fecha);
+            const now = new Date();
+            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+        }
+        return true;
+    });
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Tareas', href: '/tareas' }]}>
@@ -223,7 +284,7 @@ export default function Tareas() {
                     </Typography>
                 )}
 
-                {/* Buscador y botones */}
+                {/* Buscador y botones de filtro */}
                 <Box
                     sx={{
                         mb: 4,
@@ -234,33 +295,93 @@ export default function Tareas() {
                         justifyContent: { md: 'space-between' },
                     }}
                 >
-                    <TextField
-                        placeholder="Buscar por título..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        size="small"
-                        fullWidth
-                        sx={{ maxWidth: 320 }}
-                        InputProps={{
-                            startAdornment: (
-                                <IconButton tabIndex={-1}>
-                                    <SearchIcon />
-                                </IconButton>
-                            ),
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: { xs: 'column', md: 'row' },
+                            gap: 2,
+                            alignItems: { md: 'center' },
+                            width: '100%',
+                            flexWrap: 'wrap',
                         }}
-                    />
+                    >
+                        <TextField
+                            placeholder="Buscar por título..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            size="small"
+                            fullWidth={isMobile}
+                            sx={{ maxWidth: 320 }}
+                            InputProps={{
+                                startAdornment: (
+                                    <IconButton tabIndex={-1}>
+                                        <SearchIcon />
+                                    </IconButton>
+                                ),
+                            }}
+                        />
+
+                        <Button
+                            variant={filterMode === 'todos' ? 'contained' : 'outlined'}
+                            color="primary"
+                            onClick={() => setFilterMode('todos')}
+                            sx={{ fontWeight: 'bold' }}
+                        >
+                            Mostrar Todas
+                        </Button>
+                        <Button
+                            variant={filterMode === 'semana' ? 'contained' : 'outlined'}
+                            color="primary"
+                            onClick={() => setFilterMode('semana')}
+                            sx={{ fontWeight: 'bold' }}
+                        >
+                            Esta Semana
+                        </Button>
+                        <Button
+                            variant={filterMode === 'mes' ? 'contained' : 'outlined'}
+                            color="primary"
+                            onClick={() => setFilterMode('mes')}
+                            sx={{ fontWeight: 'bold' }}
+                        >
+                            Este Mes
+                        </Button>
+                    </Box>
+
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                         <Button variant="contained" color="primary" onClick={openCreateModal} startIcon={<EditIcon />} sx={{ fontWeight: 'bold' }}>
                             Nueva Tarea
                         </Button>
-
-                        {esHoy && (
-                            <Button variant="contained" color="secondary" onClick={handleAsignarTareas} sx={{ fontWeight: 'bold' }}>
-                                Asignar Tareas a Pasantes
-                            </Button>
-                        )}
                     </Box>
                 </Box>
+
+                {/* Si estoy en modo “semana”, muestro los 7 botones (Lun→Dom) de la semana actual */}
+                {filterMode === 'semana' && (
+                    <Box sx={{ mb: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {weekDates.map((date) => {
+                            const d = parseLocalDate(date);
+                            const dayName = d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', '');
+                            return (
+                                <Button
+                                    key={date}
+                                    variant={selectedDay === date ? 'contained' : 'outlined'}
+                                    color="primary"
+                                    onClick={() => setSelectedDay(date)}
+                                    sx={{ textTransform: 'capitalize' }}
+                                >
+                                    {dayName} {date.slice(8)}
+                                </Button>
+                            );
+                        })}
+                        <Button
+                            variant={!selectedDay ? 'contained' : 'outlined'}
+                            color="primary"
+                            onClick={() => setSelectedDay(null)}
+                            sx={{ fontWeight: 'bold' }}
+                        >
+                            Todas
+                        </Button>
+                    </Box>
+                )}
 
                 {/* Tabla de tareas */}
                 <TableContainer
@@ -277,121 +398,61 @@ export default function Tareas() {
                     <Table stickyHeader sx={{ minWidth: 900 }}>
                         <TableHead>
                             <TableRow>
-                                <TableCell
-                                    padding="checkbox"
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell padding="checkbox" sx={headerCellSx}>
                                     <Checkbox
-                                        checked={filteredTareas.length > 0 && selectedRows.length === filteredTareas.length}
-                                        indeterminate={selectedRows.length > 0 && selectedRows.length < filteredTareas.length}
+                                        checked={finalFilteredTareas.length > 0 && selectedRows.length === finalFilteredTareas.length}
+                                        indeterminate={selectedRows.length > 0 && selectedRows.length < finalFilteredTareas.length}
                                         onChange={handleHeaderCheckbox}
                                     />
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>Asignados</Box>
+                                </TableCell>
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <BusinessIcon fontSize="small" /> Titulo
+                                        <BusinessIcon fontSize="small" /> Título
                                     </Box>
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <CategoryIcon fontSize="small" /> Prioridad
                                     </Box>
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <CalendarTodayIcon fontSize="small" /> Fecha
                                     </Box>
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <BusinessIcon fontSize="small" /> Descripcion
+                                        <BusinessIcon fontSize="small" /> Descripción
                                     </Box>
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <ListAltIcon fontSize="small" /> Tipo
                                     </Box>
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <BusinessIcon fontSize="small" /> Empresa
                                     </Box>
                                 </TableCell>
-                                <TableCell
-                                    sx={(theme) => ({
-                                        fontWeight: 'bold',
-                                        backgroundColor: theme.palette.primary.main,
-                                        color: theme.palette.common.white,
-                                        padding: { xs: '8px', md: '16px' },
-                                        fontSize: { xs: '0.875rem', md: '1rem' },
-                                    })}
-                                >
+                                <TableCell sx={headerCellSx}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         <EditIcon fontSize="small" /> / <DeleteIcon fontSize="small" /> Acciones
                                     </Box>
                                 </TableCell>
                             </TableRow>
                         </TableHead>
+
                         <TableBody>
-                            {filteredTareas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tarea) => (
+                            {finalFilteredTareas.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((tarea) => (
                                 <TableRow key={tarea.id} hover>
                                     <TableCell padding="checkbox">
                                         <Checkbox checked={selectedRows.includes(tarea.id)} onChange={() => handleRowCheckbox(tarea.id)} />
                                     </TableCell>
+                                    <TableCell>{tarea.asignados.length > 0 ? tarea.asignados.map((a) => a.user_name).join(', ') : '—'}</TableCell>
                                     <TableCell>{tarea.titulo}</TableCell>
                                     <TableCell>{tarea.prioridad || '-'}</TableCell>
                                     <TableCell>{tarea.fecha || '-'}</TableCell>
@@ -408,21 +469,22 @@ export default function Tareas() {
                                     </TableCell>
                                 </TableRow>
                             ))}
-                            {filteredTareas.length === 0 && (
+                            {finalFilteredTareas.length === 0 && (
                                 <TableRow>
-                                    <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                                    <TableCell colSpan={9} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                                         No se encontraron tareas.
                                     </TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
+
                         <TableFooter>
                             <TableRow>
-                                <TableCell colSpan={8} sx={{ p: 0 }}>
+                                <TableCell colSpan={9} sx={{ p: 0 }}>
                                     <TablePagination
                                         rowsPerPageOptions={[5, 10, 25]}
                                         component="div"
-                                        count={filteredTareas.length}
+                                        count={finalFilteredTareas.length}
                                         rowsPerPage={rowsPerPage}
                                         page={page}
                                         onPageChange={handleChangePage}
@@ -550,7 +612,7 @@ export default function Tareas() {
                         Cancelar
                     </Button>
                     <Button onClick={handleSubmit} color="primary" variant="contained" disabled={loading}>
-                        {loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear'}
+                        {loading ? 'Guardando...' : isEditMode ? 'Actualizar' : 'Crear y Asignar'}
                     </Button>
                 </DialogActions>
             </Dialog>

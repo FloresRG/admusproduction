@@ -40,6 +40,7 @@ Route::get('/consultorias', fn() => Inertia::render('paginas/Consultorias'))
 Route::get('/eventos-digitales', fn() => Inertia::render('paginas/EventosDigitales'))
      ->name('eventos.digitales');
 
+     
 
 
 
@@ -232,6 +233,7 @@ Route::get('/api/tipos', function () {
 Route::get('/api/companies', function () {
     return \App\Models\Company::select('id', 'name as nombre')->get();
 });
+Route::get('/api/tareas-asignadas', [TareaController::class, 'tareasAsignadas']);
 Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 
 
