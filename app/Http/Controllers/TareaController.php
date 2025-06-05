@@ -296,7 +296,7 @@ public function tareasAsignadas()
     return response()->json($resultado);
 }
 
-}
+
     public function generarPdfTareasAsignadas()
     {
         $fechaActual = Carbon::now()->toDateString();
