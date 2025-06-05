@@ -84,6 +84,7 @@ class TareaController extends Controller
         $tarea->delete();
         return response()->json(['message' => 'Tarea eliminada']);
     }
+
     public function asignarTareas()
     {
         $pasantes = User::role('Pasante')->get();
@@ -214,5 +215,61 @@ class TareaController extends Controller
             'total_tareas_asignadas' => count($tareasAsignadas),
             'tareas_por_pasante' => collect($pasantesTipos)->mapWithKeys(fn($info) => [$info['user']->name => count($info['tareas'])]),
         ]);
+    }
+    public function generarPdfTareasAsignadas()
+    {
+        $fechaActual = Carbon::now()->toDateString();
+
+        // Obtener asignaciones de tareas con relaciones necesarias
+        $asignaciones = AsignacionTarea::with(['user', 'tarea.tipo'])
+            ->whereDate('fecha', $fechaActual)
+            ->get();
+
+        if ($asignaciones->isEmpty()) {
+            return response()->json(['message' => 'No hay tareas asignadas hoy.'], 404);
+        }
+
+        $pdf = new \FPDF();
+        $pdf->AddPage();
+        $pdf->SetMargins(10, 10, 10);
+
+        // Logos
+        $pdf->Image(public_path('logo.jpeg'), 10, 10, 30);
+        $pdf->Image(public_path('logo.jpeg'), 170, 10, 30);
+
+        // Título
+        $pdf->Ln(15);
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->Cell(0, 10, utf8_decode('Asignación de Tareas - ' . $fechaActual), 0, 1, 'C');
+        $pdf->Ln(5);
+
+        // Tabla de encabezados
+        $pdf->SetFillColor(0, 102, 204); // Azul
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->Cell(50, 10, utf8_decode('Pasante'), 1, 0, 'C', true);
+        $pdf->Cell(60, 10, utf8_decode('Tarea'), 1, 0, 'C', true);
+        $pdf->Cell(40, 10, utf8_decode('Tipo'), 1, 0, 'C', true);
+        $pdf->Cell(30, 10, utf8_decode('Prioridad'), 1, 1, 'C', true);
+
+        // Filas
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->SetTextColor(0, 0, 0);
+
+        foreach ($asignaciones as $asignacion) {
+            $pasante = utf8_decode($asignacion->user->name);
+            $tarea = utf8_decode($asignacion->tarea->titulo ?? 'Sin nombre');
+            $tipo = utf8_decode($asignacion->tarea->tipo->nombre_tipo?? 'N/A');
+            $prioridad = ucfirst($asignacion->tarea->prioridad);
+
+            $pdf->Cell(50, 10, $pasante, 1);
+            $pdf->Cell(60, 10, $tarea, 1);
+            $pdf->Cell(40, 10, $tipo, 1);
+            $pdf->Cell(30, 10, $prioridad, 1, 1);
+        }
+
+        return response($pdf->Output('S', 'tareas_asignadas.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="tareas_asignadas.pdf"');
     }
 }

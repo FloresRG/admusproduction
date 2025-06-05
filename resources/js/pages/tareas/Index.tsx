@@ -205,6 +205,10 @@ export default function Tareas() {
             .post('/asignar-tareas')
             .then((res) => {
                 alert(res.data.message);
+
+                // Abre el PDF en otra pestaña después de asignar
+                const pdfUrl = '/tareas/pdf'; // O usa route('tareas.asignadas.pdf') si usas Ziggy
+                window.open(pdfUrl, '_blank');
             })
             .catch((err) => {
                 console.error('Error al asignar tareas:', err);
