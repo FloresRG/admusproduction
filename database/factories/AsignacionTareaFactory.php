@@ -21,7 +21,7 @@ class AsignacionTareaFactory extends Factory
         return [
             'user_id' => User::factory(),
             'tarea_id' => Tarea::factory(),
-            'estado' => $this->faker->randomElement(['pendiente', 'en_proceso', 'completada']),
+            'estado' => $this->faker->randomElement([]),
             'detalle' => $this->faker->sentence,
             'fecha' => $this->faker->date(),
         ];

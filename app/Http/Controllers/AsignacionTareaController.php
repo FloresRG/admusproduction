@@ -55,23 +55,24 @@ class AsignacionTareaController extends Controller
     }
 
     public function store(Request $request, $fecha, User $user)
-    {
-        $data = $request->validate([
-            'tarea_id' => 'required|exists:tareas,id',
-            'estado'   => 'required|string',
-            'detalle'  => 'nullable|string',
-        ]);
+{
+    $data = $request->validate([
+        'tarea_id' => 'required|exists:tareas,id',
+        'estado'   => ['required', Rule::in(['pendiente', 'en_revision', 'publicada'])],
+        'detalle'  => 'nullable|string',
+    ]);
 
-        AsignacionTarea::create([
-            'user_id'  => $user->id,
-            'tarea_id' => $data['tarea_id'],
-            'estado'   => $data['estado'],
-            'detalle'  => $data['detalle'] ?? '',
-            'fecha'    => $fecha,
-        ]);
+    AsignacionTarea::create([
+        'user_id'  => $user->id,
+        'tarea_id' => $data['tarea_id'],
+        'estado'   => $data['estado'],
+        'detalle'  => $data['detalle'] ?? '',
+        'fecha'    => $fecha,
+    ]);
 
-        return redirect()->back();
-    }
+    return redirect()->back();
+}
+
 
     public function destroy(AsignacionTarea $asignacion)
     {
@@ -79,17 +80,24 @@ class AsignacionTareaController extends Controller
         return redirect()->back();
     }
 
-    public function update(Request $request, AsignacionTarea $asignacion)
-    {
-        $data = $request->validate([
-            'estado' => ['required', Rule::in(['pendiente', 'en_proceso', 'completada'])],
-        ]);
+    // app/Http/Controllers/AsignacionTareaController.php
 
-        $asignacion->update(['estado' => $data['estado']]);
+public function update(Request $request, AsignacionTarea $asignacion)
+{
+    $data = $request->validate([
+        // Validamos 'estado' solo si viene en la petición
+        'estado'  => ['sometimes', 'required', Rule::in(['pendiente', 'en_revision', 'publicada'])],
+        // Validamos 'detalle' solo si viene en la petición
+        'detalle' => ['sometimes', 'nullable', 'string'],
+    ]);
 
-        // Si vienes de Inertia, mejor devolver un redirect back manteniendo props
-        return back();
-    }
+    // Con esto, $data tendrá solo las claves que se enviaron. 
+    // Actualizamos solo los campos remitidos por el front-end.
+    $asignacion->update($data);
+
+    return back();
+}
+
 
     /**
      * Lista las fechas en que el usuario autenticado tiene asignaciones.

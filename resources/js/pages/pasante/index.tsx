@@ -47,16 +47,16 @@ type Props = {
         search?: string;
     };
 };
-
+///'pendiente', 'en_revision', 'publicada'
 const estadoOptions = [
     { value: 'pendiente', label: 'Pendiente' },
-    { value: 'en_proceso', label: 'En proceso' },
-    { value: 'completada', label: 'Completada' },
+    { value: 'en_revision', label: 'En revision' },
+    { value: 'publicada', label: 'Publicada' },
 ];
 
 // Color de tarjeta por estado
 const getEstadoColor = (estado: string) => {
-    if (estado === 'completada') return 'success.main';
+    if (estado === 'publicada') return 'success.main';
     return 'background.paper';
 };
 
@@ -285,7 +285,7 @@ export default function Pasante({ tareas, filters }: Props) {
     const totalMedia = countTotal(allTareas.media);
     const totalBaja = countTotal(allTareas.baja);
     const totalCompletadas =
-        countEstado(allTareas.alta, 'completada') + countEstado(allTareas.media, 'completada') + countEstado(allTareas.baja, 'completada');
+        countEstado(allTareas.alta, 'publicada') + countEstado(allTareas.media, 'publicada') + countEstado(allTareas.baja, 'publicada');
     const totalPendientes = countTotal(allTareas.alta) + countTotal(allTareas.media) + countTotal(allTareas.baja) - totalCompletadas;
 
     // Función para guardar cambios al editar tarea
