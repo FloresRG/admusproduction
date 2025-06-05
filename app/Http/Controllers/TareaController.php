@@ -123,6 +123,7 @@ class TareaController extends Controller
         $tarea->delete();
         return response()->json(['message' => 'Tarea eliminada']);
     }
+
     public function asignarTareas()
     {
         $pasantes = User::role('Pasante')->get();
@@ -254,45 +255,4 @@ class TareaController extends Controller
             'tareas_por_pasante' => collect($pasantesTipos)->mapWithKeys(fn($info) => [$info['user']->name => count($info['tareas'])]),
         ]);
     }
-    
-public function tareasAsignadas()
-{
-    // Traemos todas las tareas que tengan al menos una asignación
-    // e incluimos la relación con 'tipo', 'company' y 'asignaciones.user'.
-    $tareas = Tarea::with([
-            'tipo:id,nombre_tipo',
-            'company:id,name',
-            'asignaciones.user:id,name' 
-        ])
-        ->whereHas('asignaciones') // solo las que tengan asignaciones
-        ->get();
-
-    // Transformamos cada tarea para enviar en JSON:
-    // - Queremos enviar id, titulo, prioridad, descripcion, fecha, tipo, company
-    // - Y, por cada asignación, el nombre del usuario asignado.
-    $resultado = $tareas->map(fn($t) => [
-        'id'            => $t->id,
-        'titulo'        => $t->titulo,
-        'prioridad'     => $t->prioridad,
-        'descripcion'   => $t->descripcion,
-        'fecha'         => $t->fecha,
-        'tipo'          => $t->tipo ? [
-                              'id'          => $t->tipo->id,
-                              'nombre_tipo' => $t->tipo->nombre_tipo,
-                          ] : null,
-        'company'       => $t->company ? [
-                              'id'     => $t->company->id,
-                              'name'   => $t->company->name,
-                          ] : null,
-        'asignados'     => $t->asignaciones->map(fn($a) => [
-                              'user_id'   => $a->user->id,
-                              'user_name' => $a->user->name,
-                              'estado'    => $a->estado,
-                              'detalle'   => $a->detalle,
-                          ]),
-    ]);
-
-    return response()->json($resultado);
-}
-
 }
