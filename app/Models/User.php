@@ -62,6 +62,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(AsignacionTarea::class);
     }
+    
     public function availabilities()
     {
         return $this->hasMany(InfluencerAvailability::class);
