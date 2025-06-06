@@ -252,6 +252,8 @@ Route::get('/api/roles', fn() => response()->json(Role::all()));
 Route::get('/semana', [SemanaController::class, 'index']);
 Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
 Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
+Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
+
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
