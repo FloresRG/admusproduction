@@ -165,7 +165,7 @@ const PrioritySection = ({ title, items, onEdit }: { title: string; items?: Asig
             </Typography>
             <Grid container spacing={3}>
                 {items.map((item) => {
-                    const isCompleted = item.estado === 'completada';
+                    const isCompleted = item.estado === 'publicada';
                     const detalleLargo = item.detalle && item.detalle.length > 100;
                     const mostrarDetalle = !detalleLargo || showMoreIds.has(item.id) ? item.detalle : item.detalle?.slice(0, 100) + '...';
 

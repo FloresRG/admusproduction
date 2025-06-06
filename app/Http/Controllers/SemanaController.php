@@ -28,7 +28,15 @@ class SemanaController extends Controller
         ])
             ->whereBetween('fecha', [$inicioSemana->toDateString(), $finSemana->toDateString()])
             ->orderBy('fecha')
-            ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
+            ->orderByRaw("
+                        CASE prioridad
+                            WHEN 'alta'  THEN 1
+                            WHEN 'media' THEN 2
+                            WHEN 'baja'  THEN 3
+                            ELSE 4
+                        END
+                    ")
+
             ->get();
 
 
