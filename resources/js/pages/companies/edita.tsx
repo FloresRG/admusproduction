@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import React from 'react';
+import CompanyMapInput from './CompanyMapInput';
 
 type CompanyCategory = {
     id: number;
@@ -21,6 +22,7 @@ type Company = {
     company_category_id: string;
     contract_duration: string;
     description: string;
+    ubicacion: string;
     direccion: string;
     start_date: string;
     end_date: string;
@@ -47,6 +49,7 @@ export default function Edit({ company, categories, availability }: Props) {
         company_category_id: company.company_category_id,
         contract_duration: company.contract_duration,
         description: company.description || '',
+        ubicacion: company.ubicacion || '',
         direccion: company.direccion || '',
         start_date: company.start_date || '',
         end_date: company.end_date || '',
@@ -148,12 +151,23 @@ export default function Edit({ company, categories, availability }: Props) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Dirección</label>
-                        <textarea
+                        <label className="block text-sm font-medium text-gray-700">Ubicación</label>
+                        <input
+                            type="text"
                             className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            value={data.direccion}
-                            onChange={(e) => setData('direccion', e.target.value)}
+                            value={data.ubicacion}
+                            onChange={(e) => setData('ubicacion', e.target.value)}
                         />
+                        {errors.ubicacion && <div className="mt-1 text-red-600">{errors.ubicacion}</div>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Seleccionar ubicación en el mapa</label>
+                        <CompanyMapInput
+                            value={data.direccion}
+                            onChange={(value) => setData('direccion', value)}
+                        />
+                        {errors.direccion && <div className="mt-1 text-red-600">{errors.direccion}</div>}
                     </div>
 
                     <div>
@@ -162,7 +176,9 @@ export default function Edit({ company, categories, availability }: Props) {
                             className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
+                            rows={4}
                         />
+                        {errors.description && <div className="mt-1 text-red-600">{errors.description}</div>}
                     </div>
 
                     <div className="mt-6">
@@ -222,10 +238,9 @@ export default function Edit({ company, categories, availability }: Props) {
                                     <div className="flex items-center justify-center">
                                         <button
                                             type="button"
-                                            className="text-xl font-bold text-red-600"
+                                            className="text-xl font-bold text-red-600 hover:text-red-800"
                                             onClick={() => handleRemoveAvailability(idx)}
                                             disabled={data.availability.length === 1}
-                                            title="Eliminar este día"
                                         >
                                             ×
                                         </button>
@@ -235,26 +250,28 @@ export default function Edit({ company, categories, availability }: Props) {
                         ))}
 
                         <div className="mt-2 flex justify-center">
-                            <button type="button" onClick={handleAddAvailability} className="font-semibold text-blue-600">
+                            <button
+                                type="button"
+                                onClick={handleAddAvailability}
+                                className="text-blue-600 hover:text-blue-800"
+                            >
                                 + Añadir otro día
                             </button>
                         </div>
-
-                        {/* Mostrar errores de disponibilidad si existen */}
-                        {Object.keys(errors)
-                            .filter((key) => key.startsWith('availability'))
-                            .map((key) => (
-                                <div key={key} className="text-center text-red-600">
-                                    {errors[key as keyof typeof errors]}
-                                </div>
-                            ))}
                     </div>
 
                     <div className="flex justify-end space-x-4">
-                        <Link href="/companies" className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-400">
+                        <Link
+                            href="/companies"
+                            className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-400"
+                        >
                             Cancelar
                         </Link>
-                        <button type="submit" className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700" disabled={processing}>
+                        <button
+                            type="submit"
+                            className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700"
+                            disabled={processing}
+                        >
                             {processing ? 'Guardando...' : 'Guardar cambios'}
                         </button>
                     </div>

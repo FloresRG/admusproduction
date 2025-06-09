@@ -174,16 +174,49 @@ public function destroy(Week $week, Booking $booking)
     {
          $bookings = \App\Models\Booking::with([
         'week',
-        'company',
-        'user', // opcional, si lo necesitas en frontend
+        'company' => function($query) {
+            $query->select([
+                'id',
+                'name',
+                'company_category_id',
+                'contract_duration',
+                'description',
+                'ubicacion',
+                'direccion',
+                'start_date',
+                'end_date'
+            ]);
+        },
+        'company.category', // Include the company category relation
+        'user'
     ])
     ->where('user_id', Auth::id())
-    ->orderByDesc('start_time')
-    ->get();
+    ->orderBy('start_time')
+    ->get()
+    ->map(function ($booking) {
+        return [
+            'id' => $booking->id,
+            'start_time' => $booking->start_time,
+            'end_time' => $booking->end_time,
+            'company' => [
+                'id' => $booking->company->id,
+                'name' => $booking->company->name,
+                'category' => $booking->company->category->name,
+                'contract_duration' => $booking->company->contract_duration,
+                'description' => $booking->company->description,
+                'ubicacion' => $booking->company->ubicacion,
+                'direccion' => $booking->company->direccion, // This will contain the coordinates as "-16.491381,-68.144709"
+                'start_date' => $booking->company->start_date,
+                'end_date' => $booking->company->end_date,
+            ],
+            'week' => $booking->week,
+            'user' => $booking->user
+        ];
+    });
 
     return \Inertia\Inertia::render('Bookings/ThisWeek', [
         'bookings' => $bookings,
-        'user' => Auth::user(), // Por si necesitas mostrar datos del usuario
+        'user' => Auth::user(),
     ]);
-    }
+}
 }
