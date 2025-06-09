@@ -40,6 +40,7 @@ Route::get('/consultorias', fn() => Inertia::render('paginas/Consultorias'))
 Route::get('/eventos-digitales', fn() => Inertia::render('paginas/EventosDigitales'))
      ->name('eventos.digitales');
 
+     
 
 
 
@@ -221,6 +222,7 @@ Route::get('/tareas', function () {
 Route::get('/api/vertareas', [TareaController::class, 'vertareas']);
 Route::get('/api/tareas', [TareaController::class, 'index']);
 Route::get('/api/tareas-por-fecha', [TareaController::class, 'tareasPorFecha']);
+Route::get('/tareas/pdf', [TareaController::class, 'generarPdfTareasAsignadas'])->name('tareas.asignadas.pdf');
 
 
 Route::post('/create/tareas', [TareaController::class, 'store']);
@@ -232,6 +234,7 @@ Route::get('/api/tipos', function () {
 Route::get('/api/companies', function () {
     return \App\Models\Company::select('id', 'name as nombre')->get();
 });
+Route::get('/api/tareas-asignadas', [TareaController::class, 'tareasAsignadas']);
 Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 
 
@@ -247,6 +250,9 @@ Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
 Route::get('/semana', [SemanaController::class, 'index']);
+Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
+Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
+Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
 
 
 require __DIR__ . '/settings.php';

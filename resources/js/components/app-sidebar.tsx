@@ -149,7 +149,7 @@ export function AppSidebar() {
     const roles = auth?.user?.roles.map((r) => r.name) || [];
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
-    const isPasante = roles.includes('Pasante');
+    const isPasante = roles.includes('pasante');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);
@@ -168,6 +168,7 @@ export function AppSidebar() {
                     { title: 'Roles', href: '/roles', icon: AdminPanelSettingsIcon },
                     { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
                     { title: 'Semana', href: '/semana', icon: FormatIndentIncreaseIcon },
+                    { title: 'Semana Influencer', href: '/semanainfluencer', icon: FormatIndentIncreaseIcon },
                 ],
                 isCollapsible: true,
             },
@@ -221,8 +222,8 @@ export function AppSidebar() {
                 title: 'Pasante',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Mis Tareas', href: '/mis-asignaciones/fechas', icon: DateRangeIcon },
-                    { title: 'Pasante', href: '/pasante', icon: FormatIndentIncreaseIcon },
+                    { title: 'Historial de Tareas', href: '/mis-asignaciones/fechas', icon: DateRangeIcon },
+                    { title: 'Mis Tareas', href: '/pasante', icon: FormatIndentIncreaseIcon },
                 ],
                 isCollapsible: false,
             });

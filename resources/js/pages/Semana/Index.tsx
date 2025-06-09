@@ -111,13 +111,14 @@ const Semana = () => {
     const handleCerrarModal = () => {
         setTareaSeleccionada(null);
     };
+    ///'pendiente', 'en_revision', 'publicada'
     const getIconByEstado = (estado: string | undefined) => {
         switch (estado) {
             case 'pendiente':
                 return <PendingIcon fontSize="small" sx={{ ml: 0.5 }} />;
-            case 'en_proceso':
+            case 'en_revision':
                 return <WorkIcon fontSize="small" sx={{ ml: 0.5 }} />;
-            case 'completada':
+            case 'publicada':
                 return <DoneIcon fontSize="small" sx={{ ml: 0.5 }} />;
             default:
                 return null;
@@ -277,12 +278,6 @@ const Semana = () => {
                                 </Grid>
                             </Grid>
 
-                            <Box>
-                                <Typography variant="subtitle2" color="text.secondary">
-                                    Descripción
-                                </Typography>
-                                <Typography>{tareaSeleccionada.descripcion || 'Sin descripción'}</Typography>
-                            </Box>
                             <Box>
                                 <Typography variant="subtitle2" color="text.secondary">
                                     Descripción
