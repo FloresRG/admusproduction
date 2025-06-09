@@ -1,8 +1,9 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
+
 import {
     Box,
     Checkbox,
@@ -437,6 +438,19 @@ export default function InfluencersDatos() {
                                         )}
                                     </TableCell>
                                     <TableCell>
+                                        <IconButton
+                                            variant="contained"
+                                            size="small"
+                                            color="primary"
+                                            sx={{ mr: 1 }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                router.visit(`/users/${row.id}/photos/upload`);
+                                            }}
+                                        >
+                                            Subir foto
+                                        </IconButton>
+
                                         <IconButton
                                             size="small"
                                             color="error"
