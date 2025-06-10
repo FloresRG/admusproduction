@@ -36,58 +36,28 @@ class CompanyController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company_category_id' => 'required|exists:company_categories,id',
-            'contract_duration' => 'required|string|max:255',
+            'contract_duration' => 'required|string',
             'description' => 'nullable|string',
-            'direccion' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
+            'ubicacion' => 'required|string',
+            'direccion' => 'required|string', // Formato: "latitud,longitud"
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
             'availability' => 'required|array',
             'availability.*.day_of_week' => 'required|integer|between:1,7',
-            'availability.*.turno' => 'required|string|in:mañana,tarde',
-            'availability.*.cantidad' => 'nullable|integer',
+            'availability.*.turno' => 'required|in:mañana,tarde',
+            'availability.*.start_time' => 'required|date_format:H:i',
+            'availability.*.end_time' => 'required|date_format:H:i',
+            'availability.*.cantidad' => 'nullable|integer|min:0',
         ]);
 
-        $company = Company::create([
-            'name' => $validated['name'],
-            'company_category_id' => $validated['company_category_id'],
-            'contract_duration' => $validated['contract_duration'],
-            'description' => $validated['description'] ?? '',
-            'direccion' => $validated['direccion'] ?? '',
-            'start_date' => $validated['start_date'] ?? null,
-            'end_date' => $validated['end_date'] ?? null,
-        ]);
+        $company = Company::create($validated);
 
-        foreach ($validated['availability'] as $day) {
-            $dayNames = [
-                1 => 'monday',
-                2 => 'tuesday',
-                3 => 'wednesday',
-                4 => 'thursday',
-                5 => 'friday',
-                6 => 'saturday',
-                7 => 'sunday',
-            ];
-
-            // Definir horarios por turno
-            $horarios = [
-                'mañana' => ['start_time' => '09:30', 'end_time' => '13:00'],
-                'tarde' => ['start_time' => '14:00', 'end_time' => '18:00'],
-            ];
-
-            $company->availabilityDays()->create([
-                'day_of_week' => $dayNames[$day['day_of_week']],
-                'start_time' => $horarios[$day['turno']]['start_time'],
-                'end_time' => $horarios[$day['turno']]['end_time'],
-                'turno' => $day['turno'],
-                'cantidad' => $day['cantidad'] ?? null,
-            ]);
+        foreach ($validated['availability'] as $availability) {
+            $company->availabilityDays()->create($availability);
         }
 
-
-        return Inertia::render('companies/Index', [
-            'companies' => Company::with(['category', 'availabilityDays'])->get(),
-            'success' => 'Compañía creada con éxito.'
-        ]);
+        return redirect()->route('companies.index')
+            ->with('success', 'Empresa creada correctamente');
     }
 
     // Mostrar el formulario de edición
@@ -123,64 +93,35 @@ class CompanyController extends Controller
     }
 
     // Actualizar la compañía
-    public function update(Request $request, $id)
+    public function update(Request $request, Company $company)
     {
-        $company = Company::findOrFail($id);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company_category_id' => 'required|exists:company_categories,id',
-            'contract_duration' => 'required|string|max:255',
+            'contract_duration' => 'required|string',
             'description' => 'nullable|string',
-            'direccion' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
+            'ubicacion' => 'required|string',
+            'direccion' => 'required|string', // Formato: "latitud,longitud"
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
             'availability' => 'required|array',
             'availability.*.day_of_week' => 'required|integer|between:1,7',
-            'availability.*.turno' => 'required|string|in:mañana,tarde',
-            'availability.*.cantidad' => 'nullable|integer',
+            'availability.*.turno' => 'required|in:mañana,tarde',
+            'availability.*.start_time' => 'required|date_format:H:i',
+            'availability.*.end_time' => 'required|date_format:H:i',
+            'availability.*.cantidad' => 'nullable|integer|min:0',
         ]);
 
-        $company->update([
-            'name' => $validated['name'],
-            'company_category_id' => $validated['company_category_id'],
-            'contract_duration' => $validated['contract_duration'],
-            'description' => $validated['description'] ?? '',
-            'direccion' => $validated['direccion'] ?? '',
-            'start_date' => $validated['start_date'] ?? null,
-            'end_date' => $validated['end_date'] ?? null,
-        ]);
+        $company->update($validated);
 
-        // Actualizamos la disponibilidad
+        // Actualizar la disponibilidad
         $company->availabilityDays()->delete();
-
-        $dayNames = [
-            1 => 'monday',
-            2 => 'tuesday',
-            3 => 'wednesday',
-            4 => 'thursday',
-            5 => 'friday',
-            6 => 'saturday',
-            7 => 'sunday',
-        ];
-
-        $horarios = [
-            'mañana' => ['start_time' => '09:30', 'end_time' => '13:00'],
-            'tarde' => ['start_time' => '14:00', 'end_time' => '18:00'],
-        ];
-
-        foreach ($validated['availability'] as $day) {
-            $company->availabilityDays()->create([
-                'day_of_week' => $dayNames[$day['day_of_week']],
-                'start_time' => $horarios[$day['turno']]['start_time'],
-                'end_time' => $horarios[$day['turno']]['end_time'],
-                'turno' => $day['turno'],
-                'cantidad' => $day['cantidad'] ?? null,
-            ]);
+        foreach ($validated['availability'] as $availability) {
+            $company->availabilityDays()->create($availability);
         }
 
-        return redirect()->route('index')->with('success', 'Compañía actualizada con éxito.');
-
+        return redirect()->route('companies.index')
+            ->with('success', 'Empresa actualizada correctamente');
     }
 
     public function destroy(Company $company)

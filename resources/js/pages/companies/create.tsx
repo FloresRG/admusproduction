@@ -1,6 +1,23 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { LatLng } from 'leaflet';
+import { Dialog, DialogActions, DialogContent, DialogTitle, Button, Typography } from '@mui/material';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Corregir los iconos de Leaflet
+const defaultIcon = L.icon({
+    iconUrl: '/path/to/marker-icon.png',
+    shadowUrl: '/path/to/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = defaultIcon;
 
 type CompanyCategory = {
     id: number;
@@ -18,6 +35,15 @@ type Availability = {
     turno: 'mañana' | 'tarde';
     cantidad?: number | null;
 };
+
+type SearchResult = {
+    display_name: string;
+    lat: string;
+    lon: string;
+};
+
+const DEFAULT_CENTER = { lat: -16.5871, lng: -68.0855 };
+const DEFAULT_ZOOM = 13;
 
 export default function Create({ categories }: Props) {
     const { data, setData, post, processing, errors } = useForm<{
@@ -48,6 +74,10 @@ export default function Create({ categories }: Props) {
         ],
     });
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+
     const handleAddAvailability = () => {
         setData('availability', [...data.availability, { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null }]);
     };
@@ -69,6 +99,103 @@ export default function Create({ categories }: Props) {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/companies');
+    };
+// Estado para manejar la visibilidad del mapa
+    const [openMapModal, setOpenMapModal] = useState(false);
+    const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(null);
+    const [mapError, setMapError] = useState<string>('');
+
+    const handleOpenMap = () => {
+        setMapError('');
+        setOpenMapModal(true);
+        // Si ya hay una ubicación guardada, usarla como centro
+        if (data.direccion) {
+            const [lat, lng] = data.direccion.split(',').map(Number);
+            setSelectedLocation(new LatLng(lat, lng));
+        }
+    };
+
+    const handleCloseMap = () => {
+        setOpenMapModal(false);
+    };
+
+    const handleSaveLocation = () => {
+        if (!selectedLocation) {
+            setMapError('Por favor seleccione una ubicación en el mapa');
+            return;
+        }
+        
+        // Redondear coordenadas a 6 decimales para mayor precisión
+        const lat = Number(selectedLocation.lat.toFixed(6));
+        const lng = Number(selectedLocation.lng.toFixed(6));
+        setData('direccion', `${lat},${lng}`);
+        setOpenMapModal(false);
+        setMapError('');
+    };
+
+    // Componente para manejar la selección del marcador
+    function LocationMarker() {
+        const map = useMapEvents({
+            dblclick(e) {
+                e.originalEvent.preventDefault();
+                const { lat, lng } = e.latlng;
+                const newLocation = new LatLng(
+                    Number(lat.toFixed(6)),
+                    Number(lng.toFixed(6))
+                );
+                setSelectedLocation(newLocation);
+                setMapError('');
+            },
+        });
+
+        useEffect(() => {
+            if (selectedLocation) {
+                map.setView(selectedLocation, map.getZoom());
+            }
+        }, [selectedLocation]);
+
+        return selectedLocation ? (
+            <Marker 
+                position={selectedLocation}
+                icon={defaultIcon}
+            >
+                <Popup>
+                    <div className="text-center">
+                        <p>Ubicación seleccionada</p>
+                        <small>{selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</small>
+                    </div>
+                </Popup>
+            </Marker>
+        ) : null;
+    }
+
+    // Añadir la función de búsqueda
+    const handleSearch = async (query: string) => {
+        if (!query.trim()) return;
+        
+        setIsSearching(true);
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+            );
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error('Error searching location:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // Añadir función para seleccionar resultado
+    const handleSelectSearchResult = (result: SearchResult) => {
+        const newLocation = new LatLng(
+            Number(result.lat),
+            Number(result.lon)
+        );
+        setSelectedLocation(newLocation);
+        setSearchResults([]);
+        setSearchQuery('');
     };
 
     return (
@@ -147,14 +274,116 @@ export default function Create({ categories }: Props) {
                     </div>
 
                     {/* Dirección (ancho completo) */}
+                    
+                    {/* Dirección con el mapa */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700">Dirección</label>
-                        <textarea
-                            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            value={data.direccion}
-                            onChange={(e) => setData('direccion', e.target.value)}
-                        />
+                        <label className="block text-sm font-medium text-gray-700">
+        Dirección
+        <span className="text-red-500 ml-1">*</span>
+    </label>
+    <div className="flex items-center space-x-2">
+        <input
+            type="text"
+            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            value={data.direccion}
+            placeholder="Seleccione una ubicación en el mapa"
+            readOnly
+        />
+        <Button 
+            variant="contained" 
+            color="primary" 
+            onClick={handleOpenMap}
+        >
+            Seleccionar Ubicación
+        </Button>
+    </div>
+    {errors.direccion && (
+        <div className="mt-1 text-red-600">{errors.direccion}</div>
+    )}
+</div>
+
+                    {/* Modal con el mapa */}
+                    <Dialog open={openMapModal} onClose={handleCloseMap} maxWidth="md" fullWidth>
+                        <DialogTitle>
+        Seleccionar Ubicación
+        <Typography variant="caption" component="div" color="textSecondary">
+            Haga clic en el mapa para seleccionar la ubicación
+        </Typography>
+    </DialogTitle>
+    <DialogContent>
+        <div className="mb-4">
+        <div className="flex space-x-2">
+            <input
+                type="text"
+                className="w-full rounded-md border border-gray-300 p-2"
+                placeholder="Buscar ubicación..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSearch(searchQuery);
+                    }
+                }}
+            />
+            <Button 
+                onClick={() => handleSearch(searchQuery)}
+                variant="contained"
+                disabled={isSearching}
+            >
+                {isSearching ? 'Buscando...' : 'Buscar'}
+            </Button>
+        </div>
+        
+        {searchResults.length > 0 && (
+            <div className="mt-2 max-h-40 overflow-y-auto rounded-md border border-gray-200">
+                {searchResults.map((result, index) => (
+                    <div
+                        key={index}
+                        className="cursor-pointer border-b border-gray-200 p-2 hover:bg-gray-100"
+                        onClick={() => handleSelectSearchResult(result)}
+                    >
+                        {result.display_name}
                     </div>
+                ))}
+            </div>
+        )}
+    </div>
+    
+    <MapContainer
+        center={selectedLocation || DEFAULT_CENTER}
+        zoom={DEFAULT_ZOOM}
+        style={{ height: '400px', width: '100%' }}
+        doubleClickZoom={false} // Desactivar zoom con doble clic
+        className="rounded-lg border border-gray-300 shadow-md"
+    >
+        <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        <LocationMarker />
+    </MapContainer>
+    
+    {mapError && (
+        <Typography color="error" className="mt-2 text-center">
+            {mapError}
+        </Typography>
+    )}
+</DialogContent>
+    <DialogActions>
+        <Button onClick={handleCloseMap} color="secondary">
+            Cancelar
+        </Button>
+        <Button 
+            onClick={handleSaveLocation} 
+            color="primary"
+            disabled={!selectedLocation}
+        >
+            Guardar Ubicación
+        </Button>
+    </DialogActions>
+                    </Dialog>
+
 
                     {/* Descripción (ancho completo) */}
                     <div>
