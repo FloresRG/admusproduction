@@ -11,11 +11,13 @@ import {
     DialogContent,
     DialogTitle,
     FormControl,
+    FormControlLabel,
     InputLabel,
     MenuItem,
     Paper,
     Select,
     Stack,
+    Switch,
     Table,
     TableBody,
     TableCell,
@@ -120,6 +122,8 @@ const Semanainfluencer = () => {
             alert('Hubo un error al quitar el influencer');
         }
     };
+    const [agregarOtro, setAgregarOtro] = useState(false);
+    const [selectedInfluencerExtra, setSelectedInfluencerExtra] = useState<number | ''>('');
 
     return (
         <AppLayout>
@@ -127,6 +131,23 @@ const Semanainfluencer = () => {
                 <Typography variant="h4" gutterBottom fontWeight="bold">
                     📅 Disponibilidad Semanal por Empresa
                 </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => window.open('/disponibilidad-semanal-pdf', '_blank')}
+                    sx={{
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        borderRadius: 2,
+                        background: 'linear-gradient(90deg, #6a11cb, #2575fc)',
+                        boxShadow: '0 4px 15px rgba(37,117,252,0.4)',
+                        '&:hover': {
+                            background: 'linear-gradient(90deg, #4b0eb9, #1a56d0)',
+                        },
+                    }}
+                >
+                    Generar PDF
+                </Button>
 
                 <Paper elevation={3} sx={{ overflowX: 'auto', borderRadius: 3 }}>
                     <Table sx={{ borderCollapse: 'separate', borderSpacing: 0 }}>
@@ -166,7 +187,6 @@ const Semanainfluencer = () => {
                                         </Stack>
                                     </TableCell>
                                 ))}
-
                             </TableRow>
                         </TableHead>
 
@@ -328,7 +348,6 @@ const Semanainfluencer = () => {
                                             </TableCell>
                                         );
                                     })}
-
                                 </TableRow>
                             ))}
                         </TableBody>
@@ -373,6 +392,7 @@ const Semanainfluencer = () => {
                             <strong>Turno:</strong> <em>{selectedTurno?.turno}</em>
                         </Typography>
 
+                        {/* Select principal con influencers disponibles */}
                         <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                             <InputLabel id="influencer-label">Influencer</InputLabel>
                             <Select
@@ -388,7 +408,6 @@ const Semanainfluencer = () => {
                             >
                                 {(() => {
                                     const empresaSeleccionada = datosPorEmpresa.find((e) => e.empresa.id === selectedTurno?.empresaId);
-
                                     const disponibles =
                                         empresaSeleccionada?.influencersDisponibles?.[selectedTurno?.dia]?.[selectedTurno?.turno] || [];
 
@@ -404,6 +423,40 @@ const Semanainfluencer = () => {
                                 })()}
                             </Select>
                         </FormControl>
+
+                        {/* Switch para mostrar el segundo select */}
+                        <FormControlLabel
+                            control={<Switch checked={agregarOtro} onChange={(e) => setAgregarOtro(e.target.checked)} color="primary" />}
+                            label="Agregar otro influencer (todos)"
+                        />
+
+                        {/* Segundo select con TODOS los influencers */}
+                        {agregarOtro && (
+                            <FormControl fullWidth variant="outlined">
+                                <InputLabel id="influencer-extra-label">Influencer adicional</InputLabel>
+                                <Select
+                                    labelId="influencer-extra-label"
+                                    value={selectedInfluencerExtra}
+                                    label="Influencer adicional"
+                                    onChange={(e) => setSelectedInfluencerExtra(e.target.value)}
+                                    sx={{
+                                        borderRadius: 2,
+                                        backgroundColor: '#fff',
+                                        boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
+                                    }}
+                                >
+                                    {influencers.length === 0 ? (
+                                        <MenuItem disabled>No hay influencers registrados</MenuItem>
+                                    ) : (
+                                        influencers.map((user) => (
+                                            <MenuItem key={user.id} value={user.id}>
+                                                {user.name}
+                                            </MenuItem>
+                                        ))
+                                    )}
+                                </Select>
+                            </FormControl>
+                        )}
                     </Stack>
                 </DialogContent>
 
@@ -443,21 +496,44 @@ const Semanainfluencer = () => {
                             },
                         }}
                         onClick={async () => {
-                            if (selectedTurno && selectedInfluencer) {
-                                try {
-                                    await axios.post('/asignar-influencer', {
+                            if (!selectedTurno) return;
+
+                            const peticiones = [];
+
+                            if (selectedInfluencer) {
+                                peticiones.push(
+                                    axios.post('/asignar-influencer', {
                                         empresa_id: selectedTurno.empresaId,
                                         dia: selectedTurno.dia,
                                         turno: selectedTurno.turno,
                                         influencer_id: selectedInfluencer,
-                                    });
+                                    }),
+                                );
+                            }
 
-                                    handleCloseModal();
-                                    window.location.reload(); // opcional
-                                } catch (error) {
-                                    console.error('Error al asignar influencer:', error);
-                                    alert('Hubo un error al asignar el influencer');
-                                }
+                            if (agregarOtro && selectedInfluencerExtra) {
+                                peticiones.push(
+                                    axios.post('/asignar-influencer', {
+                                        empresa_id: selectedTurno.empresaId,
+                                        dia: selectedTurno.dia,
+                                        turno: selectedTurno.turno,
+                                        influencer_id: selectedInfluencerExtra,
+                                    }),
+                                );
+                            }
+
+                            if (peticiones.length === 0) {
+                                alert('Debes seleccionar al menos un influencer.');
+                                return;
+                            }
+
+                            try {
+                                await Promise.all(peticiones);
+                                handleCloseModal();
+                                window.location.reload();
+                            } catch (error) {
+                                console.error('Error al asignar influencer(es):', error);
+                                alert('Hubo un error al asignar el influencer.');
                             }
                         }}
                     >

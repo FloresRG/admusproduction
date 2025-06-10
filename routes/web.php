@@ -16,6 +16,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\PasanteController;
+use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
@@ -27,29 +28,29 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/fotografias', fn() => Inertia::render('fotografias/fotografia'))
-     ->name('fotografias');
+    ->name('fotografias');
 
 Route::get('/servicios/produccion-audiovisual', fn() => Inertia::render('servicios/produccion-audiovisual'))
-     ->name('servicios.produccion-audiovisual');
+    ->name('servicios.produccion-audiovisual');
 
 // ——— Rutas públicas para React/Inertia ———
 
 Route::get('/consultorias', fn() => Inertia::render('paginas/Consultorias'))
-     ->name('consultorias');
+    ->name('consultorias');
 
 Route::get('/eventos-digitales', fn() => Inertia::render('paginas/EventosDigitales'))
-     ->name('eventos.digitales');
-
-     
+    ->name('eventos.digitales');
 
 
 
 
-     
+
+
+
 Route::middleware(['auth', 'verified'])->group(function () {
-   Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->middleware(['auth', 'verified'])
+        ->name('dashboard');
     Route::prefix('categories')->group(function () {
         Route::get('/', [CompanyCategoryController::class, 'index']);
         Route::post('/', [CompanyCategoryController::class, 'store']);
@@ -79,16 +80,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Listar bookings DE UNA semana concreta
         // 1. Mostrar la vista de bookings para una semana
-    Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
-         ->name('weeks.bookings.index');
+        Route::get('{week}/bookings', [WeekController::class, 'bookingsByWeek'])
+            ->name('weeks.bookings.index');
 
-    // 2. Crear (añadir) un booking en esa semana
-    Route::post('{week}/bookings', [BookingController::class, 'store'])
-         ->name('weeks.bookings.store');
+        // 2. Crear (añadir) un booking en esa semana
+        Route::post('{week}/bookings', [BookingController::class, 'store'])
+            ->name('weeks.bookings.store');
 
-    // 3. Eliminar un booking de esa semana
-    Route::delete('{week}/bookings/{booking}', [BookingController::class, 'destroy'])
-         ->name('weeks.bookings.destroy');
+        // 3. Eliminar un booking de esa semana
+        Route::delete('{week}/bookings/{booking}', [BookingController::class, 'destroy'])
+            ->name('weeks.bookings.destroy');
     });
     // —– Rutas para Booking (UPDATE) —–
     // ¡Esto SALE fuera del prefix('weeks')!
@@ -121,7 +122,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('tipos/{tipoId}', [TipoController::class, 'destroyTipo']); // Eliminar un tipo
     Route::get('/pasante', [PasanteController::class, 'index'])->name('pasante.index');
 
-    
+
     Route::get('/pasante/historial', [PasanteController::class, 'historial'])->name('pasante.historial');
     Route::put('/pasante/actualizar/{id}', [PasanteController::class, 'actualizarEstado'])->name('pasante.actualizar');
 
@@ -146,20 +147,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('asignaciones.destroy');
     // Cambiar asignacion estado
     Route::patch('/asignaciones/{asignacion}', [AsignacionTareaController::class, 'update'])
-     ->name('asignaciones.update');
-// Grupo para “mis asignaciones”
-     // Lista de fechas en que yo tengo asignaciones
-    Route::get('/mis-asignaciones/fechas', 
-        [AsignacionTareaController::class, 'myDatesIndex'])
+        ->name('asignaciones.update');
+    // Grupo para “mis asignaciones”
+    // Lista de fechas en que yo tengo asignaciones
+    Route::get(
+        '/mis-asignaciones/fechas',
+        [AsignacionTareaController::class, 'myDatesIndex']
+    )
         ->name('mis.asignaciones.fechas');
 
     // Mis tareas para una fecha concreta
-    Route::get('/mis-asignaciones/{fecha}', 
-        [AsignacionTareaController::class, 'myShowByFecha'])
+    Route::get(
+        '/mis-asignaciones/{fecha}',
+        [AsignacionTareaController::class, 'myShowByFecha']
+    )
         ->name('mis.asignaciones.porFecha');
-     
-
-
 });
 Route::get('/users', function () {
     return Inertia::render('user');
@@ -170,11 +172,11 @@ Route::get('/users', function () {
 
 
 
-    //para la vista de marketing
+//para la vista de marketing
 Route::get('/marketing', function () {
     return Inertia::render('Marketing'); // Note the capital 'M'
 });
-    //para la vista de marketing
+//para la vista de marketing
 Route::get('/diseño', function () {
     return Inertia::render('Diseño'); // Note the capital 'M'
 });
@@ -266,6 +268,10 @@ Route::get('/semana', [SemanaController::class, 'index']);
 Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
 Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
 Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
+Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfDisponibilidad'])->name('disponibilidad.semanal.pdf');
+
+Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
+Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
 
 require __DIR__ . '/settings.php';

@@ -8,7 +8,9 @@ use App\Models\Tarea;
 use App\Models\User;
 use App\Models\Week;
 use Carbon\Carbon;
+use FPDF;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -181,10 +183,9 @@ class SemanaController extends Controller
         return Inertia::render('Semana/influencer', [
             'datosPorEmpresa' => $datosPorEmpresa,
             'diasSemana' => $diasSemana,
+            'influencers' => $influencers,
         ]);
     }
-
-
     public function asignarInfluencer(Request $request)
     {
         // Validar datos de entrada
@@ -243,7 +244,6 @@ class SemanaController extends Controller
             'week_id'      => $weekId,
             'day_of_week'  => strtolower($validated['dia']),
         ]);
-
         return back()->with('success', 'Influencer asignado exitosamente.');
     }
     public function quitarInfluencer(Request $request)
@@ -307,5 +307,375 @@ class SemanaController extends Controller
         $booking->delete();
 
         return back()->with('success', 'Influencer removido exitosamente.');
+    }
+
+    /* public function generarPdfDisponibilidad()
+    {
+        // Obtener semana actual
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->toDateString();
+
+        $week = Week::where('start_date', $startOfWeek)->where('end_date', $endOfWeek)->first();
+
+        if (!$week) {
+            return response()->json(['error' => 'No se encontró la semana actual.'], 404);
+        }
+
+        // Obtener todas las asignaciones de esta semana con empresa e influencer
+        $bookings = Booking::with(['company', 'user'])
+            ->where('week_id', $week->id)
+            ->orderBy('day_of_week')
+            ->orderBy('turno')
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json(['error' => 'No hay asignaciones esta semana.'], 404);
+        }
+
+        $diasTraducidos = [
+            'monday' => 'Lunes',
+            'tuesday' => 'Martes',
+            'wednesday' => 'Miércoles',
+            'thursday' => 'Jueves',
+            'friday' => 'Viernes',
+            'saturday' => 'Sábado',
+            'sunday' => 'Domingo',
+        ];
+
+        $pdf = new \FPDF();
+        $pdf->AddPage();
+        $pdf->SetMargins(10, 10, 10);
+
+        // Logos
+        $pdf->Image(public_path('logo.jpeg'), 10, 10, 30);
+        $pdf->Image(public_path('logo.jpeg'), 170, 10, 30);
+
+        // Título
+        $pdf->SetFont('Arial', 'B', 14);
+        $pdf->SetXY(60, 15);
+        $pdf->Cell(90, 10, utf8_decode('ADMUS PRODUCTION'), 0, 1, 'C');
+
+        $pdf->Ln(10);
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->SetFillColor(230, 230, 250);
+        $pdf->Cell(0, 12, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
+
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+        $pdf->Ln(5);
+
+        // Encabezado tabla
+        $pdf->SetFont('Arial', 'B', 12);
+        $pdf->SetFillColor(60, 90, 180);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell(60, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
+        $pdf->Cell(50, 10, utf8_decode('Influencer'), 1, 0, 'C', true);
+        $pdf->Cell(40, 10, utf8_decode('Día'), 1, 0, 'C', true);
+        $pdf->Cell(30, 10, utf8_decode('Turno'), 1, 1, 'C', true);
+
+        // Filas
+        $pdf->SetFont('Arial', '', 11);
+        $pdf->SetTextColor(0, 0, 0);
+
+        foreach ($bookings as $booking) {
+            $pdf->Cell(60, 10, utf8_decode($booking->company->name), 1);
+            $pdf->Cell(50, 10, utf8_decode($booking->user->name), 1);
+            $pdf->Cell(40, 10, utf8_decode($diasTraducidos[$booking->day_of_week] ?? $booking->day_of_week), 1, 0, 'C');
+            $pdf->Cell(30, 10, ucfirst($booking->turno), 1, 1, 'C');
+        }
+
+
+
+        // Salida del PDF
+        return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
+    }
+     */
+    /* public function generarPdfDisponibilidad()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->toDateString();
+
+        $week = Week::where('start_date', $startOfWeek)->where('end_date', $endOfWeek)->first();
+
+        if (!$week) {
+            return response()->json(['error' => 'No se encontró la semana actual.'], 404);
+        }
+
+        $bookings = Booking::with(['company', 'user'])
+            ->where('week_id', $week->id)
+            ->orderBy('company_id')
+            ->orderBy('day_of_week')
+            ->orderBy('turno')
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json(['error' => 'No hay asignaciones esta semana.'], 404);
+        }
+
+        // Días sin domingo
+        $diasSemana = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        $diasTraducidos = [
+            'monday' => 'Lunes',
+            'tuesday' => 'Martes',
+            'wednesday' => 'Miércoles',
+            'thursday' => 'Jueves',
+            'friday' => 'Viernes',
+            'saturday' => 'Sábado',
+        ];
+
+        // Agrupar por empresa > día > turno
+        $datosPorEmpresa = [];
+        foreach ($bookings as $booking) {
+            $empresaId = $booking->company->id;
+            $dia = strtolower($booking->day_of_week);
+            $turno = strtolower($booking->turno);
+
+            if (!isset($datosPorEmpresa[$empresaId])) {
+                $datosPorEmpresa[$empresaId] = [
+                    'empresa' => $booking->company,
+                    'disponibilidad' => [],
+                ];
+            }
+
+            if (!isset($datosPorEmpresa[$empresaId]['disponibilidad'][$dia])) {
+                $datosPorEmpresa[$empresaId]['disponibilidad'][$dia] = [];
+            }
+
+            if (!isset($datosPorEmpresa[$empresaId]['disponibilidad'][$dia][$turno])) {
+                $datosPorEmpresa[$empresaId]['disponibilidad'][$dia][$turno] = [];
+            }
+
+            $datosPorEmpresa[$empresaId]['disponibilidad'][$dia][$turno][] = $booking->user->name;
+        }
+
+        $pdf = new \FPDF('L', 'mm', 'A4');  // Orientación horizontal
+        $pdf->AddPage();
+        $pdf->SetMargins(10, 10, 10);
+
+        // Logos
+        $pdf->Image(public_path('logo.jpeg'), 10, 10, 30);
+        $pdf->Image(public_path('logo.jpeg'), 250, 10, 30);
+
+        // Título
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->SetXY(0, 15);
+        $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTION'), 0, 1, 'C');
+
+        $pdf->Ln(8);
+        $pdf->SetFont('Arial', 'B', 18);
+        $pdf->SetFillColor(100, 149, 237); // cornflower blue
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
+
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+        $pdf->Ln(6);
+
+        // Calcular anchos adaptativos
+        $totalWidth = 297; // ancho A4 horizontal en mm
+        $margen = 10; // margen izquierdo y derecho
+        $margenTotal = $margen * 2; // 20 mm total
+        $anchoEmpresa = 60; // ancho fijo para columna empresa
+        $diasCount = count($diasSemana);
+
+        $anchoDisponible = $totalWidth - $margenTotal - $anchoEmpresa;
+        $cellWidth = $anchoDisponible / $diasCount;
+
+        // Encabezado tabla
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFillColor(70, 130, 180); // steel blue
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetDrawColor(70, 130, 180);
+        $pdf->SetLineWidth(0.3);
+
+        $pdf->Cell($anchoEmpresa, 12, utf8_decode('Empresa'), 1, 0, 'C', true);
+
+        foreach ($diasSemana as $dia) {
+            $pdf->Cell($cellWidth, 12, utf8_decode($diasTraducidos[$dia]), 1, 0, 'C', true);
+        }
+        $pdf->Ln();
+
+        // Filas
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->SetTextColor(0, 0, 0);
+        $fill = false;
+
+        foreach ($datosPorEmpresa as $empresaData) {
+            $pdf->SetFillColor($fill ? 245 : 255, $fill ? 245 : 255, $fill ? 245 : 255);
+            $pdf->Cell($anchoEmpresa, 45, utf8_decode($empresaData['empresa']->name), 'LR', 0, 'L', $fill);
+
+            foreach ($diasSemana as $dia) {
+                $contenido = '';
+                if (isset($empresaData['disponibilidad'][$dia])) {
+                    foreach (['mañana', 'tarde'] as $turno) {
+                        if (!empty($empresaData['disponibilidad'][$dia][$turno])) {
+                            $colorTurno = $turno === 'mañana' ? [66, 165, 245] : [171, 71, 188];
+                            $pdf->SetTextColor(...$colorTurno);
+                            $contenido .= ucfirst($turno) . ":\n";
+                            $pdf->SetTextColor(0, 0, 0);
+                            foreach ($empresaData['disponibilidad'][$dia][$turno] as $influencer) {
+                                $contenido .= "• $influencer\n";
+                            }
+                            $contenido .= "\n";
+                        }
+                    }
+                }
+
+                if ($contenido === '') {
+                    $contenido = "-";
+                }
+
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
+
+                $pdf->MultiCell($cellWidth, 5, utf8_decode($contenido), 'LR', 'L', $fill);
+
+                $pdf->SetXY($x + $cellWidth, $y);
+            }
+
+            $pdf->Ln(45);
+            $fill = !$fill;
+        }
+
+        // Línea final abajo
+        $pdf->Cell($anchoEmpresa + $cellWidth * $diasCount, 0, '', 'T');
+
+        return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
+    } */
+    public function generarPdfDisponibilidad()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
+        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->toDateString();
+
+        $week = Week::where('start_date', $startOfWeek)->where('end_date', $endOfWeek)->first();
+
+        if (!$week) {
+            return response()->json(['error' => 'No se encontró la semana actual.'], 404);
+        }
+
+        $bookings = Booking::with(['company', 'user'])
+            ->where('week_id', $week->id)
+            ->orderBy('company_id')
+            ->orderBy('day_of_week')
+            ->orderBy('turno')
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return response()->json(['error' => 'No hay asignaciones esta semana.'], 404);
+        }
+
+        $diasSemana = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        $diasTraducidos = [
+            'monday' => 'Lunes',
+            'tuesday' => 'Martes',
+            'wednesday' => 'Miércoles',
+            'thursday' => 'Jueves',
+            'friday' => 'Viernes',
+            'saturday' => 'Sábado',
+        ];
+
+        $datosPorEmpresa = [];
+        foreach ($bookings as $booking) {
+            $empresaId = $booking->company->id;
+            $dia = strtolower($booking->day_of_week);
+            $turno = strtolower($booking->turno);
+
+            $datosPorEmpresa[$empresaId]['empresa'] = $booking->company;
+            $datosPorEmpresa[$empresaId]['disponibilidad'][$dia][$turno][] = $booking->user->name;
+        }
+
+        $pdf = new \FPDF('L', 'mm', 'A4');
+        $pdf->AddPage();
+        $pdf->SetMargins(10, 10, 10);
+
+        // Logo y encabezado
+        $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
+        $pdf->Image(public_path('logo.jpeg'), 260, 10, 25);
+        $pdf->SetFont('Arial', 'B', 16);
+        $pdf->SetXY(0, 15);
+        $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTION'), 0, 1, 'C');
+
+        $pdf->Ln(8);
+        $pdf->SetFont('Arial', 'B', 18);
+        $pdf->SetFillColor(0, 102, 204);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
+
+        $pdf->SetFont('Arial', '', 12);
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+        $pdf->Ln(4);
+
+        // Cálculo de anchos
+        $totalWidth = 297;
+        $margen = 10;
+        $anchoEmpresa = 60;
+        $diasCount = count($diasSemana);
+        $cellWidth = ($totalWidth - ($margen * 2) - $anchoEmpresa) / $diasCount;
+
+        // Encabezado de tabla
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFillColor(30, 144, 255);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetDrawColor(30, 144, 255);
+
+        $pdf->Cell($anchoEmpresa, 10, utf8_decode('Empresa'), 0, 0, 'C', true);
+        foreach ($diasSemana as $dia) {
+            $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 0, 0, 'C', true);
+        }
+        $pdf->Ln();
+
+        // Contenido
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(0, 0, 0);
+        $alturaFila = 25;
+
+        foreach ($datosPorEmpresa as $empresaData) {
+            $xStart = $pdf->GetX();
+            $yStart = $pdf->GetY();
+
+            // Empresa
+            $pdf->MultiCell($anchoEmpresa, 5, utf8_decode($empresaData['empresa']->name), 0, 'L');
+            $yEnd = $pdf->GetY();
+            $pdf->SetXY($xStart + $anchoEmpresa, $yStart);
+
+            foreach ($diasSemana as $dia) {
+                $contenido = '';
+                foreach (['mañana', 'tarde'] as $turno) {
+                    if (!empty($empresaData['disponibilidad'][$dia][$turno])) {
+                        $icono = $turno === 'mañana' ? '☀️' : '🌙';
+                        $contenido .= "$icono " . ucfirst($turno) . ":\n";
+                        foreach ($empresaData['disponibilidad'][$dia][$turno] as $nombre) {
+                            $contenido .= "• $nombre\n";
+                        }
+                        $contenido .= "\n";
+                    }
+                }
+
+                if (empty(trim($contenido))) {
+                    $contenido = "-";
+                }
+
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
+                $pdf->MultiCell($cellWidth, 5, utf8_decode($contenido), 0, 'L');
+                $pdf->SetXY($x + $cellWidth, $y);
+            }
+
+            // Línea divisora
+            $pdf->Ln($alturaFila);
+            $pdf->SetDrawColor(180, 180, 180);
+            $pdf->Line($margen, $pdf->GetY(), $totalWidth - $margen, $pdf->GetY());
+            $pdf->Ln(2);
+        }
+
+        return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
     }
 }
