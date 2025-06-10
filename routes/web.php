@@ -255,6 +255,7 @@ Route::get('/semana', [SemanaController::class, 'index']);
 Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
 Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
 Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
+Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfDisponibilidad'])->name('disponibilidad.semanal.pdf');
 
 Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
