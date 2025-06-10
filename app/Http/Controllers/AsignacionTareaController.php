@@ -7,7 +7,9 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\AsignacionTarea;
+use App\Models\Company;
 use App\Models\Tarea;
+use App\Models\Tipo;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 
@@ -15,12 +17,22 @@ class AsignacionTareaController extends Controller
 {
     public function index()
     {
+        // Carga todas las tareas con tipo, empresa y asignaciones → user
+    $tareas = Tarea::with(['tipo', 'company', 'asignaciones.user'])->get();
+
+    // Opcional: si necesitas la lista de tipos y empresas
+    $tipos     = Tipo::all(['id','nombre']);
+    $empresas  = Company::all(['id','nombre']);
+
         // Trae todas las asignaciones con usuario y tarea
         $asignaciones = AsignacionTarea::with(['user', 'tarea'])->get();
 
         // Renderiza Inertia y pasa los datos como prop
         return Inertia::render('asignaciones/asignacioneslist', [
             'asignaciones' => $asignaciones,
+            'tareas'    => $tareas,
+        'tipos'     => $tipos,
+        'empresas'  => $empresas,
         ]);
     }
     public function datesIndex()
@@ -122,23 +134,26 @@ public function update(Request $request, AsignacionTarea $asignacion)
     /**
      * Muestra sólo mis tareas para la fecha indicada.
      */
-    public function myShowByFecha($fecha)
-    {
-        $userId = Auth::id();
 
-        $tareasAsignadas = AsignacionTarea::with('tarea')
-            ->where('user_id', $userId)
-            ->whereDate('fecha', $fecha)
-            ->get();
 
-        // Opcional: si quieres permitir añadir nuevas tareas a ti mismo,
-        // carga también el listado de Tarea para el dropdown:
-        $todasTareas = Tarea::select('id', 'titulo')->get();
+public function myShowByFecha($fecha)
+{
+    $userId = Auth::id();
 
-        return Inertia::render('asignaciones/mistareasporfecha', [
-            'fecha'           => $fecha,
-            'tareasAsignadas' => $tareasAsignadas,
-            'todasTareas'     => $todasTareas,
-        ]);
-    }
+    $tareasAsignadas = AsignacionTarea::with('tarea')
+        ->where('user_id', $userId)
+        ->whereDate('fecha', $fecha)
+        ->get();
+
+    // -- aquí creas la variable --
+    $todasTareas = Tarea::select('id','titulo')->get();
+
+    return Inertia::render('tareas/fecha', [
+        'fecha'           => $fecha,
+        'tareasAsignadas' => $tareasAsignadas,
+        'todasTareas'     => $todasTareas,
+    ]);
+}
+
+
 }

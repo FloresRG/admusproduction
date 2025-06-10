@@ -26,11 +26,11 @@ export default function MisTareasPorFecha() {
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
                     <Link href={route('mis.asignaciones.fechas')} style={{ textDecoration: 'none' }}>
                         <Typography variant="subtitle1" color="secondary">
-                            ← Volver a Mis Fechas
+                            ← Volverddd a Mis Fechas
                         </Typography>
                     </Link>
                     <Typography variant="h4" color="secondary">
-                        Mis Tareas – {dayjs(fecha).format('DD MMM YYYY')}
+                        Mis Taredddddas – {dayjs(fecha).format('DD MMM YYYY')}
                     </Typography>
                 </Box>
 

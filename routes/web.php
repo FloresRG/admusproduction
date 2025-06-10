@@ -218,7 +218,20 @@ Route::get('/vertareas', function () {
 });
 Route::get('/tareas', function () {
     return Inertia::render('tareas/index');
-});
+})->name('tareas.index');
+
+// Lista mis tareas POR FECHA (vista día)
+Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
+     ->name('tareas.fecha');
+
+
+
+
+
+
+
+
+
 Route::get('/api/vertareas', [TareaController::class, 'vertareas']);
 Route::get('/api/tareas', [TareaController::class, 'index']);
 Route::get('/api/tareas-por-fecha', [TareaController::class, 'tareasPorFecha']);
