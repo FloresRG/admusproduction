@@ -21,7 +21,7 @@ use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
 use App\Http\Controllers\WeekController;
-use App\Models\Tarea;
+
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -221,7 +221,20 @@ Route::get('/vertareas', function () {
 });
 Route::get('/tareas', function () {
     return Inertia::render('tareas/index');
-});
+})->name('tareas.index');
+
+// Lista mis tareas POR FECHA (vista día)
+Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
+     ->name('tareas.fecha');
+
+
+
+
+
+
+
+
+
 Route::get('/api/vertareas', [TareaController::class, 'vertareas']);
 Route::get('/api/tareas', [TareaController::class, 'index']);
 Route::get('/api/tareas-por-fecha', [TareaController::class, 'tareasPorFecha']);
@@ -260,6 +273,14 @@ Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfD
 Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
+    // Nueva ruta para la vista de detalles de una semana específica
+    Route::get('/dashboard/influencer/weeks/{week}', [DashboardController::class, 'showWeekDetails'])
+         ->name('influencer.week.details'); // Un nombre de ruta descriptivo
 
+    // Opcional: Las rutas API que devuelven JSON si las quieres mantener para otros usos
+    Route::get('/api/influencer/weeks', [DashboardController::class, 'getWorkingWeeksList'])
+         ->name('api.influencer.weeks.list');
+    Route::get('/api/influencer/weeks/{week}', [DashboardController::class, 'getSpecificWeekDetails'])
+         ->name('api.influencer.weeks.details');
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

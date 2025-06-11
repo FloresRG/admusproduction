@@ -71,4 +71,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Photo::class);
     }
+    // ¡¡AÑADE ESTA FUNCIÓN!!
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'user_id'); // Asumiendo que la tabla 'bookings' tiene una columna 'user_id'
+    }
 }

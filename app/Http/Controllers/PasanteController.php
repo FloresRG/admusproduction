@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AsignacionTarea;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -90,6 +91,18 @@ class PasanteController extends Controller
         return response()->json([
             'message' => 'Tarea actualizada correctamente.',
             'data' => $asignacion
+        ]);
+    }
+    public function getPasantes()
+    {
+        $pasantes = User::role('pasante')
+            ->select('id', 'name', 'email')
+            ->with(['roles:id,name'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $pasantes
         ]);
     }
 }
