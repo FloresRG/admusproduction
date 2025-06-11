@@ -1,16 +1,15 @@
-//import { PageProps } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { Box, Typography, Paper, Grid, Button, IconButton, useTheme } from '@mui/material';
+import { Box, Typography, Paper, Grid, Button, IconButton, useTheme, List, ListItem, ListItemText } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CalendarMonth, BarChart, Business, AccessTime, PlaylistAddCheck,
     HourglassEmpty, EventNote, TrendingUp, PhotoCamera, Block, WavingHand,
-    ArrowDownward // Nuevo icono para indicar desplazamiento
+    ArrowDownward, Visibility // Icono de visibilidad para navegar a detalles
 } from '@mui/icons-material';
 import React, { useState, useEffect, useRef } from 'react';
-import dayjs from 'dayjs'; // Importamos dayjs para formateo de fechas
-import { ArrowDown } from 'lucide-react'; // Puedes usar iconos de Lucide React también
+import dayjs from 'dayjs';
+import { router } from '@inertiajs/react'; // Importamos router para la navegación
 
 // Definición de interfaces (mantienen las mismas)
 interface Week {
@@ -21,6 +20,7 @@ interface Week {
 }
 
 interface DaysWorkedData {
+    week_id: number;
     week_name: string;
     total_days_worked: number;
 }
@@ -79,14 +79,14 @@ const cardVariants = {
         opacity: 1,
         scale: 1,
         transition: {
-            delay: i * 0.1 + 0.5, // Retraso incremental, comenzando después de la bienvenida
+            delay: i * 0.1 + 0.5,
             duration: 0.6,
             ease: "easeOut",
         },
     }),
 };
 
-export default function InfluencerDashboard({
+export default function DatosInfluencer({
     auth,
     workingWeeks,
     daysWorkedByWeek,
@@ -96,24 +96,18 @@ export default function InfluencerDashboard({
     bookingStatusCounts,
     totalAvailabilityHours,
     nextBooking,
-    lastWorkedCompany,
-    averageDaysPerWeek,
-    totalPhotos,
-    daysWithoutAvailability,
-}: DashboardProps) {
-    const theme = useTheme(); // Para acceder a los colores del tema de MUI
+    }: DashboardProps) {
+    const theme = useTheme();
     const [showWelcome, setShowWelcome] = useState(true);
-    const contentRef = useRef<HTMLDivElement>(null); // Referencia al contenido principal
+    const contentRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Opción 1: Desvanecer la bienvenida después de un tiempo
         const timer = setTimeout(() => {
             setShowWelcome(false);
-        }, 3000); // Muestra la bienvenida por 3 segundos
+        }, 3000);
 
-        // Opción 2: Ocultar la bienvenida al hacer scroll
         const handleScroll = () => {
-            if (window.scrollY > 50) { // Si el usuario se desplaza más de 50px
+            if (window.scrollY > 50) {
                 setShowWelcome(false);
             }
         };
@@ -128,9 +122,14 @@ export default function InfluencerDashboard({
 
     const scrollToContent = () => {
         if (contentRef.current) {
-            setShowWelcome(false); // Ocultar bienvenida al hacer clic en el botón
+            setShowWelcome(false);
             contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
+    };
+
+    // Función para navegar a la nueva página de detalles de la semana
+    const navigateToWeekDetails = (weekId: number) => {
+        router.visit(route('influencer.week.details', { week: weekId }));
     };
 
     const breadcrumbs = [
@@ -151,7 +150,7 @@ export default function InfluencerDashboard({
                         exit="exit"
                         variants={welcomeVariants}
                         style={{
-                            minHeight: 'calc(100vh - 64px)', // Resta la altura del header de AppLayout si lo tiene
+                            minHeight: 'calc(100vh - 64px)',
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'center',
@@ -215,7 +214,7 @@ export default function InfluencerDashboard({
 
             <Box ref={contentRef} sx={{ p: 4, pt: showWelcome ? 0 : 4, opacity: showWelcome ? 0 : 1, transition: 'opacity 0.5s ease-in-out' }}>
                 <Grid container spacing={4}>
-                    {/* Card 1: Semanas Trabajando */}
+                    {/* Card 1: Semanas Trabajando - Ahora con botón para navegar */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={0} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -224,26 +223,40 @@ export default function InfluencerDashboard({
                                     Semanas en Curso
                                 </Typography>
                                 {workingWeeks.length > 0 ? (
-                                    <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
-                                        {workingWeeks.map(week => (
-                                            <li key={week.id}>
-                                                <Typography variant="body2">
-                                                    <strong>{week.name}</strong><br />
-                                                    {dayjs(week.start_date).format('DD MMM YYYY')} - {dayjs(week.end_date).format('DD MMM YYYY')}
-                                                </Typography>
-                                            </li>
+                                    <List sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper', textAlign: 'center' }}>
+                                        {workingWeeks.slice(0, 3).map(week => (
+                                            <ListItem
+                                                key={week.id}
+                                                secondaryAction={
+                                                    <IconButton edge="end" aria-label="details" onClick={() => navigateToWeekDetails(week.id)}>
+                                                        <Visibility />
+                                                    </IconButton>
+                                                }
+                                            >
+                                                <ListItemText
+                                                    primary={week.name}
+                                                    secondary={`${dayjs(week.start_date).format('DD MMM')} - ${dayjs(week.end_date).format('DD MMM')}`}
+                                                    primaryTypographyProps={{ style: { fontWeight: 'bold' } }}
+                                                    secondaryTypographyProps={{ style: { fontSize: '0.8rem' } }}
+                                                />
+                                            </ListItem>
                                         ))}
-                                    </ul>
+                                        {workingWeeks.length > 3 && (
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                ...y {workingWeeks.length - 3} más.
+                                            </Typography>
+                                        )}
+                                    </List>
                                 ) : (
                                     <Typography variant="body2" color="text.secondary" align="center">
-                                        No tienes semanas asignadas.
+                                        No tienes semanas asignadas actualmente.
                                     </Typography>
                                 )}
                             </Paper>
                         </motion.div>
                     </Grid>
 
-                    {/* Card 2: Días Trabajados por Semana */}
+                    {/* Resto de las Cards (2-12) - Mismo código que antes */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={1} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -263,14 +276,13 @@ export default function InfluencerDashboard({
                                     </ul>
                                 ) : (
                                     <Typography variant="body2" color="text.secondary" align="center">
-                                        No hay registros de días trabajados.
+                                        No hay registros de días trabajados por semana.
                                     </Typography>
                                 )}
                             </Paper>
                         </motion.div>
                     </Grid>
 
-                    {/* Card 3: Empresas Colaboradoras */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={2} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -295,7 +307,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 4: Tu Disponibilidad Registrada */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={3} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -330,7 +341,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 5: Total de Reservas */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={4} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -348,7 +358,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 6: Desglose de Reservas por Estado */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={5} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -375,7 +384,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 7: Total de Horas de Disponibilidad */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={6} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -393,7 +401,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 8: Próxima Reserva */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={7} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -419,7 +426,7 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 9: Última Empresa Trabajada */}
+                    {/* El resto de las cards van aquí igual que antes */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={8} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -428,7 +435,8 @@ export default function InfluencerDashboard({
                                     Última Empresa
                                 </Typography>
                                 <Typography variant="h5" component="p" color="text.primary" align="center">
-                                    {lastWorkedCompany}
+                                    {/* Suponiendo que 'lastWorkedCompany' está en las props del DashboardProps */}
+                                    {(props as DashboardProps).lastWorkedCompany}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" align="center">
                                     Con la que colaboraste recientemente.
@@ -437,7 +445,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 10: Promedio de Días de Trabajo por Semana */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={9} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -446,7 +453,7 @@ export default function InfluencerDashboard({
                                     Promedio Días/Semana
                                 </Typography>
                                 <Typography variant="h4" component="p" color="text.primary" align="center">
-                                    {averageDaysPerWeek}
+                                    {(props as DashboardProps).averageDaysPerWeek}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" align="center">
                                     Días de trabajo por semana.
@@ -455,7 +462,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 11: Cantidad de Fotos Subidas */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={10} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -464,7 +470,7 @@ export default function InfluencerDashboard({
                                     Tus Fotos
                                 </Typography>
                                 <Typography variant="h4" component="p" color="text.primary" align="center">
-                                    {totalPhotos}
+                                    {(props as DashboardProps).totalPhotos}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" align="center">
                                     Fotos subidas a tu perfil.
@@ -473,7 +479,6 @@ export default function InfluencerDashboard({
                         </motion.div>
                     </Grid>
 
-                    {/* Card 12: Días sin Disponibilidad */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={11} variants={cardVariants}>
                             <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
@@ -481,9 +486,9 @@ export default function InfluencerDashboard({
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Días Sin Disponibilidad
                                 </Typography>
-                                {daysWithoutAvailability.length > 0 ? (
+                                {(props as DashboardProps).daysWithoutAvailability.length > 0 ? (
                                     <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
-                                        {daysWithoutAvailability.map((day, index) => (
+                                        {(props as DashboardProps).daysWithoutAvailability.map((day, index) => (
                                             <li key={index}>
                                                 <Typography variant="body2">
                                                     {day.charAt(0).toUpperCase() + day.slice(1)}

@@ -14,7 +14,7 @@ class WeekController extends Controller
      *
      * @return \Inertia\Response
      */
-    
+
     public function index(Request $request)
     {
         $search = $request->input('search', '');
@@ -22,13 +22,15 @@ class WeekController extends Controller
         $weeks = Week::where('name', 'like', '%' . $search . '%')
             ->orWhere('start_date', 'like', '%' . $search . '%')
             ->orWhere('end_date', 'like', '%' . $search . '%')
-            ->paginate(10); // Paginación de 10 por página
+            ->orderBy('start_date', 'desc') // Orden descendente
+            ->paginate(10);
 
         return Inertia::render('weeks/Index', [
             'weeks' => $weeks,
             'search' => $search
         ]);
     }
+
     /**
      * Crear una nueva semana
      *
@@ -112,5 +114,4 @@ class WeekController extends Controller
             'companies' => $companies,
         ]);
     }
-  
 }

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Inertia\Inertia;
 
 class DatoInfluencersController extends Controller
 {
@@ -24,9 +25,10 @@ class DatoInfluencersController extends Controller
                 ];
             });
 
-        return response()->json($users);
+        return Inertia::render('influencers/infuencersdatos', [
+            'users' => $users
+        ]);
     }
-
 
     public function store(Request $request)
     {
@@ -51,7 +53,7 @@ class DatoInfluencersController extends Controller
         // Asignamos el rol al usuario (puede ser 'influencer' o el rol proporcionado)
         $user->assignRole($role);
 
-        return response()->json($user, 201);
+        return redirect()->back()->with('success', 'Usuario creado exitosamente');
     }
 
     public function update(Request $request, $id)
@@ -59,7 +61,7 @@ class DatoInfluencersController extends Controller
         $user = User::find($id);
 
         if (!$user) {
-            return response()->json(['message' => 'Usuario no encontrado'], 404);
+            return redirect()->back()->with('error', 'Usuario no encontrado');
         }
 
         // Validación de los campos proporcionados
@@ -98,14 +100,13 @@ class DatoInfluencersController extends Controller
         // Guardar cambios en el usuario
         $user->save();
 
-        return response()->json(['dato' => $user->dato]);
+        return redirect()->back()->with('success', 'Campo actualizado exitosamente');
     }
-
 
     // Eliminar un usuario
     public function destroy(User $user)
     {
         $user->delete();
-        return response()->json(['message' => 'Usuario eliminado']);
+        return redirect()->back()->with('success', 'Usuario eliminado exitosamente');
     }
 }

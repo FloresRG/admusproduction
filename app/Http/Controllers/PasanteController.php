@@ -64,7 +64,7 @@ class PasanteController extends Controller
             'filters' => $request->only('search'),
         ]);
     }
-    public function actualizarEstado(Request $request, $id)
+    public function actualizarEstadoa(Request $request, $id)
     {
         $request->validate([
             'estado' => 'required|string|max:255',
@@ -103,6 +103,255 @@ class PasanteController extends Controller
         return response()->json([
             'success' => true,
             'data' => $pasantes
+        ]);
+    }
+    public function mistareas(Request $request)
+    {
+        $userId = Auth::id();
+        $perPage = 10;
+
+        $query = AsignacionTarea::with([
+            'tarea' => function ($query) {
+                $query->select('id', 'titulo', 'descripcion', 'prioridad', 'fecha', 'company_id', 'tipo_id');
+            },
+            'tarea.tipo' => function ($query) {
+                $query->select('id', 'nombre_tipo');
+            },
+            'tarea.company' => function ($query) {
+                $query->select('id', 'name', 'ubicacion', 'direccion');
+            }
+        ])
+            ->where('user_id', $userId);
+
+        // Búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('tarea', function ($q) use ($search) {
+                $q->where('titulo', 'like', "%{$search}%")
+                    ->orWhere('descripcion', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por prioridad
+        if ($request->filled('priority')) {
+            $query->whereHas('tarea', function ($q) use ($request) {
+                $q->where('prioridad', $request->priority);
+            });
+        }
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $query->where('estado', $request->status);
+        }
+
+        // Filtro por tipo
+        if ($request->filled('type')) {
+            $query->whereHas('tarea.tipo', function ($q) use ($request) {
+                $q->where('nombre_tipo', $request->type);
+            });
+        }
+
+        $tareas = $query->orderBy('fecha', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'tareas' => $tareas->items(),
+            'total' => $tareas->total(),
+            'perPage' => $perPage,
+            'currentPage' => $tareas->currentPage(),
+        ]);
+    }
+    public function mistareaspendientes(Request $request)
+    {
+        $userId = Auth::id();
+        $perPage = 10;
+
+        $query = AsignacionTarea::with([
+            'tarea' => function ($query) {
+                $query->select('id', 'titulo', 'descripcion', 'prioridad', 'fecha', 'company_id', 'tipo_id');
+            },
+            'tarea.tipo' => function ($query) {
+                $query->select('id', 'nombre_tipo');
+            },
+            'tarea.company' => function ($query) {
+                $query->select('id', 'name', 'ubicacion', 'direccion');
+            }
+        ])
+            ->where('user_id', $userId)
+            ->where('estado', 'pendiente'); // Filter for pending tasks;
+
+        // Búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('tarea', function ($q) use ($search) {
+                $q->where('titulo', 'like', "%{$search}%")
+                    ->orWhere('descripcion', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por prioridad
+        if ($request->filled('priority')) {
+            $query->whereHas('tarea', function ($q) use ($request) {
+                $q->where('prioridad', $request->priority);
+            });
+        }
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $query->where('estado', $request->status);
+        }
+
+        // Filtro por tipo
+        if ($request->filled('type')) {
+            $query->whereHas('tarea.tipo', function ($q) use ($request) {
+                $q->where('nombre_tipo', $request->type);
+            });
+        }
+
+        $tareas = $query->orderBy('fecha', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'tareas' => $tareas->items(),
+            'total' => $tareas->total(),
+            'perPage' => $perPage,
+            'currentPage' => $tareas->currentPage(),
+        ]);
+    }
+    public function mistareasenrevicion(Request $request)
+    {
+        $userId = Auth::id();
+        $perPage = 10;
+
+        $query = AsignacionTarea::with([
+            'tarea' => function ($query) {
+                $query->select('id', 'titulo', 'descripcion', 'prioridad', 'fecha', 'company_id', 'tipo_id');
+            },
+            'tarea.tipo' => function ($query) {
+                $query->select('id', 'nombre_tipo');
+            },
+            'tarea.company' => function ($query) {
+                $query->select('id', 'name', 'ubicacion', 'direccion');
+            }
+        ])
+            ->where('user_id', $userId)
+            ->where('estado', 'en_revision'); // Filter for pending tasks;
+
+        // Búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('tarea', function ($q) use ($search) {
+                $q->where('titulo', 'like', "%{$search}%")
+                    ->orWhere('descripcion', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por prioridad
+        if ($request->filled('priority')) {
+            $query->whereHas('tarea', function ($q) use ($request) {
+                $q->where('prioridad', $request->priority);
+            });
+        }
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $query->where('estado', $request->status);
+        }
+
+        // Filtro por tipo
+        if ($request->filled('type')) {
+            $query->whereHas('tarea.tipo', function ($q) use ($request) {
+                $q->where('nombre_tipo', $request->type);
+            });
+        }
+
+        $tareas = $query->orderBy('fecha', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'tareas' => $tareas->items(),
+            'total' => $tareas->total(),
+            'perPage' => $perPage,
+            'currentPage' => $tareas->currentPage(),
+        ]);
+    }
+    public function mistareaspublicadas(Request $request)
+    {
+        $userId = Auth::id();
+        $perPage = 10;
+
+        $query = AsignacionTarea::with([
+            'tarea' => function ($query) {
+                $query->select('id', 'titulo', 'descripcion', 'prioridad', 'fecha', 'company_id', 'tipo_id');
+            },
+            'tarea.tipo' => function ($query) {
+                $query->select('id', 'nombre_tipo');
+            },
+            'tarea.company' => function ($query) {
+                $query->select('id', 'name', 'ubicacion', 'direccion');
+            }
+        ])
+            ->where('user_id', $userId)
+            ->where('estado', 'publicada'); // Filter for pending tasks;
+
+
+        // Búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('tarea', function ($q) use ($search) {
+                $q->where('titulo', 'like', "%{$search}%")
+                    ->orWhere('descripcion', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtro por prioridad
+        if ($request->filled('priority')) {
+            $query->whereHas('tarea', function ($q) use ($request) {
+                $q->where('prioridad', $request->priority);
+            });
+        }
+
+        // Filtro por estado
+        if ($request->filled('status')) {
+            $query->where('estado', $request->status);
+        }
+
+        // Filtro por tipo
+        if ($request->filled('type')) {
+            $query->whereHas('tarea.tipo', function ($q) use ($request) {
+                $q->where('nombre_tipo', $request->type);
+            });
+        }
+
+        $tareas = $query->orderBy('fecha', 'desc')->paginate($perPage);
+
+        return response()->json([
+            'tareas' => $tareas->items(),
+            'total' => $tareas->total(),
+            'perPage' => $perPage,
+            'currentPage' => $tareas->currentPage(),
+        ]);
+    }
+    public function actualizarEstado(Request $request, $id)
+    {
+        $request->validate([
+            'estado' => 'required|string|in:completada,en progreso,pendiente',
+            'detalle' => 'nullable|string|max:500',
+        ]);
+
+        $asignacion = AsignacionTarea::findOrFail($id);
+
+        if ($asignacion->user_id !== Auth::id()) {
+            return response()->json([
+                'message' => 'No autorizado'
+            ], 403);
+        }
+
+        $asignacion->update([
+            'estado' => $request->estado,
+            'detalle' => $request->detalle,
+        ]);
+
+        return response()->json([
+            'message' => 'Actualización exitosa',
+            'asignacion' => $asignacion
         ]);
     }
 }
