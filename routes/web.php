@@ -21,7 +21,7 @@ use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
 use App\Http\Controllers\WeekController;
-use App\Models\Tarea;
+
 
 Route::get('/', function () {
     return Inertia::render('welcome');

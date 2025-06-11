@@ -48,58 +48,89 @@ class TareaController extends Controller
 
 
     public function store(Request $request)
-{
-    // 1. Validar
-    $data = $request->validate([
-        'titulo'      => 'required|string|max:255',
-        'prioridad'   => 'nullable|string|max:255',
-        'descripcion' => 'nullable|string',
-        'fecha'       => 'nullable|date',
-        'tipo_id'     => 'nullable|exists:tipos,id',
-        'company_id'  => 'nullable|exists:companies,id',
-    ]);
+    {
+        // 1. Validar incluyendo el nuevo campo de asignación
+        $data = $request->validate([
+            'titulo'      => 'required|string|max:255',
+            'prioridad'   => 'nullable|string|max:255',
+            'descripcion' => 'nullable|string',
+            'fecha'       => 'nullable|date',
+            'tipo_id'     => 'nullable|exists:tipos,id',
+            'company_id'  => 'nullable|exists:companies,id',
+            'asignacion_aleatoria' => 'required|boolean', // Nuevo campo
+            'pasante_id' => 'required_if:asignacion_aleatoria,false|nullable|exists:users,id' // Solo requerido si no es aleatorio
+        ]);
 
-    // 2. Crear la tarea
-    $tarea = Tarea::create($data);
+        // 2. Crear la tarea
+        $tarea = Tarea::create([
+            'titulo' => $data['titulo'],
+            'prioridad' => $data['prioridad'],
+            'descripcion' => $data['descripcion'],
+            'fecha' => $data['fecha'],
+            'tipo_id' => $data['tipo_id'],
+            'company_id' => $data['company_id'],
+        ]);
 
-    // 3. Determinar fecha de asignación: si el front envió 'fecha', usarla; si no, usar hoy.
-    $fechaAsignacion = $data['fecha'] ?? Carbon::now()->toDateString();
+        // 3. Determinar fecha de asignación
+        $fechaAsignacion = $data['fecha'] ?? Carbon::now()->toDateString();
 
-    // 4. Buscar pasantes
-    //    (a) Primero intento filtrar por tipo_id, si es que el usuario seleccionó un tipo
-    $pasantesQuery = User::role('pasante');
+        // 4. Proceso de asignación según el tipo seleccionado
+        if ($data['asignacion_aleatoria']) {
+            // Asignación aleatoria
+            $pasantesQuery = User::role('pasante');
 
-    if (!empty($data['tipo_id'])) {
-        // Asumo que existe relación User->tipos() (belongsToMany(Tipo::class, 'tipo_user'))
-        $pasantesQuery = $pasantesQuery->whereHas('tipos', function($q) use ($data) {
-            $q->where('tipo_id', $data['tipo_id']);
-        });
-    }
+            if (!empty($data['tipo_id'])) {
+                $pasantesQuery = $pasantesQuery->whereHas('tipos', function ($q) use ($data) {
+                    $q->where('tipo_id', $data['tipo_id']);
+                });
+            }
 
-    $pasantes = $pasantesQuery->get();
+            $pasantes = $pasantesQuery->get();
 
-    // Si no quedó ninguno (p. ej. no hay pasantes con ese tipo), vuelvo a cargar todos los pasantes
-    if ($pasantes->isEmpty()) {
-        $pasantes = User::role('pasante')->get();
-    }
+            if ($pasantes->isEmpty()) {
+                $pasantes = User::role('pasante')->get();
+            }
 
-    // 5. Si existe al menos un pasante, elijo uno al azar
-    if ($pasantes->isNotEmpty()) {
-        $pasanteElegido = $pasantes->random();
+            if ($pasantes->isNotEmpty()) {
+                $pasanteElegido = $pasantes->random();
+                $pasanteId = $pasanteElegido->id;
+            } else {
+                return response()->json([
+                    'message' => 'No hay pasantes disponibles para asignar la tarea'
+                ], 400);
+            }
+        } else {
+            // Asignación manual
+            $pasanteId = $data['pasante_id'];
 
-        // 6. Crear la asignación
+            // Verificar que el usuario seleccionado sea un pasante
+            $esPasante = User::role('pasante')->where('id', $pasanteId)->exists();
+
+            if (!$esPasante) {
+                return response()->json([
+                    'message' => 'El usuario seleccionado no es un pasante'
+                ], 400);
+            }
+        }
+
+        // 5. Crear la asignación
         AsignacionTarea::create([
-            'user_id'  => $pasanteElegido->id,
+            'user_id'  => $pasanteId,
             'tarea_id' => $tarea->id,
             'estado'   => 'pendiente',
             'detalle'  => '',
             'fecha'    => $fechaAsignacion,
         ]);
-    }
 
-    // 7. Respuesta al frontend. Ahora sí la tarea ya está asignada automáticamente.
-    return response()->json(['message' => 'Tarea creada y asignada'], 201);
-}
+        // 6. Respuesta al frontend
+        return response()->json([
+            'message' => 'Tarea creada y asignada correctamente',
+            'data' => [
+                'tarea' => $tarea,
+                'pasante_id' => $pasanteId
+            ]
+        ], 201);
+    }
 
 
     public function update(Request $request, Tarea $tarea)
@@ -254,45 +285,44 @@ class TareaController extends Controller
             'tareas_por_pasante' => collect($pasantesTipos)->mapWithKeys(fn($info) => [$info['user']->name => count($info['tareas'])]),
         ]);
     }
-    
-public function tareasAsignadas()
-{
-    // Traemos todas las tareas que tengan al menos una asignación
-    // e incluimos la relación con 'tipo', 'company' y 'asignaciones.user'.
-    $tareas = Tarea::with([
+
+    public function tareasAsignadas()
+    {
+        // Traemos todas las tareas que tengan al menos una asignación
+        // e incluimos la relación con 'tipo', 'company' y 'asignaciones.user'.
+        $tareas = Tarea::with([
             'tipo:id,nombre_tipo',
             'company:id,name',
-            'asignaciones.user:id,name' 
+            'asignaciones.user:id,name'
         ])
-        ->whereHas('asignaciones') // solo las que tengan asignaciones
-        ->get();
+            ->whereHas('asignaciones') // solo las que tengan asignaciones
+            ->get();
 
-    // Transformamos cada tarea para enviar en JSON:
-    // - Queremos enviar id, titulo, prioridad, descripcion, fecha, tipo, company
-    // - Y, por cada asignación, el nombre del usuario asignado.
-    $resultado = $tareas->map(fn($t) => [
-        'id'            => $t->id,
-        'titulo'        => $t->titulo,
-        'prioridad'     => $t->prioridad,
-        'descripcion'   => $t->descripcion,
-        'fecha'         => $t->fecha,
-        'tipo'          => $t->tipo ? [
-                              'id'          => $t->tipo->id,
-                              'nombre_tipo' => $t->tipo->nombre_tipo,
-                          ] : null,
-        'company'       => $t->company ? [
-                              'id'     => $t->company->id,
-                              'name'   => $t->company->name,
-                          ] : null,
-        'asignados'     => $t->asignaciones->map(fn($a) => [
-                              'user_id'   => $a->user->id,
-                              'user_name' => $a->user->name,
-                              'estado'    => $a->estado,
-                              'detalle'   => $a->detalle,
-                          ]),
-    ]);
+        // Transformamos cada tarea para enviar en JSON:
+        // - Queremos enviar id, titulo, prioridad, descripcion, fecha, tipo, company
+        // - Y, por cada asignación, el nombre del usuario asignado.
+        $resultado = $tareas->map(fn($t) => [
+            'id'            => $t->id,
+            'titulo'        => $t->titulo,
+            'prioridad'     => $t->prioridad,
+            'descripcion'   => $t->descripcion,
+            'fecha'         => $t->fecha,
+            'tipo'          => $t->tipo ? [
+                'id'          => $t->tipo->id,
+                'nombre_tipo' => $t->tipo->nombre_tipo,
+            ] : null,
+            'company'       => $t->company ? [
+                'id'     => $t->company->id,
+                'name'   => $t->company->name,
+            ] : null,
+            'asignados'     => $t->asignaciones->map(fn($a) => [
+                'user_id'   => $a->user->id,
+                'user_name' => $a->user->name,
+                'estado'    => $a->estado,
+                'detalle'   => $a->detalle,
+            ]),
+        ]);
 
-    return response()->json($resultado);
-}
-
+        return response()->json($resultado);
+    }
 }
