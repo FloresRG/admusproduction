@@ -273,6 +273,14 @@ Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfD
 Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
+    // Nueva ruta para la vista de detalles de una semana específica
+    Route::get('/dashboard/influencer/weeks/{week}', [DashboardController::class, 'showWeekDetails'])
+         ->name('influencer.week.details'); // Un nombre de ruta descriptivo
 
+    // Opcional: Las rutas API que devuelven JSON si las quieres mantener para otros usos
+    Route::get('/api/influencer/weeks', [DashboardController::class, 'getWorkingWeeksList'])
+         ->name('api.influencer.weeks.list');
+    Route::get('/api/influencer/weeks/{week}', [DashboardController::class, 'getSpecificWeekDetails'])
+         ->name('api.influencer.weeks.details');
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
