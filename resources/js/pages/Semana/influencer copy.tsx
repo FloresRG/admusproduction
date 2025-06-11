@@ -415,6 +415,9 @@ const Semanainfluencer = () => {
                                                         <Typography variant="subtitle1" fontWeight="bold">
                                                             {empresaData.empresa.name ?? 'Empresa sin nombre'}
                                                         </Typography>
+                                                        <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                                                            ID: {empresaData.empresa.id}
+                                                        </Typography>
                                                     </Box>
                                                 </Stack>
                                             </TableCell>
@@ -445,7 +448,7 @@ const Semanainfluencer = () => {
                                                                         }
                                                                         title={
                                                                             <Typography variant="subtitle2" fontWeight="bold">
-                                                                                Turno Mañana
+                                                                                Mañana
                                                                             </Typography>
                                                                         }
                                                                         action={
@@ -530,7 +533,7 @@ const Semanainfluencer = () => {
                                                                         }
                                                                         title={
                                                                             <Typography variant="subtitle2" fontWeight="bold">
-                                                                                Turno Tarde
+                                                                                Tarde
                                                                             </Typography>
                                                                         }
                                                                         action={

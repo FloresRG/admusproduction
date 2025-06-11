@@ -1,10 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 
 import {
+    Alert,
     Box,
     Checkbox,
     IconButton,
@@ -31,6 +32,14 @@ type User = {
     email: string;
     cantidad: number;
 };
+
+interface PageProps {
+    users: User[];
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+}
 
 const breadcrumbs = [
     {
@@ -59,7 +68,8 @@ function stableSort<T>(array: T[], comparator: (a: T, b: T) => number) {
 
 export default function InfluencersDatos() {
     const theme = useTheme();
-    const [rowData, setRowData] = useState<User[]>([]);
+    const { users, flash } = usePage<PageProps>().props;
+    const [rowData, setRowData] = useState<User[]>(users);
     const [search, setSearch] = useState('');
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -73,31 +83,28 @@ export default function InfluencersDatos() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    // Cargar usuarios desde la API
+    // Actualizar rowData cuando cambien los usuarios (después de operaciones)
     useEffect(() => {
-        fetch('/api/infuencersdatos')
-            .then((response) => response.json())
-            .then((data) => setRowData(data))
-            .catch((error) => console.error('Error fetching users:', error));
-    }, []);
+        setRowData(users);
+    }, [users]);
+
+    // Manejar mensajes flash
+    useEffect(() => {
+        if (flash?.success) {
+            setNotification(flash.success);
+        } else if (flash?.error) {
+            setNotification(flash.error);
+        }
+    }, [flash]);
 
     // Eliminar usuario
     const handleDelete = async (id: number) => {
         if (!window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
-        try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            await fetch(`/infuencersdatos/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken || '',
-                },
-            });
-            setRowData((prevData) => prevData.filter((user) => user.id !== id));
-            setNotification('Usuario eliminado exitosamente');
-        } catch (error) {
-            setNotification('Hubo un error al eliminar el usuario');
-        }
+        
+        router.delete(`/infuencersdatos/${id}`, {
+            preserveState: true,
+            preserveScroll: true,
+        });
     };
 
     // Editar el campo cantidad y manejar la creación de un nuevo dato si no existe
@@ -121,26 +128,26 @@ export default function InfluencersDatos() {
             [editingField!]: editingValue,
         };
 
-        try {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const response = await fetch(`/infuencersdatos/${editingId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken || '',
-                },
-                body: JSON.stringify(updatedField),
-            });
-            if (!response.ok) throw new Error('Error al actualizar el campo');
-            const updatedUser = await response.json();
-            setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: editingValue } : user)));
-            setNotification('Campo actualizado exitosamente');
-            setEditingId(null);
-            setEditingField(null);
-            setEditingValue('');
-        } catch (error) {
-            setNotification('Hubo un error al actualizar el campo');
-        }
+        router.put(`/infuencersdatos/${editingId}`, updatedField, {
+            preserveState: true,
+            preserveScroll: true,
+            onSuccess: () => {
+                // Actualizar el estado local inmediatamente para mejor UX
+                setRowData((prev) => 
+                    prev.map((user) => 
+                        user.id === editingId 
+                            ? { ...user, [editingField!]: editingValue } 
+                            : user
+                    )
+                );
+                setEditingId(null);
+                setEditingField(null);
+                setEditingValue('');
+            },
+            onError: () => {
+                setNotification('Hubo un error al actualizar el campo');
+            }
+        });
     };
 
     // Filtrado de búsqueda
@@ -170,6 +177,21 @@ export default function InfluencersDatos() {
         setSelected((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]));
     };
     const isSelected = (id: number) => selected.indexOf(id) !== -1;
+
+    // Eliminar múltiples usuarios seleccionados
+    const handleDeleteSelected = () => {
+        if (!window.confirm(`¿Estás seguro de que deseas eliminar ${selected.length} usuario${selected.length > 1 ? 's' : ''}?`)) return;
+        
+        // Eliminar uno por uno (puedes optimizar esto en el backend para eliminar múltiples)
+        selected.forEach((id) => {
+            router.delete(`/infuencersdatos/${id}`, {
+                preserveState: true,
+                preserveScroll: true,
+            });
+        });
+        
+        setSelected([]); // Limpiar selección
+    };
 
     // Notificaciones
     useEffect(() => {
@@ -211,7 +233,7 @@ export default function InfluencersDatos() {
                     <Typography sx={{ flex: '1 1 100%' }} color="inherit">
                         {selected.length} seleccionado{selected.length > 1 ? 's' : ''}
                     </Typography>
-                    <IconButton color="error" onClick={() => selected.forEach((id) => handleDelete(id))}>
+                    <IconButton color="error" onClick={handleDeleteSelected}>
                         <DeleteIcon />
                     </IconButton>
                 </Toolbar>
@@ -442,11 +464,6 @@ export default function InfluencersDatos() {
                                             variant="contained"
                                             size="small"
                                             color="primary"
-                                            sx={{ mr: 1 }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                router.visit(`/users/${row.id}/photos/upload`);
-                                            }}
                                         >
                                             Subir foto
                                         </IconButton>

@@ -23,16 +23,29 @@ type CompanyCategory = {
     name: string;
 };
 
-type Props = {
-    categories: CompanyCategory[];
-};
-
 type Availability = {
     day_of_week: number;
     start_time: string;
     end_time: string;
     turno: 'mañana' | 'tarde';
     cantidad?: number | null;
+};
+
+type Company = {
+    id: number;
+    name: string;
+    company_category_id: string;
+    contract_duration: string;
+    description: string;
+    direccion: string;
+    start_date: string;
+    end_date: string;
+};
+
+type Props = {
+    company: Company;
+    categories: CompanyCategory[];
+    availability: Availability[];
 };
 
 type SearchResult = {
@@ -44,8 +57,10 @@ type SearchResult = {
 const DEFAULT_CENTER = { lat: -16.5871, lng: -68.0855 };
 const DEFAULT_ZOOM = 13;
 
-export default function Create({ categories }: Props) {
-    const { data, setData, post, processing, errors } = useForm<{
+const formatDate = (dateStr: string) => dateStr ? new Date(dateStr).toISOString().slice(0, 10) : '';
+
+export default function Edit({ company, categories, availability }: Props) {
+    const { data, setData, put, processing, errors } = useForm<{
         name: string;
         company_category_id: string;
         contract_duration: string;
@@ -55,22 +70,25 @@ export default function Create({ categories }: Props) {
         end_date: string;
         availability: Availability[];
     }>({
-        name: '',
-        company_category_id: '',
-        contract_duration: '',
-        description: '',
-        direccion: '',
-        start_date: '',
-        end_date: '',
-        availability: [
-            {
-                day_of_week: 1,
-                start_time: '',
-                end_time: '',
-                turno: 'mañana',
-                cantidad: null,
-            },
-        ],
+        name: company.name,
+        company_category_id: company.company_category_id,
+        contract_duration: company.contract_duration,
+        description: company.description || '',
+        direccion: company.direccion,
+        start_date: formatDate(company.start_date), // <-- aquí
+        end_date: formatDate(company.end_date),  
+        availability:
+            availability.length > 0
+                ? availability
+                : [
+                      {
+                          day_of_week: 1,
+                          start_time: '',
+                          end_time: '',
+                          turno: 'mañana',
+                          cantidad: null,
+                      },
+                  ],
     });
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -94,20 +112,22 @@ export default function Create({ categories }: Props) {
             data.availability.filter((_, i) => i !== index),
         );
     };
-
+ 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/companies');
+        put(`/companies/${company.id}`);
     };
+
     // Estado para manejar la visibilidad del mapa
     const [openMapModal, setOpenMapModal] = useState(false);
-    const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(
+        company.direccion ? new LatLng(Number(company.direccion.split(',')[0]), Number(company.direccion.split(',')[1])) : null,
+    );
     const [mapError, setMapError] = useState<string>('');
 
     const handleOpenMap = () => {
         setMapError('');
         setOpenMapModal(true);
-        // Si ya hay una ubicación guardada, usarla como centro
         if (data.direccion) {
             const [lat, lng] = data.direccion.split(',').map(Number);
             setSelectedLocation(new LatLng(lat, lng));
@@ -123,8 +143,6 @@ export default function Create({ categories }: Props) {
             setMapError('Por favor seleccione una ubicación en el mapa');
             return;
         }
-
-        // Redondear coordenadas a 6 decimales para mayor precisión
         const lat = Number(selectedLocation.lat.toFixed(6));
         const lng = Number(selectedLocation.lng.toFixed(6));
         setData('direccion', `${lat},${lng}`);
@@ -132,7 +150,6 @@ export default function Create({ categories }: Props) {
         setMapError('');
     };
 
-    // Componente para manejar la selección del marcador
     function LocationMarker() {
         const map = useMapEvents({
             dblclick(e) {
@@ -164,7 +181,6 @@ export default function Create({ categories }: Props) {
         ) : null;
     }
 
-    // Añadir la función de búsqueda
     const handleSearch = async (query: string) => {
         if (!query.trim()) return;
 
@@ -180,7 +196,6 @@ export default function Create({ categories }: Props) {
         }
     };
 
-    // Añadir función para seleccionar resultado
     const handleSelectSearchResult = (result: SearchResult) => {
         const newLocation = new LatLng(Number(result.lat), Number(result.lon));
         setSelectedLocation(newLocation);
@@ -190,9 +205,9 @@ export default function Create({ categories }: Props) {
 
     return (
         <AppLayout>
-            <Head title="Crear Empresa" />
+            <Head title="Editar Empresa" />
             <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-lg">
-                <h1 className="mb-6 text-center text-2xl font-bold">Crear nueva Empresa</h1>
+                <h1 className="mb-6 text-center text-2xl font-bold">Editar Empresa</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Nombre */}
@@ -264,8 +279,6 @@ export default function Create({ categories }: Props) {
                     </div>
 
                     {/* Dirección (ancho completo) */}
-
-                    {/* Dirección con el mapa */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
                             Dirección
@@ -334,7 +347,7 @@ export default function Create({ categories }: Props) {
                                 center={selectedLocation || DEFAULT_CENTER}
                                 zoom={DEFAULT_ZOOM}
                                 style={{ height: '400px', width: '100%' }}
-                                doubleClickZoom={false} // Desactivar zoom con doble clic
+                                doubleClickZoom={false}
                                 className="rounded-lg border border-gray-300 shadow-md"
                             >
                                 <TileLayer
@@ -370,7 +383,7 @@ export default function Create({ categories }: Props) {
                         />
                     </div>
 
-                    {/* Disponibilidad (como la tienes, sin cambios grandes) */}
+                    {/* Disponibilidad */}
                     <div className="mt-6">
                         <label className="mb-2 block text-sm font-medium text-gray-700">Días de disponibilidad</label>
 
@@ -389,6 +402,7 @@ export default function Create({ categories }: Props) {
                                         <option value={4}>Jueves</option>
                                         <option value={5}>Viernes</option>
                                         <option value={6}>Sabado</option>
+                                        <option value={7}>Domingo</option>
                                     </select>
 
                                     {/* Turno */}
@@ -415,7 +429,7 @@ export default function Create({ categories }: Props) {
                                         <option value="tarde">Tarde</option>
                                     </select>
 
-                                    {/* Cantidad (2 fracciones) */}
+                                    {/* Cantidad */}
                                     <div className="col-span-2">
                                         <label className="sr-only">Cantidad</label>
                                         <input
@@ -469,7 +483,7 @@ export default function Create({ categories }: Props) {
                             Cancelar
                         </Link>
                         <button type="submit" className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700" disabled={processing}>
-                            {processing ? 'Creando...' : 'Crear'}
+                            {processing ? 'Actualizando...' : 'Actualizar'}
                         </button>
                     </div>
                 </form>

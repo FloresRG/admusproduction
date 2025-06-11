@@ -1,8 +1,11 @@
 import AppLayout from '@/layouts/app-layout';
 import { Inertia } from '@inertiajs/inertia';
 import { Head, usePage } from '@inertiajs/react';
-import { Box, Button, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Button, IconButton, Paper, Typography } from '@mui/material';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 type Props = {
     user: {
@@ -13,23 +16,28 @@ type Props = {
 };
 
 export default function FotoInfluencer({ user }: Props) {
-    const [photos, setPhotos] = useState<File[]>([]); // Array de fotos
-    const [previews, setPreviews] = useState<string[]>([]); // URLs de previsualización
+    const [photos, setPhotos] = useState<File[]>([]);
+    const [previews, setPreviews] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
-
     const { flash = {} } = usePage().props as any;
 
-    useEffect(() => {
-        if (photos.length === 0) {
-            setPreviews([]);
-            return;
-        }
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        setError(null);
+        setPhotos((prev) => [...prev, ...acceptedFiles]);
+    }, []);
 
-        // Generar URLs para todas las fotos seleccionadas
-        const objectUrls = photos.map((photo) => URL.createObjectURL(photo));
+    const { getRootProps, getInputProps, open } = useDropzone({
+        accept: { 'image/*': [] },
+        onDrop,
+        noClick: true,
+        noKeyboard: true,
+        multiple: true,
+    });
+
+    useEffect(() => {
+        const objectUrls = photos.map((file) => URL.createObjectURL(file));
         setPreviews(objectUrls);
 
-        // Limpiar URLs al desmontar o cambiar fotos
         return () => {
             objectUrls.forEach((url) => URL.revokeObjectURL(url));
         };
@@ -45,7 +53,7 @@ export default function FotoInfluencer({ user }: Props) {
 
         const formData = new FormData();
         photos.forEach((photo) => {
-            formData.append('photos[]', photo); // Array en el backend: photos[]
+            formData.append('photos[]', photo);
         });
 
         Inertia.post(`/users/${user.id}/photos`, formData, {
@@ -55,10 +63,14 @@ export default function FotoInfluencer({ user }: Props) {
         });
     };
 
+    const removeImage = (indexToRemove: number) => {
+        setPhotos((prev) => prev.filter((_, i) => i !== indexToRemove));
+    };
+
     return (
         <AppLayout>
             <Head title={`Subir fotos - ${user.name}`} />
-            <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4 }}>
+            <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
                 <Typography variant="h5" mb={2}>
                     Subir fotos para {user.name}
                 </Typography>
@@ -67,20 +79,56 @@ export default function FotoInfluencer({ user }: Props) {
                 {error && <Typography color="error.main">{error}</Typography>}
 
                 <form onSubmit={handleSubmit}>
-                    <input type="file" accept="image/*" multiple onChange={(e) => setPhotos(e.target.files ? Array.from(e.target.files) : [])} />
+                    <Paper
+                        {...getRootProps()}
+                        sx={{
+                            border: '2px dashed #ccc',
+                            padding: 4,
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            mb: 2,
+                            bgcolor: '#f9f9f9',
+                        }}
+                    >
+                        <input {...getInputProps()} />
+                        <Typography variant="body1">Arrastra y suelta tus fotos aquí</Typography>
+                        <Button variant="outlined" startIcon={<AddPhotoAlternateIcon />} sx={{ mt: 2 }} onClick={open}>
+                            Agregar fotos
+                        </Button>
+                    </Paper>
 
-                    <Box sx={{ mt: 2, mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                        {previews.map((src, index) => (
-                            <img
-                                key={index}
-                                src={src}
-                                alt={`Vista previa ${index + 1}`}
-                                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 8 }}
-                            />
-                        ))}
-                    </Box>
+                    {previews.length > 0 && (
+                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
+                            {previews.map((src, index) => (
+                                <Box key={index} sx={{ position: 'relative' }}>
+                                    <img
+                                        src={src}
+                                        alt={`Preview ${index}`}
+                                        style={{
+                                            width: 100,
+                                            height: 100,
+                                            objectFit: 'cover',
+                                            borderRadius: 8,
+                                        }}
+                                    />
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => removeImage(index)}
+                                        sx={{
+                                            position: 'absolute',
+                                            top: -10,
+                                            right: -10,
+                                            backgroundColor: 'white',
+                                        }}
+                                    >
+                                        <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
 
-                    <Button type="submit" variant="contained" sx={{ mt: 2 }}>
+                    <Button type="submit" variant="contained">
                         Subir fotos
                     </Button>
                 </form>

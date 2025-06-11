@@ -58,18 +58,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('{id}', [CompanyCategoryController::class, 'destroy']);
     });
     Route::prefix('companies')->group(function () {
-        Route::get('/', [CompanyController::class, 'index'])->name('index');
+        Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('/create', [CompanyController::class, 'create'])->name('create');
         Route::post('/', [CompanyController::class, 'store'])->name('store');
-        Route::get('{company}/edit', [CompanyController::class, 'edit'])->name('edit');
-        Route::put('{company}', [CompanyController::class, 'update'])->name('update');
+        Route::get('{id}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+        Route::put('{id}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('{company}', [CompanyController::class, 'destroy'])->name('destroy');
     });
     Route::get('/users', function () {
         return Inertia::render('user');
     });
 
-
+    Route::get('{id}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+    Route::put('{id}', [CompanyController::class, 'update'])->name('companies.update');
     // —– Rutas para Weeks —–
     Route::prefix('weeks')->group(function () {
         // Listar semanas
@@ -240,14 +241,13 @@ Route::get('/api/tareas-asignadas', [TareaController::class, 'tareasAsignadas'])
 Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 
 
-Route::get('/infuencersdatos', function () {
-    return Inertia::render('influencers/infuencersdatos');
-});
 
-Route::get('/api/infuencersdatos', [DatoInfluencersController::class, 'index']);
-Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store']);
-Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']);
-Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
+
+// Rutas para el controlador de influencers con Inertia
+Route::get('/infuencersdatos', [DatoInfluencersController::class, 'index'])->name('infuencersdatos.index');
+Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store'])->name('infuencersdatos.store');
+Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update'])->name('infuencersdatos.update');
+Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy'])->name('infuencersdatos.destroy');
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
