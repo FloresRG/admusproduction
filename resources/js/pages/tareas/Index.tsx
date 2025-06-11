@@ -1,4 +1,3 @@
-"use client"
 
 import AppLayout from "@/layouts/app-layout"
 import { Head } from "@inertiajs/react"
@@ -100,6 +99,9 @@ export default function Tareas() {
   const [tareas, setTareas] = useState<TareaAsignada[]>([])
   const [tipos, setTipos] = useState<TipoTarea[]>([])
   const [empresas, setEmpresas] = useState<Empresa[]>([])
+  const [asignacionTipo, setAsignacionTipo] = useState<"aleatoria" | "manual">("aleatoria");
+  const [pasantes, setPasantes] = useState<Array<{ id: number, name: string, email: string }>>([]);
+  const [selectedPasanteId, setSelectedPasanteId] = useState<string>("");
 
   // Estados de UI
   const [loading, setLoading] = useState(true)
@@ -148,15 +150,18 @@ export default function Tareas() {
     setError(null)
 
     try {
-      const [tareasRes, tiposRes, empresasRes] = await Promise.all([
+      const [tareasRes, tiposRes, empresasRes, pasantesRes] = await Promise.all([
         axios.get("/api/tareas-asignadas"),
         axios.get("/api/tipos"),
         axios.get("/api/companies"),
+        axios.get("/api/pasantes")
       ])
 
       setTareas(tareasRes.data)
       setTipos(tiposRes.data)
       setEmpresas(empresasRes.data)
+      setPasantes(pasantesRes.data.data); // Nota el .data.data debido a la estructura de la respuesta
+
     } catch (err) {
       console.error("Error al cargar datos:", err)
       setError("Hubo un error al cargar los datos. Por favor, intenta de nuevo.")
@@ -383,36 +388,43 @@ export default function Tareas() {
   }
 
   const cancelNewTask = () => {
-    setShowNewTaskForm(false)
-    setNewTaskData({
-      titulo: "",
-      prioridad: "",
-      descripcion: "",
-      fecha: "",
-      tipo_id: "",
-      company_id: "",
-    })
-    setAsignarEmpresa("no")
-  }
+  setShowNewTaskForm(false);
+  setNewTaskData({
+    titulo: "",
+    prioridad: "",
+    descripcion: "",
+    fecha: "",
+    tipo_id: "",
+    company_id: "",
+  });
+  setAsignarEmpresa("no");
+  setAsignacionTipo("aleatoria");
+  setSelectedPasanteId("");
+};
 
   const saveNewTask = async () => {
-    if (!newTaskData.titulo.trim()) return
+    if (!newTaskData.titulo.trim()) return;
 
     try {
       const payload = {
         ...newTaskData,
         tipo_id: newTaskData.tipo_id ? Number(newTaskData.tipo_id) : null,
         company_id: newTaskData.company_id ? Number(newTaskData.company_id) : null,
-      }
+        asignacion_aleatoria: asignacionTipo === "aleatoria",
+        pasante_id: asignacionTipo === "manual" ? Number(selectedPasanteId) : null
+      };
 
-      await axios.post("/create/tareas", payload)
-      setShowNewTaskForm(false)
-      fetchData()
+      await axios.post("/create/tareas", payload);
+      setShowNewTaskForm(false);
+      fetchData();
+      // Limpiar estados
+      setAsignacionTipo("aleatoria");
+      setSelectedPasanteId("");
     } catch (err) {
-      console.error("Error al crear tarea:", err)
-      setError("Error al crear la tarea")
+      console.error("Error al crear tarea:", err);
+      setError("Error al crear la tarea");
     }
-  }
+  };
 
   const handleDelete = async (id: number) => {
     if (!confirm("¿Estás seguro de que deseas eliminar esta tarea?")) return
@@ -753,6 +765,75 @@ export default function Tareas() {
               </Box>
               <Box sx={{ p: 4, background: "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)" }}>
                 <Grid container spacing={3}>
+                  {/* Dentro del formulario de nueva tarea, después de los campos existentes */}
+                  <Grid item xs={12} md={6}>
+                    <FormControl component="fieldset" fullWidth>
+                      <FormLabel component="legend" sx={{ fontWeight: "bold", mb: 1, color: "#1976d2" }}>
+                        👥 Tipo de Asignación
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={asignacionTipo}
+                        onChange={(e) => {
+                          setAsignacionTipo(e.target.value as "aleatoria" | "manual");
+                          if (e.target.value === "aleatoria") {
+                            setSelectedPasanteId("");
+                          }
+                        }}
+                      >
+                        <FormControlLabel
+                          value="aleatoria"
+                          control={<Radio />}
+                          label="Aleatoria"
+                        />
+                        <FormControlLabel
+                          value="manual"
+                          control={<Radio />}
+                          label="Manual"
+                        />
+                      </RadioGroup>
+                    </FormControl>
+                  </Grid>
+
+                  {asignacionTipo === "manual" && (
+                    <Grid item xs={12}>
+                      <TextField
+                        select
+                        fullWidth
+                        label="🧑‍💼 Seleccionar Pasante"
+                        value={selectedPasanteId}
+                        onChange={(e) => setSelectedPasanteId(e.target.value)}
+                        required
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: 2
+                          }
+                        }}
+                      >
+                        <MenuItem value="">Seleccionar pasante</MenuItem>
+                        {pasantes.map((pasante) => (
+                          <MenuItem key={pasante.id} value={pasante.id}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Avatar
+                                sx={{
+                                  width: 24,
+                                  height: 24,
+                                  bgcolor: getAvatarColor(pasante.name),
+                                  fontSize: '0.875rem'
+                                }}
+                              >
+                                {getInitials(pasante.name)}
+                              </Avatar>
+                              <Typography>{pasante.name}</Typography>
+                              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                                ({pasante.email})
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                  )}
                   <Grid item xs={12} md={6}>
                     <TextField
                       fullWidth
@@ -894,7 +975,10 @@ export default function Tareas() {
                         variant="contained"
                         startIcon={<Save />}
                         onClick={saveNewTask}
-                        disabled={!newTaskData.titulo.trim()}
+                        disabled={
+                          !newTaskData.titulo.trim() ||
+                          (asignacionTipo === "manual" && !selectedPasanteId)
+                        }
                         sx={{
                           borderRadius: 2,
                           minWidth: 120,

@@ -21,7 +21,7 @@ use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
 use App\Http\Controllers\WeekController;
-use App\Models\Tarea;
+
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -273,6 +273,6 @@ Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfD
 Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
-
+Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
