@@ -227,6 +227,13 @@ Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowB
      ->name('tareas.fecha');
 
 
+Route::get('/tareas-asignadas', [TareaController::class, 'tareasConAsignaciones']);
+Route::put('/asignacion-tarea/{id}', [TareaController::class, 'actualizarAsignacion']);
+Route::put('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion']);
+
+
+
+
 
 
 

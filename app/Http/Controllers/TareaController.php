@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TareaController extends Controller
@@ -47,6 +48,10 @@ class TareaController extends Controller
     }
 
 
+
+
+
+
     public function store(Request $request)
     {
         // 1. Validar incluyendo el nuevo campo de asignación
@@ -58,7 +63,13 @@ class TareaController extends Controller
             'tipo_id'     => 'nullable|exists:tipos,id',
             'company_id'  => 'nullable|exists:companies,id',
             'asignacion_aleatoria' => 'required|boolean', // Nuevo campo
-            'pasante_id' => 'required_if:asignacion_aleatoria,false|nullable|exists:users,id' // Solo requerido si no es aleatorio
+            'pasante_id' => 'required_if:asignacion_aleatoria,false|nullable|exists:users,id', // Solo requerido si no es aleatorio
+
+            // Agregar detalle y estado para la asignacion
+        'estado' => 'nullable|string|in:pendiente,en_progreso,finalizado', // ajusta según tus estados válidos
+        'detalle' => 'nullable|string',
+
+
         ]);
 
         // 2. Crear la tarea
@@ -132,22 +143,92 @@ class TareaController extends Controller
         ], 201);
     }
 
+public function tareasConAsignaciones()
+{
+    $tareas = Tarea::with(['asignaciones.user', 'tipo', 'company'])->get();
+
+    $resultado = $tareas->map(function ($tarea) {
+        return [
+            'id' => $tarea->id,
+            'titulo' => $tarea->titulo,
+            'descripcion' => $tarea->descripcion,
+            'prioridad' => $tarea->prioridad,
+            'fecha' => $tarea->fecha,
+            'tipo' => $tarea->tipo?->nombre,
+            'company' => $tarea->company?->nombre,
+            'asignaciones' => $tarea->asignaciones->map(function ($asignacion) {
+                return [
+                    'id' => $asignacion->id,
+                    'user' => $asignacion->user?->name,
+                    'estado' => $asignacion->estado,
+                    'detalle' => $asignacion->detalle,
+                ];
+            }),
+        ];
+    });
+
+    return response()->json($resultado);
+}
+public function actualizarAsignacion(Request $request, $id)
+{
+    $data = $request->validate([
+        'estado' => [
+            'required',
+            Rule::in(['pendiente', 'en_revision', 'publicada']),
+        ],
+        'detalle' => 'nullable|string',
+    ]);
+
+    $asignacion = AsignacionTarea::findOrFail($id);
+    $asignacion->update($data);
+
+    return back()->with('success', 'Asignación actualizada correctamente');
+}
+
+
+
 
     public function update(Request $request, Tarea $tarea)
-    {
-        $data = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'prioridad' => 'nullable|string|max:255',
-            'descripcion' => 'nullable|string',
-            'fecha' => 'nullable|date',
-            'tipo_id' => 'nullable|exists:tipos,id',
-            'company_id' => 'nullable|exists:companies,id',
-        ]);
+{
+    $data = $request->validate([
+        'titulo' => 'required|string|max:255',
+        'prioridad' => 'nullable|string|max:255',
+        'descripcion' => 'nullable|string',
+        'fecha' => 'nullable|date',
+        'tipo_id' => 'nullable|exists:tipos,id',
+        'company_id' => 'nullable|exists:companies,id',
 
-        $tarea->update($data);
+        // Nuevos campos opcionales para la asignación
+        'asignacion.estado' => [
+            'nullable',
+            Rule::in(['pendiente', 'en_revision', 'publicada']),
+        ],
+        'asignacion.detalle' => 'nullable|string',
+    ]);
 
-        return response()->json(['message' => 'Tarea actualizada']);
+    $tarea->update([
+        'titulo' => $data['titulo'],
+        'prioridad' => $data['prioridad'],
+        'descripcion' => $data['descripcion'],
+        'fecha' => $data['fecha'],
+        'tipo_id' => $data['tipo_id'],
+        'company_id' => $data['company_id'],
+    ]);
+
+    // Si viene información de asignación, actualizamos la más reciente (puedes ajustar esto)
+    if (isset($data['asignacion'])) {
+        $asignacion = $tarea->asignaciones()->latest()->first();
+        if ($asignacion) {
+            $asignacion->update([
+                'estado' => $data['asignacion']['estado'] ?? $asignacion->estado,
+                'detalle' => $data['asignacion']['detalle'] ?? $asignacion->detalle,
+            ]);
+        }
     }
+
+    return response()->json(['message' => 'Tarea y asignación actualizadas']);
+}
+
 
     public function destroy(Tarea $tarea)
     {
