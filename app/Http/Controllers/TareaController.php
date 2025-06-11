@@ -10,7 +10,6 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TareaController extends Controller
@@ -172,63 +171,60 @@ public function tareasConAsignaciones()
 public function actualizarAsignacion(Request $request, $id)
 {
     $data = $request->validate([
-        'estado' => [
-            'required',
-            Rule::in(['pendiente', 'en_revision', 'publicada']),
-        ],
+        'estado' => 'required|string|in:pendiente,en progreso,completado',
         'detalle' => 'nullable|string',
     ]);
 
     $asignacion = AsignacionTarea::findOrFail($id);
     $asignacion->update($data);
 
-    return back()->with('success', 'Asignación actualizada correctamente');
+    return response()->json(['message' => 'Asignación actualizada con éxito.']);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
     public function update(Request $request, Tarea $tarea)
-{
-    $data = $request->validate([
-        'titulo' => 'required|string|max:255',
-        'prioridad' => 'nullable|string|max:255',
-        'descripcion' => 'nullable|string',
-        'fecha' => 'nullable|date',
-        'tipo_id' => 'nullable|exists:tipos,id',
-        'company_id' => 'nullable|exists:companies,id',
+    {
+        $data = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'prioridad' => 'nullable|string|max:255',
+            'descripcion' => 'nullable|string',
+            'fecha' => 'nullable|date',
+            'tipo_id' => 'nullable|exists:tipos,id',
+            'company_id' => 'nullable|exists:companies,id',
+        ]);
 
-        // Nuevos campos opcionales para la asignación
-        'asignacion.estado' => [
-            'nullable',
-            Rule::in(['pendiente', 'en_revision', 'publicada']),
-        ],
-        'asignacion.detalle' => 'nullable|string',
-    ]);
+        $tarea->update($data);
 
-    $tarea->update([
-        'titulo' => $data['titulo'],
-        'prioridad' => $data['prioridad'],
-        'descripcion' => $data['descripcion'],
-        'fecha' => $data['fecha'],
-        'tipo_id' => $data['tipo_id'],
-        'company_id' => $data['company_id'],
-    ]);
-
-    // Si viene información de asignación, actualizamos la más reciente (puedes ajustar esto)
-    if (isset($data['asignacion'])) {
-        $asignacion = $tarea->asignaciones()->latest()->first();
-        if ($asignacion) {
-            $asignacion->update([
-                'estado' => $data['asignacion']['estado'] ?? $asignacion->estado,
-                'detalle' => $data['asignacion']['detalle'] ?? $asignacion->detalle,
-            ]);
-        }
+        return response()->json(['message' => 'Tarea actualizada']);
     }
-
-    return response()->json(['message' => 'Tarea y asignación actualizadas']);
-}
-
 
     public function destroy(Tarea $tarea)
     {
