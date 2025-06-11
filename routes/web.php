@@ -274,5 +274,25 @@ Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->n
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
+Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
+Route::get('/pasante/mistareas/todos', function () {
+    return Inertia::render('pasante/mistareas');
+});
+Route::get('/pasante/mistareaspendientes', [PasanteController::class, 'mistareaspendientes'])->name('pasante.mistareaspendientes');
+
+Route::get('/pasante/mistareas/pendientes', function () {
+    return Inertia::render('pasante/mistareaspendientes');
+});
+Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareasenrevicion'])->name('pasante.mistareasenrevicion');
+
+Route::get('/pasante/mistareas/enrevicion', function () {
+    return Inertia::render('pasante/mistareasenrevicion');
+});
+Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
+
+Route::get('/pasante/mistareas/publicadas', function () {
+    return Inertia::render('pasante/mistareaspublicadas');
+});
+Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
