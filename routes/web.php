@@ -15,6 +15,7 @@ use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
+use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
@@ -280,6 +281,38 @@ Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->n
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
+Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
+Route::get('/pasante/mistareas/todos', function () {
+    return Inertia::render('pasante/mistareas');
+});
+Route::get('/pasante/mistareaspendientes', [PasanteController::class, 'mistareaspendientes'])->name('pasante.mistareaspendientes');
+
+Route::get('/pasante/mistareas/pendientes', function () {
+    return Inertia::render('pasante/mistareaspendientes');
+});
+Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareasenrevicion'])->name('pasante.mistareasenrevicion');
+
+Route::get('/pasante/mistareas/enrevicion', function () {
+    return Inertia::render('pasante/mistareasenrevicion');
+});
+Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
+
+Route::get('/pasante/mistareas/publicadas', function () {
+    return Inertia::render('pasante/mistareaspublicadas');
+});
+Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
+
+
+Route::get('/tiposinfluencers', function () {
+    return Inertia::render('influencers/tipoinfluencers');
+})->name('tareas.index');
+Route::get('/api/influencer/profile', [InfluencerController::class, 'profile']);
+Route::post('/api/influencer/photos', [InfluencerController::class, 'updatePhotos']);
+Route::get('/api/influencer/availability', [InfluencerController::class, 'getAvailability']);
+Route::post('/api/influencer/availability', [InfluencerController::class, 'updateAvailability']);
+Route::get('/api/influencer/bookings', [InfluencerController::class, 'getBookings']);
+Route::get('/api/influencer/assignments', [InfluencerController::class, 'getAssignments']);
+
 
 Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
 Route::get('/pasante/mistareas/todos', function () {
