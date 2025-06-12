@@ -15,6 +15,7 @@ use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
+use App\Http\Controllers\InfluencerDatosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
@@ -58,11 +59,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('{id}', [CompanyCategoryController::class, 'destroy']);
     });
     Route::prefix('companies')->group(function () {
-        Route::get('/', [CompanyController::class, 'index'])->name('index');
+        Route::get('/', [CompanyController::class, 'index'])->name('companies.index');
         Route::get('/create', [CompanyController::class, 'create'])->name('create');
         Route::post('/', [CompanyController::class, 'store'])->name('store');
-        Route::get('{company}/edit', [CompanyController::class, 'edit'])->name('edit');
-        Route::put('{company}', [CompanyController::class, 'update'])->name('update');
+        Route::get('{id}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
+        Route::put('{id}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('{company}', [CompanyController::class, 'destroy'])->name('destroy');
     });
     Route::get('/users', function () {
@@ -260,15 +261,12 @@ Route::get('/api/companies', function () {
 Route::get('/api/tareas-asignadas', [TareaController::class, 'tareasAsignadas']);
 Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 
+// Rutas para el controlador de influencers con Inertia
+Route::get('/infuencersdatos', [DatoInfluencersController::class, 'index'])->name('infuencersdatos.index');
+Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store'])->name('infuencersdatos.store');
+Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update'])->name('infuencersdatos.update');
+Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy'])->name('infuencersdatos.destroy');
 
-Route::get('/infuencersdatos', function () {
-    return Inertia::render('influencers/infuencersdatos');
-});
-
-Route::get('/api/infuencersdatos', [DatoInfluencersController::class, 'index']);
-Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store']);
-Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update']);
-Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy']);
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
@@ -282,5 +280,41 @@ Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->n
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
+
+Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
+Route::get('/pasante/mistareas/todos', function () {
+    return Inertia::render('pasante/mistareas');
+});
+Route::get('/pasante/mistareaspendientes', [PasanteController::class, 'mistareaspendientes'])->name('pasante.mistareaspendientes');
+
+Route::get('/pasante/mistareas/pendientes', function () {
+    return Inertia::render('pasante/mistareaspendientes');
+});
+Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareasenrevicion'])->name('pasante.mistareasenrevicion');
+
+Route::get('/pasante/mistareas/enrevicion', function () {
+    return Inertia::render('pasante/mistareasenrevicion');
+});
+Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
+
+Route::get('/pasante/mistareas/publicadas', function () {
+    return Inertia::render('pasante/mistareaspublicadas');
+});
+
+Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
+
+
+///guadalupe
+
+Route::get('/influencers', [InfluencerDatosController::class, 'index'])
+    ->name('influencers.index');
+
+Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
+    ->name('influencers.show');
+
+
+
+
+    
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

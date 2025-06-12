@@ -171,7 +171,7 @@ public function tareasConAsignaciones()
 public function actualizarAsignacion(Request $request, $id)
 {
     $data = $request->validate([
-        'estado' => 'required|string|in:pendiente,en progreso,completado',
+        'estado' => 'required|string|in:pendiente,en_revision,publicada',
         'detalle' => 'nullable|string',
     ]);
 
