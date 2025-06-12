@@ -15,6 +15,8 @@ use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
+use App\Http\Controllers\InfluencerController;
+use App\Http\Controllers\InfluencerDatosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
@@ -69,8 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('user');
     });
 
-    Route::get('{id}/edit', [CompanyController::class, 'edit'])->name('companies.edit');
-    Route::put('{id}', [CompanyController::class, 'update'])->name('companies.update');
+
     // —– Rutas para Weeks —–
     Route::prefix('weeks')->group(function () {
         // Listar semanas
@@ -228,6 +229,14 @@ Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowB
      ->name('tareas.fecha');
 
 
+Route::get('/tareas-asignadas', [TareaController::class, 'tareasConAsignaciones']);
+Route::put('/asignacion-tarea/{id}', [TareaController::class, 'actualizarAsignacion']);
+
+
+
+
+
+
 
 
 
@@ -263,6 +272,7 @@ Route::get('/infuencersdatos', [DatoInfluencersController::class, 'index'])->nam
 Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store'])->name('infuencersdatos.store');
 Route::put('/infuencersdatos/{id}', [DatoInfluencersController::class, 'update'])->name('infuencersdatos.update');
 Route::delete('/infuencersdatos/{user}', [DatoInfluencersController::class, 'destroy'])->name('infuencersdatos.destroy');
+
 Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
@@ -275,14 +285,74 @@ Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfD
 Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
-    // Nueva ruta para la vista de detalles de una semana específica
-    Route::get('/dashboard/influencer/weeks/{week}', [DashboardController::class, 'showWeekDetails'])
-         ->name('influencer.week.details'); // Un nombre de ruta descriptivo
+Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
+Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
+Route::get('/pasante/mistareas/todos', function () {
+    return Inertia::render('pasante/mistareas');
+});
+Route::get('/pasante/mistareaspendientes', [PasanteController::class, 'mistareaspendientes'])->name('pasante.mistareaspendientes');
 
-    // Opcional: Las rutas API que devuelven JSON si las quieres mantener para otros usos
-    Route::get('/api/influencer/weeks', [DashboardController::class, 'getWorkingWeeksList'])
-         ->name('api.influencer.weeks.list');
-    Route::get('/api/influencer/weeks/{week}', [DashboardController::class, 'getSpecificWeekDetails'])
-         ->name('api.influencer.weeks.details');
+Route::get('/pasante/mistareas/pendientes', function () {
+    return Inertia::render('pasante/mistareaspendientes');
+});
+Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareasenrevicion'])->name('pasante.mistareasenrevicion');
+
+Route::get('/pasante/mistareas/enrevicion', function () {
+    return Inertia::render('pasante/mistareasenrevicion');
+});
+Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
+
+Route::get('/pasante/mistareas/publicadas', function () {
+    return Inertia::render('pasante/mistareaspublicadas');
+});
+Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
+
+
+Route::get('/tiposinfluencers', function () {
+    return Inertia::render('influencers/tipoinfluencers');
+})->name('tareas.index');
+Route::get('/api/influencer/profile', [InfluencerController::class, 'profile']);
+Route::post('/api/influencer/photos', [InfluencerController::class, 'updatePhotos']);
+Route::get('/api/influencer/availability', [InfluencerController::class, 'getAvailability']);
+Route::post('/api/influencer/availability', [InfluencerController::class, 'updateAvailability']);
+Route::get('/api/influencer/bookings', [InfluencerController::class, 'getBookings']);
+Route::get('/api/influencer/assignments', [InfluencerController::class, 'getAssignments']);
+
+
+Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
+Route::get('/pasante/mistareas/todos', function () {
+    return Inertia::render('pasante/mistareas');
+});
+Route::get('/pasante/mistareaspendientes', [PasanteController::class, 'mistareaspendientes'])->name('pasante.mistareaspendientes');
+
+Route::get('/pasante/mistareas/pendientes', function () {
+    return Inertia::render('pasante/mistareaspendientes');
+});
+Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareasenrevicion'])->name('pasante.mistareasenrevicion');
+
+Route::get('/pasante/mistareas/enrevicion', function () {
+    return Inertia::render('pasante/mistareasenrevicion');
+});
+Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
+
+Route::get('/pasante/mistareas/publicadas', function () {
+    return Inertia::render('pasante/mistareaspublicadas');
+});
+
+Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
+
+
+///guadalupe
+
+Route::get('/influencers', [InfluencerDatosController::class, 'index'])
+    ->name('influencers.index');
+
+Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
+    ->name('influencers.show');
+
+
+
+
+    
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
