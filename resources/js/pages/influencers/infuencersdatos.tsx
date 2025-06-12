@@ -464,6 +464,11 @@ export default function InfluencersDatos() {
                                             variant="contained"
                                             size="small"
                                             color="primary"
+                                            sx={{ mr: 1 }}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                router.visit(`/users/${row.id}/photos/upload`);
+                                            }}
                                         >
                                             Subir foto
                                         </IconButton>

@@ -1,21 +1,14 @@
 import AppLayout from '@/layouts/app-layout';
 import { usePage } from '@inertiajs/react';
+import { Add, Business, Close, NightsStay, Person, PictureAsPdf, Schedule, WbSunny } from '@mui/icons-material';
 import {
-    Business,
-    WbSunny,
-    NightsStay,
-    Add,
-    Remove,
-    PictureAsPdf,
-    Person,
-    Schedule,
-    Groups,
-    Check,
-    Close
-} from '@mui/icons-material';
-import {
+    alpha,
+    Avatar,
     Box,
     Button,
+    Card,
+    CardContent,
+    CardHeader,
     Chip,
     Dialog,
     DialogActions,
@@ -23,6 +16,7 @@ import {
     DialogTitle,
     FormControl,
     FormControlLabel,
+    IconButton,
     InputLabel,
     MenuItem,
     Paper,
@@ -34,20 +28,9 @@ import {
     TableCell,
     TableHead,
     TableRow,
+    Tooltip,
     Typography,
     useTheme,
-    Avatar,
-    Tooltip,
-    Fade,
-    Slide,
-    Zoom,
-    alpha,
-    IconButton,
-    Divider,
-    Badge,
-    Card,
-    CardContent,
-    CardHeader
 } from '@mui/material';
 import axios from 'axios';
 import { BriefcaseBusinessIcon } from 'lucide-react';
@@ -130,9 +113,7 @@ const Semanainfluencer = () => {
     };
 
     const getTurnoColor = (turno: string) => {
-        return turno === 'mañana' 
-            ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)'
-            : 'linear-gradient(135deg, #4A90E2 0%, #7B68EE 100%)';
+        return turno === 'mañana' ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' : 'linear-gradient(135deg, #4A90E2 0%, #7B68EE 100%)';
     };
 
     const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
@@ -214,397 +195,413 @@ const Semanainfluencer = () => {
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('es-ES', {
             day: 'numeric',
-            month: 'short'
+            month: 'short',
         });
     };
 
     const getTotalInfluencersAsignados = () => {
         return datosPorEmpresa.reduce((total, empresa) => {
-            return total + Object.values(empresa.influencersAsignados).reduce((empresaTotal, dia) => {
-                return empresaTotal + Object.values(dia).reduce((diaTotal, turno) => {
-                    return diaTotal + turno.length;
-                }, 0);
-            }, 0);
+            return (
+                total +
+                Object.values(empresa.influencersAsignados).reduce((empresaTotal, dia) => {
+                    return (
+                        empresaTotal +
+                        Object.values(dia).reduce((diaTotal, turno) => {
+                            return diaTotal + turno.length;
+                        }, 0)
+                    );
+                }, 0)
+            );
         }, 0);
     };
 
     return (
         <AppLayout>
-            <Box 
-                p={3} 
+            <Box
+                p={3}
                 sx={{
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.05)} 0%, ${alpha(theme.palette.secondary.light, 0.05)} 100%)`,
-                    minHeight: '100vh'
+                    minHeight: '100vh',
                 }}
             >
                 {/* Header Mejorado */}
-                <Fade in timeout={800}>
-                    <Box mb={4}>
-                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center" justifyContent="space-between">
-                            <Box>
-                                <Typography 
-                                    variant="h3" 
-                                    fontWeight="bold"
-                                    sx={{
-                                        background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-                                        backgroundClip: 'text',
-                                        WebkitBackgroundClip: 'text',
-                                        WebkitTextFillColor: 'transparent',
-                                        mb: 1
-                                    }}
-                                >
-                                    📅 Gestión Semanal
-                                </Typography>
-                                <Typography variant="h6" color="text.secondary">
-                                    Asignación de influencers por empresa y turno
-                                </Typography>
-                            </Box>
 
-                            <Stack direction="row" spacing={2}>
-                                <Card sx={{ minWidth: 120 }}>
-                                    <CardContent sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
-                                        <Typography variant="h4" fontWeight="bold" color="primary">
-                                            {datosPorEmpresa.length}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Empresas
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-
-                                <Card sx={{ minWidth: 120 }}>
-                                    <CardContent sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
-                                        <Typography variant="h4" fontWeight="bold" color="secondary">
-                                            {getTotalInfluencersAsignados()}
-                                        </Typography>
-                                        <Typography variant="caption" color="text.secondary">
-                                            Asignados
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Stack>
-                        </Stack>
-
-                        <Box mt={3}>
-                            <Button
-                                variant="contained"
-                                startIcon={<PictureAsPdf />}
-                                onClick={() => window.open('/disponibilidad-semanal-pdf', '_blank')}
+                <Box mb={4}>
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center" justifyContent="space-between">
+                        <Box>
+                            <Typography
+                                variant="h3"
+                                fontWeight="bold"
                                 sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 'bold',
-                                    borderRadius: 3,
-                                    background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
-                                    boxShadow: `0 8px 32px ${alpha('#2575fc', 0.3)}`,
-                                    px: 4,
-                                    py: 1.5,
-                                    '&:hover': {
-                                        background: 'linear-gradient(135deg, #4b0eb9 0%, #1a56d0 100%)',
-                                        transform: 'translateY(-2px)',
-                                        boxShadow: `0 12px 40px ${alpha('#2575fc', 0.4)}`,
-                                    },
-                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                                    background: `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                                    backgroundClip: 'text',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    mb: 1,
                                 }}
                             >
-                                Generar Reporte PDF
-                            </Button>
+                                📅 Gestión Semanal
+                            </Typography>
+                            <Typography variant="h6" color="text.secondary">
+                                Asignación de influencers por empresa y turno
+                            </Typography>
                         </Box>
+
+                        <Stack direction="row" spacing={2}>
+                            <Card sx={{ minWidth: 120 }}>
+                                <CardContent sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
+                                    <Typography variant="h4" fontWeight="bold" color="primary">
+                                        {datosPorEmpresa.length}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Empresas
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+
+                            <Card sx={{ minWidth: 120 }}>
+                                <CardContent sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
+                                    <Typography variant="h4" fontWeight="bold" color="secondary">
+                                        {getTotalInfluencersAsignados()}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Asignados
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Stack>
+                    </Stack>
+
+                    <Box mt={3}>
+                        <Button
+                            variant="contained"
+                            startIcon={<PictureAsPdf />}
+                            onClick={() => window.open('/disponibilidad-semanal-pdf', '_blank')}
+                            sx={{
+                                textTransform: 'none',
+                                fontWeight: 'bold',
+                                borderRadius: 3,
+                                background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
+                                boxShadow: `0 8px 32px ${alpha('#2575fc', 0.3)}`,
+                                px: 4,
+                                py: 1.5,
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #4b0eb9 0%, #1a56d0 100%)',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: `0 12px 40px ${alpha('#2575fc', 0.4)}`,
+                                },
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                        >
+                            Generar Reporte PDF
+                        </Button>
                     </Box>
-                </Fade>
+                </Box>
 
                 {/* Tabla Principal Mejorada */}
-                <Slide direction="up" in timeout={1000}>
-                    <Paper 
-                        elevation={0} 
-                        sx={{ 
-                            overflowX: 'auto', 
-                            borderRadius: 4,
-                            background: alpha(theme.palette.background.paper, 0.8),
-                            backdropFilter: 'blur(10px)',
-                            border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                        }}
-                    >
-                        <Table sx={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-                            <TableHead>
+
+                <Paper
+                    elevation={0}
+                    sx={{
+                        overflowX: 'auto',
+                        borderRadius: 4,
+                        background: alpha(theme.palette.background.paper, 0.8),
+                        backdropFilter: 'blur(10px)',
+                        border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                    }}
+                >
+                    <Table sx={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                        <TableHead>
+                            <TableRow
+                                sx={{
+                                    background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
+                                    '& th': {
+                                        color: '#fff',
+                                        fontFamily: "'Poppins', sans-serif",
+                                        fontWeight: '700',
+                                        fontSize: '1rem',
+                                        py: 2,
+                                        position: 'relative',
+                                        '&::after': {
+                                            content: '""',
+                                            position: 'absolute',
+                                            right: 0,
+                                            top: '20%',
+                                            height: '60%',
+                                            width: '1px',
+                                            background: alpha('#fff', 0.2),
+                                        },
+                                    },
+                                }}
+                            >
+                                <TableCell sx={{ width: 200, pl: 3 }}>
+                                    <Stack direction="row" alignItems="center" gap={1}>
+                                        <Avatar sx={{ bgcolor: alpha('#fff', 0.2), width: 32, height: 32 }}>
+                                            <Business fontSize="small" />
+                                        </Avatar>
+                                        Empresa
+                                    </Stack>
+                                </TableCell>
+
+                                {diasSemana.map((dia, idx) => (
+                                    <TableCell key={idx} align="center">
+                                        <Stack alignItems="center" gap={0.5}>
+                                            <Avatar sx={{ bgcolor: alpha('#fff', 0.2), width: 32, height: 32 }}>
+                                                <Schedule fontSize="small" />
+                                            </Avatar>
+                                            <Typography fontWeight="bold" fontSize="0.9rem">
+                                                {dayOfWeekInSpanish[dia.nombre.toLowerCase()] ?? dia.nombre}
+                                            </Typography>
+                                            <Chip
+                                                label={formatDate(dia.fecha)}
+                                                size="small"
+                                                sx={{
+                                                    bgcolor: alpha('#fff', 0.2),
+                                                    color: '#fff',
+                                                    fontSize: '0.7rem',
+                                                    height: 20,
+                                                }}
+                                            />
+                                        </Stack>
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        </TableHead>
+
+                        <TableBody>
+                            {datosPorEmpresa.map((empresaData, idx) => (
                                 <TableRow
                                     sx={{
-                                        background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
-                                        '& th': {
-                                            color: '#fff',
+                                        background: empresaColors[idx % empresaColors.length],
+                                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        '&:hover': {
+                                            transform: 'scale(1.01)',
+                                            boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
+                                            zIndex: 1,
+                                        },
+                                        '& td': {
                                             fontFamily: "'Poppins', sans-serif",
-                                            fontWeight: '700',
-                                            fontSize: '1rem',
+                                            fontSize: '0.9rem',
                                             py: 2,
-                                            position: 'relative',
-                                            '&::after': {
-                                                content: '""',
-                                                position: 'absolute',
-                                                right: 0,
-                                                top: '20%',
-                                                height: '60%',
-                                                width: '1px',
-                                                background: alpha('#fff', 0.2)
-                                            }
                                         },
                                     }}
                                 >
-                                    <TableCell sx={{ width: 200, pl: 3 }}>
-                                        <Stack direction="row" alignItems="center" gap={1}>
-                                            <Avatar sx={{ bgcolor: alpha('#fff', 0.2), width: 32, height: 32 }}>
-                                                <Business fontSize="small" />
+                                    <TableCell sx={{ fontWeight: 'bold', pl: 3 }}>
+                                        <Stack direction="row" alignItems="center" gap={2}>
+                                            <Avatar
+                                                sx={{
+                                                    bgcolor: alpha('#fff', 0.3),
+                                                    color: theme.palette.text.primary,
+                                                    width: 40,
+                                                    height: 40,
+                                                }}
+                                            >
+                                                <Business />
                                             </Avatar>
-                                            Empresa
+                                            <Box>
+                                                <Typography variant="subtitle1" fontWeight="bold">
+                                                    {empresaData.empresa.name ?? 'Empresa sin nombre'}
+                                                </Typography>
+                                            </Box>
                                         </Stack>
                                     </TableCell>
 
-                                    {diasSemana.map((dia, idx) => (
-                                        <TableCell key={idx} align="center">
-                                            <Stack alignItems="center" gap={0.5}>
-                                                <Avatar sx={{ bgcolor: alpha('#fff', 0.2), width: 32, height: 32 }}>
-                                                    <Schedule fontSize="small" />
-                                                </Avatar>
-                                                <Typography fontWeight="bold" fontSize="0.9rem">
-                                                    {dayOfWeekInSpanish[dia.nombre.toLowerCase()] ?? dia.nombre}
-                                                </Typography>
-                                                <Chip
-                                                    label={formatDate(dia.fecha)}
-                                                    size="small"
-                                                    sx={{
-                                                        bgcolor: alpha('#fff', 0.2),
-                                                        color: '#fff',
-                                                        fontSize: '0.7rem',
-                                                        height: 20
-                                                    }}
-                                                />
-                                            </Stack>
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            </TableHead>
+                                    {diasSemana.map((dia, j) => {
+                                        const turnos = empresaData.disponibilidad[dia.nombre.toLowerCase()] || [];
 
-                            <TableBody>
-                                {datosPorEmpresa.map((empresaData, idx) => (
-                                    <Zoom key={idx} in timeout={800 + (idx * 100)}>
-                                        <TableRow
-                                            sx={{
-                                                background: empresaColors[idx % empresaColors.length],
-                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                                '&:hover': {
-                                                    transform: 'scale(1.01)',
-                                                    boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.1)}`,
-                                                    zIndex: 1,
-                                                },
-                                                '& td': {
-                                                    fontFamily: "'Poppins', sans-serif",
-                                                    fontSize: '0.9rem',
-                                                    py: 2,
-                                                },
-                                            }}
-                                        >
-                                            <TableCell sx={{ fontWeight: 'bold', pl: 3 }}>
-                                                <Stack direction="row" alignItems="center" gap={2}>
-                                                    <Avatar sx={{ 
-                                                        bgcolor: alpha('#fff', 0.3),
-                                                        color: theme.palette.text.primary,
-                                                        width: 40,
-                                                        height: 40
-                                                    }}>
-                                                        <Business />
-                                                    </Avatar>
-                                                    <Box>
-                                                        <Typography variant="subtitle1" fontWeight="bold">
-                                                            {empresaData.empresa.name ?? 'Empresa sin nombre'}
-                                                        </Typography>
-                                                    </Box>
+                                        return (
+                                            <TableCell key={j} sx={{ verticalAlign: 'top', px: 2 }}>
+                                                <Stack spacing={2} alignItems="center">
+                                                    {turnos.includes('mañana') && (
+                                                        <Card
+                                                            sx={{
+                                                                width: '100%',
+                                                                background: alpha('#fff', 0.9),
+                                                                backdropFilter: 'blur(10px)',
+                                                                borderRadius: 2,
+                                                                border: `2px solid ${alpha('#FFD700', 0.3)}`,
+                                                            }}
+                                                        >
+                                                            <CardHeader
+                                                                avatar={
+                                                                    <Avatar
+                                                                        sx={{
+                                                                            background: getTurnoColor('mañana'),
+                                                                            width: 32,
+                                                                            height: 32,
+                                                                        }}
+                                                                    >
+                                                                        {getTurnoIcon('mañana')}
+                                                                    </Avatar>
+                                                                }
+                                                                title={
+                                                                    <Typography variant="subtitle2" fontWeight="bold">
+                                                                        Turno Mañana
+                                                                    </Typography>
+                                                                }
+                                                                action={
+                                                                    <Tooltip title="Agregar Influencer">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            onClick={() =>
+                                                                                handleOpenModal(
+                                                                                    empresaData.empresa.id,
+                                                                                    dia.nombre.toLowerCase(),
+                                                                                    'mañana',
+                                                                                )
+                                                                            }
+                                                                            sx={{
+                                                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                                                '&:hover': {
+                                                                                    bgcolor: alpha(theme.palette.primary.main, 0.2),
+                                                                                    transform: 'scale(1.1)',
+                                                                                },
+                                                                            }}
+                                                                        >
+                                                                            <Add fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                }
+                                                                sx={{ py: 1, px: 2 }}
+                                                            />
+                                                            <CardContent sx={{ pt: 0, px: 2, pb: 2 }}>
+                                                                <Stack spacing={1}>
+                                                                    {(
+                                                                        empresaData.influencersAsignados?.[dia.nombre.toLowerCase()]?.['mañana'] ?? []
+                                                                    ).map((influencer, i) => (
+                                                                        <Chip
+                                                                            avatar={
+                                                                                <Avatar sx={{ bgcolor: alpha('#4caf50', 0.2) }}>
+                                                                                    <Person fontSize="small" />
+                                                                                </Avatar>
+                                                                            }
+                                                                            label={influencer.name}
+                                                                            deleteIcon={<Close fontSize="small" />}
+                                                                            onDelete={() =>
+                                                                                handleQuitarInfluencer(
+                                                                                    empresaData.empresa.id,
+                                                                                    dia.nombre.toLowerCase(),
+                                                                                    'mañana',
+                                                                                    influencer.id,
+                                                                                )
+                                                                            }
+                                                                            variant="outlined"
+                                                                            color="success"
+                                                                            sx={{
+                                                                                borderRadius: 2,
+                                                                                '& .MuiChip-deleteIcon': {
+                                                                                    color: theme.palette.error.main,
+                                                                                    '&:hover': {
+                                                                                        color: theme.palette.error.dark,
+                                                                                    },
+                                                                                },
+                                                                            }}
+                                                                        />
+                                                                    ))}
+                                                                </Stack>
+                                                            </CardContent>
+                                                        </Card>
+                                                    )}
+
+                                                    {turnos.includes('tarde') && (
+                                                        <Card
+                                                            sx={{
+                                                                width: '100%',
+                                                                background: alpha('#fff', 0.9),
+                                                                backdropFilter: 'blur(10px)',
+                                                                borderRadius: 2,
+                                                                border: `2px solid ${alpha('#4A90E2', 0.3)}`,
+                                                            }}
+                                                        >
+                                                            <CardHeader
+                                                                avatar={
+                                                                    <Avatar
+                                                                        sx={{
+                                                                            background: getTurnoColor('tarde'),
+                                                                            width: 32,
+                                                                            height: 32,
+                                                                        }}
+                                                                    >
+                                                                        {getTurnoIcon('tarde')}
+                                                                    </Avatar>
+                                                                }
+                                                                title={
+                                                                    <Typography variant="subtitle2" fontWeight="bold">
+                                                                        Turno Tarde
+                                                                    </Typography>
+                                                                }
+                                                                action={
+                                                                    <Tooltip title="Agregar Influencer">
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            onClick={() =>
+                                                                                handleOpenModal(
+                                                                                    empresaData.empresa.id,
+                                                                                    dia.nombre.toLowerCase(),
+                                                                                    'tarde',
+                                                                                )
+                                                                            }
+                                                                            sx={{
+                                                                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                                                                '&:hover': {
+                                                                                    bgcolor: alpha(theme.palette.primary.main, 0.2),
+                                                                                    transform: 'scale(1.1)',
+                                                                                },
+                                                                            }}
+                                                                        >
+                                                                            <Add fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                }
+                                                                sx={{ py: 1, px: 2 }}
+                                                            />
+                                                            <CardContent sx={{ pt: 0, px: 2, pb: 2 }}>
+                                                                <Stack spacing={1}>
+                                                                    {(
+                                                                        empresaData.influencersAsignados?.[dia.nombre.toLowerCase()]?.['tarde'] ?? []
+                                                                    ).map((influencer, i) => (
+                                                                        <Chip
+                                                                            avatar={
+                                                                                <Avatar sx={{ bgcolor: alpha('#2196f3', 0.2) }}>
+                                                                                    <Person fontSize="small" />
+                                                                                </Avatar>
+                                                                            }
+                                                                            label={influencer.name}
+                                                                            deleteIcon={<Close fontSize="small" />}
+                                                                            onDelete={() =>
+                                                                                handleQuitarInfluencer(
+                                                                                    empresaData.empresa.id,
+                                                                                    dia.nombre.toLowerCase(),
+                                                                                    'tarde',
+                                                                                    influencer.id,
+                                                                                )
+                                                                            }
+                                                                            variant="outlined"
+                                                                            color="info"
+                                                                            sx={{
+                                                                                borderRadius: 2,
+                                                                                '& .MuiChip-deleteIcon': {
+                                                                                    color: theme.palette.error.main,
+                                                                                    '&:hover': {
+                                                                                        color: theme.palette.error.dark,
+                                                                                    },
+                                                                                },
+                                                                            }}
+                                                                        />
+                                                                    ))}
+                                                                </Stack>
+                                                            </CardContent>
+                                                        </Card>
+                                                    )}
                                                 </Stack>
                                             </TableCell>
-
-                                            {diasSemana.map((dia, j) => {
-                                                const turnos = empresaData.disponibilidad[dia.nombre.toLowerCase()] || [];
-
-                                                return (
-                                                    <TableCell key={j} sx={{ verticalAlign: 'top', px: 2 }}>
-                                                        <Stack spacing={2} alignItems="center">
-                                                            {turnos.includes('mañana') && (
-                                                                <Card sx={{ 
-                                                                    width: '100%', 
-                                                                    background: alpha('#fff', 0.9),
-                                                                    backdropFilter: 'blur(10px)',
-                                                                    borderRadius: 2,
-                                                                    border: `2px solid ${alpha('#FFD700', 0.3)}`
-                                                                }}>
-                                                                    <CardHeader
-                                                                        avatar={
-                                                                            <Avatar sx={{ 
-                                                                                background: getTurnoColor('mañana'),
-                                                                                width: 32,
-                                                                                height: 32
-                                                                            }}>
-                                                                                {getTurnoIcon('mañana')}
-                                                                            </Avatar>
-                                                                        }
-                                                                        title={
-                                                                            <Typography variant="subtitle2" fontWeight="bold">
-                                                                                Turno Mañana
-                                                                            </Typography>
-                                                                        }
-                                                                        action={
-                                                                            <Tooltip title="Agregar Influencer">
-                                                                                <IconButton
-                                                                                    size="small"
-                                                                                    onClick={() =>
-                                                                                        handleOpenModal(empresaData.empresa.id, dia.nombre.toLowerCase(), 'mañana')
-                                                                                    }
-                                                                                    sx={{
-                                                                                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                                                                        '&:hover': {
-                                                                                            bgcolor: alpha(theme.palette.primary.main, 0.2),
-                                                                                            transform: 'scale(1.1)'
-                                                                                        }
-                                                                                    }}
-                                                                                >
-                                                                                    <Add fontSize="small" />
-                                                                                </IconButton>
-                                                                            </Tooltip>
-                                                                        }
-                                                                        sx={{ py: 1, px: 2 }}
-                                                                    />
-                                                                    <CardContent sx={{ pt: 0, px: 2, pb: 2 }}>
-                                                                        <Stack spacing={1}>
-                                                                            {(empresaData.influencersAsignados?.[dia.nombre.toLowerCase()]?.['mañana'] ?? []).map(
-                                                                                (influencer, i) => (
-                                                                                    <Fade key={i} in timeout={500 + (i * 100)}>
-                                                                                        <Chip
-                                                                                            avatar={
-                                                                                                <Avatar sx={{ bgcolor: alpha('#4caf50', 0.2) }}>
-                                                                                                    <Person fontSize="small" />
-                                                                                                </Avatar>
-                                                                                            }
-                                                                                            label={influencer.name}
-                                                                                            deleteIcon={<Close fontSize="small" />}
-                                                                                            onDelete={() =>
-                                                                                                handleQuitarInfluencer(
-                                                                                                    empresaData.empresa.id,
-                                                                                                    dia.nombre.toLowerCase(),
-                                                                                                    'mañana',
-                                                                                                    influencer.id,
-                                                                                                )
-                                                                                            }
-                                                                                            variant="outlined"
-                                                                                            color="success"
-                                                                                            sx={{
-                                                                                                borderRadius: 2,
-                                                                                                '& .MuiChip-deleteIcon': {
-                                                                                                    color: theme.palette.error.main,
-                                                                                                    '&:hover': {
-                                                                                                        color: theme.palette.error.dark,
-                                                                                                    }
-                                                                                                }
-                                                                                            }}
-                                                                                        />
-                                                                                    </Fade>
-                                                                                ),
-                                                                            )}
-                                                                        </Stack>
-                                                                    </CardContent>
-                                                                </Card>
-                                                            )}
-
-                                                            {turnos.includes('tarde') && (
-                                                                <Card sx={{ 
-                                                                    width: '100%', 
-                                                                    background: alpha('#fff', 0.9),
-                                                                    backdropFilter: 'blur(10px)',
-                                                                    borderRadius: 2,
-                                                                    border: `2px solid ${alpha('#4A90E2', 0.3)}`
-                                                                }}>
-                                                                    <CardHeader
-                                                                        avatar={
-                                                                            <Avatar sx={{ 
-                                                                                background: getTurnoColor('tarde'),
-                                                                                width: 32,
-                                                                                height: 32
-                                                                            }}>
-                                                                                {getTurnoIcon('tarde')}
-                                                                            </Avatar>
-                                                                        }
-                                                                        title={
-                                                                            <Typography variant="subtitle2" fontWeight="bold">
-                                                                                Turno Tarde
-                                                                            </Typography>
-                                                                        }
-                                                                        action={
-                                                                            <Tooltip title="Agregar Influencer">
-                                                                                <IconButton
-                                                                                    size="small"
-                                                                                    onClick={() =>
-                                                                                        handleOpenModal(empresaData.empresa.id, dia.nombre.toLowerCase(), 'tarde')
-                                                                                    }
-                                                                                    sx={{
-                                                                                        bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                                                                        '&:hover': {
-                                                                                            bgcolor: alpha(theme.palette.primary.main, 0.2),
-                                                                                            transform: 'scale(1.1)'
-                                                                                        }
-                                                                                    }}
-                                                                                >
-                                                                                    <Add fontSize="small" />
-                                                                                </IconButton>
-                                                                            </Tooltip>
-                                                                        }
-                                                                        sx={{ py: 1, px: 2 }}
-                                                                    />
-                                                                    <CardContent sx={{ pt: 0, px: 2, pb: 2 }}>
-                                                                        <Stack spacing={1}>
-                                                                            {(empresaData.influencersAsignados?.[dia.nombre.toLowerCase()]?.['tarde'] ?? []).map(
-                                                                                (influencer, i) => (
-                                                                                    <Fade key={i} in timeout={500 + (i * 100)}>
-                                                                                        <Chip
-                                                                                            avatar={
-                                                                                                <Avatar sx={{ bgcolor: alpha('#2196f3', 0.2) }}>
-                                                                                                    <Person fontSize="small" />
-                                                                                                </Avatar>
-                                                                                            }
-                                                                                            label={influencer.name}
-                                                                                            deleteIcon={<Close fontSize="small" />}
-                                                                                            onDelete={() =>
-                                                                                                handleQuitarInfluencer(
-                                                                                                    empresaData.empresa.id,
-                                                                                                    dia.nombre.toLowerCase(),
-                                                                                                    'tarde',
-                                                                                                    influencer.id,
-                                                                                                )
-                                                                                            }
-                                                                                            variant="outlined"
-                                                                                            color="info"
-                                                                                            sx={{
-                                                                                                borderRadius: 2,
-                                                                                                '& .MuiChip-deleteIcon': {
-                                                                                                    color: theme.palette.error.main,
-                                                                                                    '&:hover': {
-                                                                                                        color: theme.palette.error.dark,
-                                                                                                    }
-                                                                                                }
-                                                                                            }}
-                                                                                        />
-                                                                                    </Fade>
-                                                                                ),
-                                                                            )}
-                                                                        </Stack>
-                                                                    </CardContent>
-                                                                </Card>
-                                                            )}
-                                                        </Stack>
-                                                    </TableCell>
-                                                );
-                                            })}
-                                        </TableRow>
-                                    </Zoom>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Paper>
-                </Slide>
+                                        );
+                                    })}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </Paper>
             </Box>
 
             {/* Modal para agregar influencer */}
