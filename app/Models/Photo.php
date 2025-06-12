@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 class Photo extends Model
 {
     protected $fillable = ['path', 'nombre', 'tipo'];
-
+    //tipo:datos personales
+    //nombre:
     public function users()
     {
         return $this->belongsToMany(User::class);

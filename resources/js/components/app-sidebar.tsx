@@ -217,6 +217,8 @@ export function AppSidebar() {
                 items: [
                     { title: 'Influencers', href: '/influencers', icon: GroupIcon },
                     { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
+                   { title: 'Mi perfil', href: '/tiposinfluencers', icon: EventNoteIcon },
+             
                 ],
                 isCollapsible: false,
             });
