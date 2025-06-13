@@ -131,9 +131,9 @@ export default function Header() {
                         </div>
                     </div>
                     <NavLink
-                        href="/influencers"
+                        href="/influencersts"
                         active={false} // o mantén tu lógica si necesitas destacar esa ruta
-                        onClick={scrollToSection('/influencers')}
+                        onClick={scrollToSection('/influencersts')}
                     >
                         Portafolio
                     </NavLink>
@@ -256,9 +256,9 @@ export default function Header() {
                     </div>
 
                     <NavLink
-                        href="/influencers"
+                        href="/influencersts"
                         active={false} // o mantén tu lógica si necesitas destacar esa ruta
-                        onClick={scrollToSection('/influencers')}
+                        onClick={scrollToSection('/influencersts')}
                     >
                         Portafolio
                     </NavLink>

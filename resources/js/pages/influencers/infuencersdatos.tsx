@@ -5,7 +5,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import SearchIcon from '@mui/icons-material/Search';
 
 import {
-    Alert,
     Box,
     Checkbox,
     IconButton,
@@ -100,7 +99,7 @@ export default function InfluencersDatos() {
     // Eliminar usuario
     const handleDelete = async (id: number) => {
         if (!window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
-        
+
         router.delete(`/infuencersdatos/${id}`, {
             preserveState: true,
             preserveScroll: true,
@@ -133,20 +132,14 @@ export default function InfluencersDatos() {
             preserveScroll: true,
             onSuccess: () => {
                 // Actualizar el estado local inmediatamente para mejor UX
-                setRowData((prev) => 
-                    prev.map((user) => 
-                        user.id === editingId 
-                            ? { ...user, [editingField!]: editingValue } 
-                            : user
-                    )
-                );
+                setRowData((prev) => prev.map((user) => (user.id === editingId ? { ...user, [editingField!]: editingValue } : user)));
                 setEditingId(null);
                 setEditingField(null);
                 setEditingValue('');
             },
             onError: () => {
                 setNotification('Hubo un error al actualizar el campo');
-            }
+            },
         });
     };
 
@@ -181,7 +174,7 @@ export default function InfluencersDatos() {
     // Eliminar múltiples usuarios seleccionados
     const handleDeleteSelected = () => {
         if (!window.confirm(`¿Estás seguro de que deseas eliminar ${selected.length} usuario${selected.length > 1 ? 's' : ''}?`)) return;
-        
+
         // Eliminar uno por uno (puedes optimizar esto en el backend para eliminar múltiples)
         selected.forEach((id) => {
             router.delete(`/infuencersdatos/${id}`, {
@@ -189,7 +182,7 @@ export default function InfluencersDatos() {
                 preserveScroll: true,
             });
         });
-        
+
         setSelected([]); // Limpiar selección
     };
 
@@ -464,6 +457,17 @@ export default function InfluencersDatos() {
                                             variant="contained"
                                             size="small"
                                             color="primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // para que no dispare el select de la fila
+                                                router.get(
+                                                    `/users/${row.id}/photos/upload`,
+                                                    {},
+                                                    {
+                                                        preserveState: true, // opcional: para mantener filtros/paginación
+                                                        preserveScroll: true,
+                                                    },
+                                                );
+                                            }}
                                         >
                                             Subir foto
                                         </IconButton>
