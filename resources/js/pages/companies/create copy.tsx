@@ -1,7 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material';
-import { DialogTitle } from '@radix-ui/react-dialog';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import L, { LatLng } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useState } from 'react';
@@ -192,8 +191,8 @@ export default function Create({ categories }: Props) {
     return (
         <AppLayout>
             <Head title="Crear Empresa" />
-            <div className="mx-auto max-w-3xl rounded-xl bg-gradient-to-br from-white via-blue-50 to-blue-100 p-8 shadow-2xl ring-1 ring-blue-100">
-                <h1 className="mb-6 text-center text-3xl font-extrabold text-blue-700">Crear nueva Empresa</h1>
+            <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-lg">
+                <h1 className="mb-6 text-center text-2xl font-bold">Crear nueva Empresa</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Nombre */}
@@ -201,7 +200,7 @@ export default function Create({ categories }: Props) {
                             <label className="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
                             <input
                                 type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
                             />
@@ -212,7 +211,7 @@ export default function Create({ categories }: Props) {
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Categoría</label>
                             <select
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.company_category_id}
                                 onChange={(e) => setData('company_category_id', e.target.value)}
                             >
@@ -226,14 +225,13 @@ export default function Create({ categories }: Props) {
                             {errors.company_category_id && <div className="mt-1 text-red-600">{errors.company_category_id}</div>}
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {/* Duración del contrato */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Duración del contrato</label>
                             <input
                                 type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.contract_duration}
                                 onChange={(e) => setData('contract_duration', e.target.value)}
                             />
@@ -245,7 +243,7 @@ export default function Create({ categories }: Props) {
                             <label className="block text-sm font-medium text-gray-700">Fecha de inicio</label>
                             <input
                                 type="date"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.start_date}
                                 onChange={(e) => setData('start_date', e.target.value)}
                             />
@@ -257,7 +255,7 @@ export default function Create({ categories }: Props) {
                             <label className="block text-sm font-medium text-gray-700">Fecha de fin</label>
                             <input
                                 type="date"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.end_date}
                                 onChange={(e) => setData('end_date', e.target.value)}
                             />
@@ -265,11 +263,8 @@ export default function Create({ categories }: Props) {
                         </div>
                     </div>
 
-                    {/* El resto del formulario sigue igual, pero aplica el mismo patrón de clases: 
-                - Fondo degradado
-                - Sombras más suaves
-                - Inputs con focus ring azul
-                - Botones mejorados con hover y transición */}
+                    {/* Dirección (ancho completo) */}
+
                     {/* Dirección con el mapa */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -468,19 +463,12 @@ export default function Create({ categories }: Props) {
                             ))}
                     </div>
 
-                    {/* Ejemplo de botón mejorado */}
+                    {/* Botones */}
                     <div className="flex justify-end space-x-4">
-                        <Link
-                            href="/companies"
-                            className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 transition-colors duration-150 hover:bg-gray-400"
-                        >
+                        <Link href="/companies" className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-400">
                             Cancelar
                         </Link>
-                        <button
-                            type="submit"
-                            className="rounded-md bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                            disabled={processing}
-                        >
+                        <button type="submit" className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700" disabled={processing}>
                             {processing ? 'Creando...' : 'Crear'}
                         </button>
                     </div>

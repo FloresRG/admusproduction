@@ -263,6 +263,11 @@ Route::get('/api/companies', function () {
 Route::get('/api/tareas-asignadas', [TareaController::class, 'tareasAsignadas']);
 Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 
+
+
+Route::get('/infuencersdatos', function () {
+    return Inertia::render('influencers/infuencersdatos');
+});
 // Rutas para el controlador de influencers con Inertia
 Route::get('/infuencersdatos', [DatoInfluencersController::class, 'index'])->name('infuencersdatos.index');
 Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store'])->name('infuencersdatos.store');
