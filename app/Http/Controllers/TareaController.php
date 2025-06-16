@@ -143,44 +143,58 @@ class TareaController extends Controller
     }
 
 public function tareasConAsignaciones()
-{
-    $tareas = Tarea::with(['asignaciones.user', 'tipo', 'company'])->get();
+    {
+        $tareas = Tarea::with(['asignaciones.user', 'tipo', 'company'])->get();
 
-    $resultado = $tareas->map(function ($tarea) {
-        return [
-            'id' => $tarea->id,
-            'titulo' => $tarea->titulo,
-            'descripcion' => $tarea->descripcion,
-            'prioridad' => $tarea->prioridad,
-            'fecha' => $tarea->fecha,
-            'tipo' => $tarea->tipo?->nombre,
-            'company' => $tarea->company?->nombre,
-            'asignaciones' => $tarea->asignaciones->map(function ($asignacion) {
-                return [
-                    'id' => $asignacion->id,
-                    'user' => $asignacion->user?->name,
-                    'estado' => $asignacion->estado,
-                    'detalle' => $asignacion->detalle,
-                ];
-            }),
-        ];
-    });
+        $resultado = $tareas->map(function ($tarea) {
+            return [
+                'id'          => $tarea->id,
+                'titulo'      => $tarea->titulo,
+                'descripcion' => $tarea->descripcion,
+                'prioridad'   => $tarea->prioridad,
+                'fecha'       => $tarea->fecha,
+                'tipo'        => $tarea->tipo ? [
+                    'id'          => $tarea->tipo->id,
+                    'nombre_tipo' => $tarea->tipo->nombre_tipo,
+                ] : null,
+                'company'     => $tarea->company ? [
+                    'id'   => $tarea->company->id,
+                    'name' => $tarea->company->name,
+                ] : null,
+                // Aquí renombramos a "asignados" y devolvemos exactamente
+                // los campos que tu React espera
+                'asignados'   => $tarea->asignaciones->map(function ($asignacion) {
+                    return [
+                        'id'        => $asignacion->id,
+                        'user_id'   => $asignacion->user->id,
+                        'user_name' => $asignacion->user->name,
+                        'estado'    => $asignacion->estado,
+                        'detalle'   => $asignacion->detalle,
+                    ];
+                }),
+            ];
+        });
 
-    return response()->json($resultado);
-}
-public function actualizarAsignacion(Request $request, $id)
-{
-    $data = $request->validate([
-        'estado' => 'required|string|in:pendiente,en_revision,publicada',
-        'detalle' => 'nullable|string',
-    ]);
+        return response()->json($resultado);
+    }
 
-    $asignacion = AsignacionTarea::findOrFail($id);
-    $asignacion->update($data);
+    /**F
+     * Actualiza el estado y detalle de una asignación concreta.
+     * Esta ruta debe estar en web.php (no api.php) para poder respetar
+     * sesiones y CSRF de Laravel sin el prefijo /api.
+     */
+    public function actualizarAsignacion(Request $request, $id)
+    {
+        $data = $request->validate([
+            'estado'  => 'required|string|in:pendiente,en_revision,publicada',
+            'detalle' => 'nullable|string',
+        ]);
 
-    return response()->json(['message' => 'Asignación actualizada con éxito.']);
-}
+        $asignacion = AsignacionTarea::findOrFail($id);
+        $asignacion->update($data);
 
+        return response()->json(['message' => 'Asignación actualizada con éxito.']);
+    }
 
 
 

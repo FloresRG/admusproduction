@@ -148,8 +148,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/asignaciones/{asignacion}', [AsignacionTareaController::class, 'destroy'])
         ->name('asignaciones.destroy');
     // Cambiar asignacion estado
-    Route::patch('/asignaciones/{asignacion}', [AsignacionTareaController::class, 'update'])
-        ->name('asignaciones.update');
+    // Route::patch('/asignaciones/{asignacion}', [AsignacionTareaController::class, 'update'])
+    //     ->name('asignaciones.update');
     // Grupo para “mis asignaciones”
     // Lista de fechas en que yo tengo asignaciones
     Route::get(
@@ -224,13 +224,14 @@ Route::get('/tareas', function () {
     return Inertia::render('tareas/index');
 })->name('tareas.index');
 
+
+Route::get('/tareas-con-asignaciones',   [TareaController::class, 'tareasConAsignaciones']);
+Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion'])
+     ->name('asignaciones.actualizar');
+
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
     ->name('tareas.fecha');
-
-
-Route::get('/tareas-asignadas', [TareaController::class, 'tareasConAsignaciones']);
-Route::put('/asignacion-tarea/{id}', [TareaController::class, 'actualizarAsignacion']);
 
 
 
@@ -356,7 +357,7 @@ Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actua
 
 ///guadalupe
 
-Route::get('/influencers', [InfluencerDatosController::class, 'index'])
+Route::get('/influencersts', [InfluencerDatosController::class, 'index'])
     ->name('influencers.index');
 
 Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])

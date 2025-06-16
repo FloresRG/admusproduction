@@ -14,6 +14,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Fade,
     FormControl,
     FormControlLabel,
     IconButton,
@@ -225,7 +226,6 @@ const Semanainfluencer = () => {
                 }}
             >
                 {/* Header Mejorado */}
-
                 <Box mb={4}>
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center" justifyContent="space-between">
                         <Box>
@@ -299,7 +299,6 @@ const Semanainfluencer = () => {
                 </Box>
 
                 {/* Tabla Principal Mejorada */}
-
                 <Paper
                     elevation={0}
                     sx={{
@@ -469,34 +468,36 @@ const Semanainfluencer = () => {
                                                                     {(
                                                                         empresaData.influencersAsignados?.[dia.nombre.toLowerCase()]?.['mañana'] ?? []
                                                                     ).map((influencer, i) => (
-                                                                        <Chip
-                                                                            avatar={
-                                                                                <Avatar sx={{ bgcolor: alpha('#4caf50', 0.2) }}>
-                                                                                    <Person fontSize="small" />
-                                                                                </Avatar>
-                                                                            }
-                                                                            label={influencer.name}
-                                                                            deleteIcon={<Close fontSize="small" />}
-                                                                            onDelete={() =>
-                                                                                handleQuitarInfluencer(
-                                                                                    empresaData.empresa.id,
-                                                                                    dia.nombre.toLowerCase(),
-                                                                                    'mañana',
-                                                                                    influencer.id,
-                                                                                )
-                                                                            }
-                                                                            variant="outlined"
-                                                                            color="success"
-                                                                            sx={{
-                                                                                borderRadius: 2,
-                                                                                '& .MuiChip-deleteIcon': {
-                                                                                    color: theme.palette.error.main,
-                                                                                    '&:hover': {
-                                                                                        color: theme.palette.error.dark,
+                                                                        <Fade key={i} in timeout={500 + i * 100}>
+                                                                            <Chip
+                                                                                avatar={
+                                                                                    <Avatar sx={{ bgcolor: alpha('#4caf50', 0.2) }}>
+                                                                                        <Person fontSize="small" />
+                                                                                    </Avatar>
+                                                                                }
+                                                                                label={influencer.name}
+                                                                                deleteIcon={<Close fontSize="small" />}
+                                                                                onDelete={() =>
+                                                                                    handleQuitarInfluencer(
+                                                                                        empresaData.empresa.id,
+                                                                                        dia.nombre.toLowerCase(),
+                                                                                        'mañana',
+                                                                                        influencer.id,
+                                                                                    )
+                                                                                }
+                                                                                variant="outlined"
+                                                                                color="success"
+                                                                                sx={{
+                                                                                    borderRadius: 2,
+                                                                                    '& .MuiChip-deleteIcon': {
+                                                                                        color: theme.palette.error.main,
+                                                                                        '&:hover': {
+                                                                                            color: theme.palette.error.dark,
+                                                                                        },
                                                                                     },
-                                                                                },
-                                                                            }}
-                                                                        />
+                                                                                }}
+                                                                            />
+                                                                        </Fade>
                                                                     ))}
                                                                 </Stack>
                                                             </CardContent>
@@ -560,34 +561,36 @@ const Semanainfluencer = () => {
                                                                     {(
                                                                         empresaData.influencersAsignados?.[dia.nombre.toLowerCase()]?.['tarde'] ?? []
                                                                     ).map((influencer, i) => (
-                                                                        <Chip
-                                                                            avatar={
-                                                                                <Avatar sx={{ bgcolor: alpha('#2196f3', 0.2) }}>
-                                                                                    <Person fontSize="small" />
-                                                                                </Avatar>
-                                                                            }
-                                                                            label={influencer.name}
-                                                                            deleteIcon={<Close fontSize="small" />}
-                                                                            onDelete={() =>
-                                                                                handleQuitarInfluencer(
-                                                                                    empresaData.empresa.id,
-                                                                                    dia.nombre.toLowerCase(),
-                                                                                    'tarde',
-                                                                                    influencer.id,
-                                                                                )
-                                                                            }
-                                                                            variant="outlined"
-                                                                            color="info"
-                                                                            sx={{
-                                                                                borderRadius: 2,
-                                                                                '& .MuiChip-deleteIcon': {
-                                                                                    color: theme.palette.error.main,
-                                                                                    '&:hover': {
-                                                                                        color: theme.palette.error.dark,
+                                                                        <Fade key={i} in timeout={500 + i * 100}>
+                                                                            <Chip
+                                                                                avatar={
+                                                                                    <Avatar sx={{ bgcolor: alpha('#2196f3', 0.2) }}>
+                                                                                        <Person fontSize="small" />
+                                                                                    </Avatar>
+                                                                                }
+                                                                                label={influencer.name}
+                                                                                deleteIcon={<Close fontSize="small" />}
+                                                                                onDelete={() =>
+                                                                                    handleQuitarInfluencer(
+                                                                                        empresaData.empresa.id,
+                                                                                        dia.nombre.toLowerCase(),
+                                                                                        'tarde',
+                                                                                        influencer.id,
+                                                                                    )
+                                                                                }
+                                                                                variant="outlined"
+                                                                                color="info"
+                                                                                sx={{
+                                                                                    borderRadius: 2,
+                                                                                    '& .MuiChip-deleteIcon': {
+                                                                                        color: theme.palette.error.main,
+                                                                                        '&:hover': {
+                                                                                            color: theme.palette.error.dark,
+                                                                                        },
                                                                                     },
-                                                                                },
-                                                                            }}
-                                                                        />
+                                                                                }}
+                                                                            />
+                                                                        </Fade>
                                                                     ))}
                                                                 </Stack>
                                                             </CardContent>

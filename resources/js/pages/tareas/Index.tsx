@@ -66,6 +66,7 @@ import axios from 'axios';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface Asignado {
+    id: number; // ← PK de la asignación
     user_id: number;
     user_name: string;
     estado: string;
@@ -150,7 +151,7 @@ export default function Tareas() {
 
         try {
             const [tareasRes, tiposRes, empresasRes, pasantesRes] = await Promise.all([
-                axios.get('/api/tareas-asignadas'),
+                axios.get('/tareas-con-asignaciones'),
                 axios.get('/api/tipos'),
                 axios.get('/api/companies'),
                 axios.get('/api/pasantes'),
@@ -352,25 +353,6 @@ export default function Tareas() {
         setEditarEmpresa('no');
     };
 
-    const saveEdit = async () => {
-        if (!editFormData.titulo.trim()) return;
-
-        try {
-            const payload = {
-                ...editFormData,
-                tipo_id: editFormData.tipo_id ? Number(editFormData.tipo_id) : null,
-                company_id: editFormData.company_id ? Number(editFormData.company_id) : null,
-            };
-
-            await axios.put(`/tareas/${editingTask}`, payload);
-            setEditingTask(null);
-            fetchData();
-        } catch (err) {
-            console.error('Error al actualizar tarea:', err);
-            setError('Error al actualizar la tarea');
-        }
-    };
-
     // Funciones para nueva tarea
     const startNewTask = (fecha?: string) => {
         setShowNewTaskForm(true);
@@ -485,10 +467,9 @@ export default function Tareas() {
         return gradients[index % gradients.length];
     };
 
-    const [editTaskId, setEditTaskId] = useState<number | null>(null); // para descripción
-    const [editAsignacionId, setEditAsignacionId] = useState<number | null>(null); // para estado/detalle
-    const [editData, setEditData] = useState({
-        descripcion: '',
+    // Dentro de tu función Tareas(), junto al resto de useState(...)
+    const [editAsignacionId, setEditAsignacionId] = useState<number | null>(null);
+    const [editAsignData, setEditAsignData] = useState<{ estado: string; detalle: string }>({
         estado: '',
         detalle: '',
     });
@@ -510,6 +491,32 @@ export default function Tareas() {
                 </Container>
             </AppLayout>
         );
+    }
+    function startEditAsignacion(asignado: Asignado) {
+        setEditAsignacionId(asignado.id);
+        setEditAsignData({
+            estado: asignado.estado,
+            detalle: asignado.detalle ?? '',
+        });
+    }
+
+    function cancelEditAsignacion() {
+        setEditAsignacionId(null);
+        setEditAsignData({ estado: '', detalle: '' });
+    }
+
+    async function saveEditAsignacion() {
+        if (!editAsignacionId) return;
+
+        try {
+            // Para actualizar una asignación
+            await axios.patch(`/asignaciones/${editAsignacionId}`, { estado: editAsignData.estado, detalle: editAsignData.detalle });
+            await fetchData();
+            setEditAsignacionId(null);
+        } catch (err) {
+            console.error('Error al actualizar asignación:', err);
+            setError('No se pudo actualizar la asignación');
+        }
     }
 
     return (
@@ -1752,12 +1759,80 @@ export default function Tareas() {
                                                                         )}
 
                                                                         {tarea.asignados.map((asignado) => (
-                                                                            <Box key={asignado.user_id} sx={{ ml: 1 }}>
-                                                                                <Typography variant="body2" color="text.secondary">
-                                                                                    <strong>Estado:</strong> {asignado.estado || 'Sin estado'}
-                                                                                </Typography>
+                                                                            <Box key={asignado.id} sx={{ ml: 1, mb: 1 }}>
+                                                                                {editAsignacionId === asignado.id ? (
+                                                                                    // MODO EDICIÓN
+                                                                                    <Stack direction="row" spacing={2} alignItems="center">
+                                                                                        <FormControl component="fieldset" size="small">
+                                                                                            <RadioGroup
+                                                                                                row
+                                                                                                value={editAsignData.estado}
+                                                                                                onChange={(e) =>
+                                                                                                    setEditAsignData((d) => ({
+                                                                                                        ...d,
+                                                                                                        estado: e.target.value,
+                                                                                                    }))
+                                                                                                }
+                                                                                            >
+                                                                                                <FormControlLabel
+                                                                                                    value="pendiente"
+                                                                                                    control={<Radio />}
+                                                                                                    label="Pendiente"
+                                                                                                />
+                                                                                                <FormControlLabel
+                                                                                                    value="en_revision"
+                                                                                                    control={<Radio />}
+                                                                                                    label="En revisión"
+                                                                                                />
+                                                                                                <FormControlLabel
+                                                                                                    value="publicada"
+                                                                                                    control={<Radio />}
+                                                                                                    label="Publicada"
+                                                                                                />
+                                                                                            </RadioGroup>
+                                                                                            <TextField
+                                                                                                fullWidth
+                                                                                                size="small"
+                                                                                                label="Detalle"
+                                                                                                value={editAsignData.detalle}
+                                                                                                onChange={(e) =>
+                                                                                                    setEditAsignData((d) => ({
+                                                                                                        ...d,
+                                                                                                        detalle: e.target.value,
+                                                                                                    }))
+                                                                                                }
+                                                                                                sx={{ mt: 2 }}
+                                                                                            />
+                                                                                        </FormControl>
+                                                                                        <IconButton size="small" onClick={saveEditAsignacion}>
+                                                                                            <Save fontSize="small" />
+                                                                                        </IconButton>
+                                                                                        <IconButton size="small" onClick={cancelEditAsignacion}>
+                                                                                            <Cancel fontSize="small" />
+                                                                                        </IconButton>
+                                                                                    </Stack>
+                                                                                ) : (
+                                                                                    // MODO LECTURA
+                                                                                    <Stack direction="row" spacing={1} alignItems="center">
+                                                                                        <Typography variant="body2" color="text.secondary">
+                                                                                            <strong>Estado:</strong> {asignado.estado}
+                                                                                        </Typography>
+                                                                                        <IconButton
+                                                                                            size="small"
+                                                                                            onClick={() => startEditAsignacion(asignado)}
+                                                                                        >
+                                                                                            <Edit fontSize="small" />
+                                                                                        </IconButton>
+                                                                                    </Stack>
+                                                                                )}
+
+                                                                                {/* Detalle siempre visible */}
                                                                                 {asignado.detalle && (
-                                                                                    <Typography variant="body2" color="text.secondary">
+                                                                                    <Typography
+                                                                                        variant="body2"
+                                                                                        color="text.secondary"
+                                                                                        sx={{ ml: 4, mt: 0.5 }}
+                                                                                    >
                                                                                         <strong>Detalle:</strong> {asignado.detalle}
                                                                                     </Typography>
                                                                                 )}
