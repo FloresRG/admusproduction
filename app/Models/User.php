@@ -69,7 +69,7 @@ class User extends Authenticatable
     }
     public function photos()
     {
-        return $this->belongsToMany(Photo::class);
+        return $this->belongsToMany(Photo::class, 'photo_user');
     }
     // ¡¡AÑADE ESTA FUNCIÓN!!
     public function bookings()

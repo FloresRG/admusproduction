@@ -13,7 +13,7 @@ class Photo extends Model
     //nombre:
     public function users()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'photo_user');
     }
 
     // Función para obtener URL completa
@@ -22,4 +22,3 @@ class Photo extends Model
         return asset('storage/' . $this->path);
     }
 }
-
