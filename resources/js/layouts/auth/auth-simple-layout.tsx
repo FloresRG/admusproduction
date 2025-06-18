@@ -18,7 +18,7 @@ export default function AuthSimpleLayout({ children, title, description }: Props
         aria-hidden="true"
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: "url('/Gflores/prueba.gif')",
+          backgroundImage: "url('/Gflores/6.gif')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

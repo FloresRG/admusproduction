@@ -17,6 +17,7 @@ use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
+use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
@@ -364,7 +365,14 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
     ->name('influencers.show');
 
 
+Route::get('/pagos', function () {
+    return Inertia::render('pagos/index');
+});
 
+Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanies']);
+
+Route::get('/api/companies', [PagosController::class, 'getCompanies']);
+Route::post('/comprobante', [PagosController::class, 'storeComprobante']);
 
 
 require __DIR__ . '/settings.php';
