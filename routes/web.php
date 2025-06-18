@@ -18,6 +18,7 @@ use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
+use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
@@ -382,9 +383,16 @@ Route::get('/company-links', [CompanyLinkComprobanteController::class, 'index'])
 Route::post('/company-links', [CompanyLinkComprobanteController::class, 'store'])->name('company-links.store');
 Route::put('/company-links/{registro}', [CompanyLinkComprobanteController::class, 'update'])->name('company-links.update');
 Route::delete('/company-links/{registro}', [CompanyLinkComprobanteController::class, 'destroy'])->name('company-links.destroy');
+Route::get('/pagos', function () {
+    return Inertia::render('pagos/index');
+});
+
+Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanies']);
 
 ///pagos empresas
 Route::get('/pagos-del-mes', [CompanyLinkComprobanteController::class, 'pagosDelMes'])->name('company-links.pagos-del-mes');
+Route::get('/api/companies', [PagosController::class, 'getCompanies']);
+Route::post('/comprobante', [PagosController::class, 'storeComprobante']);
 
 Route::get('/reportes/pagos-por-anio', [\App\Http\Controllers\CompanyLinkComprobanteController::class, 'reporteAnual'])
     ->name('company-links.reporte-anual');
