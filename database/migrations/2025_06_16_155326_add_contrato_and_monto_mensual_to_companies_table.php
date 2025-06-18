@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('contrato')->nullable()->after('contract_duration');
             $table->decimal('monto_mensual', 10, 2)->nullable()->after('contrato');
             $table->string('celular')->nullable()->after('monto_mensual');
+            $table->string('logo')->nullable()->after('celular');
         });
     }
 

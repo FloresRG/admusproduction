@@ -22,6 +22,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
+use App\Http\Controllers\VideosController;
 use App\Http\Controllers\WeekController;
 
 
@@ -364,7 +365,11 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
     ->name('influencers.show');
 
 
-
+Route::middleware(['auth'])->group(function () {
+    // Ruta para mostrar todos los videos
+    Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');
+    Route::get('/videosmes', [VideosController::class, 'indexmes'])->name('videos.indexmes');
+});
 
 
 require __DIR__ . '/settings.php';

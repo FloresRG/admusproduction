@@ -24,7 +24,6 @@ type CompanyCategory = {
 };
 
 type Availability = {
-    id?: number;
     day_of_week: number;
     start_time: string;
     end_time: string;
@@ -35,23 +34,18 @@ type Availability = {
 type Company = {
     id: number;
     name: string;
-    company_category_id: number;
+    company_category_id: string;
     contract_duration: string;
     description: string;
     direccion: string;
     start_date: string;
     end_date: string;
-    celular: string;
-    monto_mensual: string;
-    contrato_url: string | null;
-    logo_url: string | null;
-    availability: Availability[];
 };
 
 type Props = {
     company: Company;
     categories: CompanyCategory[];
-    has_user: boolean;
+    availability: Availability[];
 };
 
 type SearchResult = {
@@ -62,10 +56,11 @@ type SearchResult = {
 
 const DEFAULT_CENTER = { lat: -16.5871, lng: -68.0855 };
 const DEFAULT_ZOOM = 13;
+
 const formatDate = (dateStr: string) => (dateStr ? new Date(dateStr).toISOString().slice(0, 10) : '');
 
-export default function Edit({ company, categories, has_user }: Props) {
-    const { data, setData, post, processing, errors } = useForm<{
+export default function Edit({ company, categories, availability }: Props) {
+    const { data, setData, put, processing, errors } = useForm<{
         name: string;
         company_category_id: string;
         contract_duration: string;
@@ -73,28 +68,19 @@ export default function Edit({ company, categories, has_user }: Props) {
         direccion: string;
         start_date: string;
         end_date: string;
-        celular: string;
-        contrato: File | null;
-        monto_mensual: string;
-        logo: File | null;
         availability: Availability[];
         crear_usuario: boolean;
-        _method: string;
     }>({
         name: company.name,
-        company_category_id: company.company_category_id.toString(),
+        company_category_id: company.company_category_id,
         contract_duration: company.contract_duration,
         description: company.description || '',
         direccion: company.direccion,
         start_date: formatDate(company.start_date), // <-- aquí
         end_date: formatDate(company.end_date),
-        celular: company.celular || '',
-        contrato: null,
-        monto_mensual: company.monto_mensual || '',
-        logo: null,
         availability:
-            company.availability.length > 0
-                ? company.availability
+            availability.length > 0
+                ? availability
                 : [
                       {
                           day_of_week: 1,
@@ -105,14 +91,11 @@ export default function Edit({ company, categories, has_user }: Props) {
                       },
                   ],
         crear_usuario: false, // ← nuevo campo
-        _method: 'PUT',
     });
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [logoPreview, setLogoPreview] = useState<string | null>(company.logo_url);
-    const [pdfPreview, setPdfPreview] = useState<string | null>(company.contrato_url);
 
     const handleAddAvailability = () => {
         setData('availability', [...data.availability, { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null }]);
@@ -134,27 +117,23 @@ export default function Edit({ company, categories, has_user }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/companies/${company.id}`);
+        put(`/companies/${company.id}`);
     };
 
     // Estado para manejar la visibilidad del mapa
     const [openMapModal, setOpenMapModal] = useState(false);
-    const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(
+        company.direccion ? new LatLng(Number(company.direccion.split(',')[0]), Number(company.direccion.split(',')[1])) : null,
+    );
     const [mapError, setMapError] = useState<string>('');
-
-    // Inicializar la ubicación desde los datos de la empresa
-    useEffect(() => {
-        if (data.direccion) {
-            const [lat, lng] = data.direccion.split(',').map(Number);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                setSelectedLocation(new LatLng(lat, lng));
-            }
-        }
-    }, [data.direccion]);
 
     const handleOpenMap = () => {
         setMapError('');
         setOpenMapModal(true);
+        if (data.direccion) {
+            const [lat, lng] = data.direccion.split(',').map(Number);
+            setSelectedLocation(new LatLng(lat, lng));
+        }
     };
 
     const handleCloseMap = () => {
@@ -166,7 +145,6 @@ export default function Edit({ company, categories, has_user }: Props) {
             setMapError('Por favor seleccione una ubicación en el mapa');
             return;
         }
-
         const lat = Number(selectedLocation.lat.toFixed(6));
         const lng = Number(selectedLocation.lng.toFixed(6));
         setData('direccion', `${lat},${lng}`);
@@ -174,7 +152,6 @@ export default function Edit({ company, categories, has_user }: Props) {
         setMapError('');
     };
 
-    // Componente para manejar la selección del marcador
     function LocationMarker() {
         const map = useMapEvents({
             dblclick(e) {
@@ -230,9 +207,9 @@ export default function Edit({ company, categories, has_user }: Props) {
 
     return (
         <AppLayout>
-            <Head title={`Editar Empresa - ${company.name}`} />
-            <div className="mx-auto max-w-3xl rounded-xl bg-gradient-to-br from-white via-blue-50 to-blue-100 p-8 shadow-2xl ring-1 ring-blue-100">
-                <h1 className="mb-6 text-center text-3xl font-extrabold text-blue-700">Editar Empresa: {company.name}</h1>
+            <Head title="Editar Empresa" />
+            <div className="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-lg">
+                <h1 className="mb-6 text-center text-2xl font-bold">Editar Empresa</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Nombre */}
@@ -240,7 +217,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                             <label className="block text-sm font-medium text-gray-700">Nombre de la Empresa</label>
                             <input
                                 type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
                             />
@@ -251,7 +228,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Categoría</label>
                             <select
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.company_category_id}
                                 onChange={(e) => setData('company_category_id', e.target.value)}
                             >
@@ -265,21 +242,20 @@ export default function Edit({ company, categories, has_user }: Props) {
                             {errors.company_category_id && <div className="mt-1 text-red-600">{errors.company_category_id}</div>}
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {/* Duración del contrato */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Duración del contrato</label>
                             <input
                                 type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                 value={data.contract_duration}
                                 onChange={(e) => setData('contract_duration', e.target.value)}
                             />
                             {errors.contract_duration && <div className="mt-1 text-red-600">{errors.contract_duration}</div>}
                         </div>
 
-                       {/* Fecha de inicio */}
+                        {/* Fecha de inicio */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Fecha de inicio</label>
                             <input
@@ -304,7 +280,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                         </div>
                     </div>
 
-                    {/* Dirección con el mapa */}
+                    {/* Dirección (ancho completo) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
                             Dirección
@@ -325,11 +301,12 @@ export default function Edit({ company, categories, has_user }: Props) {
                         {errors.direccion && <div className="mt-1 text-red-600">{errors.direccion}</div>}
                     </div>
 
+                    {/* Modal con el mapa */}
                     <Dialog open={openMapModal} onClose={handleCloseMap} maxWidth="md" fullWidth>
                         <DialogTitle>
                             Seleccionar Ubicación
                             <Typography variant="caption" component="div" color="textSecondary">
-                                Haga doble clic en el mapa para seleccionar la ubicación
+                                Haga clic en el mapa para seleccionar la ubicación
                             </Typography>
                         </DialogTitle>
                         <DialogContent>
@@ -398,7 +375,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                         </DialogActions>
                     </Dialog>
 
-                    {/* Descripción */}
+                    {/* Descripción (ancho completo) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Descripción</label>
                         <textarea
@@ -407,105 +384,18 @@ export default function Edit({ company, categories, has_user }: Props) {
                             onChange={(e) => setData('description', e.target.value)}
                         />
                     </div>
-
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Celular */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Celular</label>
+                    <div className="mt-6">
+                        <label className="inline-flex items-center">
                             <input
-                                type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                value={data.celular}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (/^\d*$/.test(value)) {
-                                        setData('celular', value);
-                                    }
-                                }}
+                                type="checkbox"
+                                className="form-checkbox"
+                                checked={data.crear_usuario}
+                                onChange={(e) => setData('crear_usuario', e.target.checked)}
                             />
-                            {errors.celular && <div className="mt-1 text-red-600">{errors.celular}</div>}
-                        </div>
-
-                        {/* Monto mensual */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Monto Mensual</label>
-                            <input
-                                type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                value={data.monto_mensual}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-                                    if (/^\d*\.?\d*$/.test(value)) {
-                                        setData('monto_mensual', value);
-                                    }
-                                }}
-                            />
-                            {errors.monto_mensual && <div className="mt-1 text-red-600">{errors.monto_mensual}</div>}
-                        </div>
+                            <span className="ml-2 text-sm text-gray-700">¿Desea crear usuario para esta empresa?</span>
+                        </label>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Contrato */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Contrato (PDF)</label>
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                className="mt-2 w-full"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setData('contrato', file);
-                                    if (file) {
-                                        setPdfPreview(URL.createObjectURL(file));
-                                    }
-                                }}
-                            />
-                            {/* Vista previa del contrato PDF */}
-                            {pdfPreview && (
-                                <div className="mt-2">
-                                    <p className="mb-2 text-sm text-gray-600">{data.contrato ? 'Nuevo archivo seleccionado' : 'Archivo actual'}</p>
-                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="300px" />
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Logo */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Logo</label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="mt-2 w-full"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setData('logo', file);
-                                    if (file) {
-                                        setLogoPreview(URL.createObjectURL(file));
-                                    }
-                                }}
-                            />
-                            {/* Vista previa del logo */}
-                            {logoPreview && (
-                                <div className="mt-2">
-                                    <p className="mb-2 text-sm text-gray-600">{data.logo ? 'Nueva imagen seleccionada' : 'Imagen actual'}</p>
-                                    <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 rounded border" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    {!has_user && (
-                        <div className="mt-6">
-                            <label className="inline-flex items-center">
-                                <input
-                                    type="checkbox"
-                                    className="form-checkbox"
-                                    checked={data.crear_usuario}
-                                    onChange={(e) => setData('crear_usuario', e.target.checked)}
-                                />
-                                <span className="ml-2 text-sm text-gray-700">¿Desea crear usuario para esta empresa?</span>
-                            </label>
-                        </div>
-                    )}
                     {/* Disponibilidad */}
                     <div className="mt-6">
                         <label className="mb-2 block text-sm font-medium text-gray-700">Días de disponibilidad</label>
@@ -524,7 +414,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                                         <option value={3}>Miércoles</option>
                                         <option value={4}>Jueves</option>
                                         <option value={5}>Viernes</option>
-                                        <option value={6}>Sábado</option>
+                                        <option value={6}>Sabado</option>
                                         <option value={7}>Domingo</option>
                                     </select>
 
@@ -534,12 +424,12 @@ export default function Edit({ company, categories, has_user }: Props) {
                                         value={avail.turno}
                                         onChange={(e) => {
                                             const turno = e.target.value as 'mañana' | 'tarde';
-                                            let start_time = avail.start_time;
-                                            let end_time = avail.end_time;
-                                            if (turno === 'mañana' && (!start_time || !end_time)) {
+                                            let start_time = '';
+                                            let end_time = '';
+                                            if (turno === 'mañana') {
                                                 start_time = '09:30';
                                                 end_time = '13:00';
-                                            } else if (turno === 'tarde' && (!start_time || !end_time)) {
+                                            } else {
                                                 start_time = '14:00';
                                                 end_time = '18:00';
                                             }
@@ -553,11 +443,12 @@ export default function Edit({ company, categories, has_user }: Props) {
                                     </select>
 
                                     {/* Cantidad */}
-                                    <div className="col-span-1">
+                                    <div className="col-span-2">
+                                        <label className="sr-only">Cantidad</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                             placeholder="Cantidad"
                                             value={avail.cantidad ?? ''}
                                             onChange={(e) =>
@@ -570,37 +461,43 @@ export default function Edit({ company, categories, has_user }: Props) {
                                     <div className="col-span-1 flex items-center justify-center">
                                         <button
                                             type="button"
-                                            className="text-xl font-bold text-red-600 hover:text-red-800"
+                                            className="text-xl font-bold text-red-600"
                                             onClick={() => handleRemoveAvailability(idx)}
                                             disabled={data.availability.length === 1}
-                                            // ...existing code...
                                             title="Eliminar este día"
                                         >
-                                            &times;
+                                            ×
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         ))}
 
-                        <div className="flex justify-end">
-                            <Button type="button" variant="outlined" color="primary" onClick={handleAddAvailability}>
-                                Agregar día
-                            </Button>
+                        {/* Botón añadir */}
+                        <div className="mt-2 flex justify-center">
+                            <button type="button" onClick={handleAddAvailability} className="font-semibold text-blue-600">
+                                + Añadir otro día
+                            </button>
                         </div>
+
+                        {/* Errores de disponibilidad */}
+                        {Object.keys(errors)
+                            .filter((key) => key.startsWith('availability'))
+                            .map((key) => (
+                                <div key={key} className="text-center text-red-600">
+                                    {errors[key as keyof typeof errors]}
+                                </div>
+                            ))}
                     </div>
 
-                    {/* Botones de acción */}
-                    <div className="mt-8 flex justify-between">
-                        <Link
-                            href="/companies"
-                            className="inline-block rounded-md bg-gray-200 px-6 py-3 text-center font-semibold text-gray-700 shadow transition hover:bg-gray-300"
-                        >
+                    {/* Botones */}
+                    <div className="flex justify-end space-x-4">
+                        <Link href="/companies" className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-400">
                             Cancelar
                         </Link>
-                        <Button type="submit" variant="contained" color="primary" disabled={processing}>
-                            Guardar Cambios
-                        </Button>
+                        <button type="submit" className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700" disabled={processing}>
+                            {processing ? 'Actualizando...' : 'Actualizar'}
+                        </button>
                     </div>
                 </form>
             </div>

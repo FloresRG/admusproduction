@@ -1,7 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material';
-import { DialogTitle } from '@radix-ui/react-dialog';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import L, { LatLng } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import React, { useEffect, useState } from 'react';
@@ -54,7 +53,12 @@ export default function Create({ categories }: Props) {
         direccion: string;
         start_date: string;
         end_date: string;
+        celular: string;
+        contrato: File | null;
+        monto_mensual: string;
+        logo: File | null;
         availability: Availability[];
+        crear_usuario: boolean;
     }>({
         name: '',
         company_category_id: '',
@@ -63,6 +67,10 @@ export default function Create({ categories }: Props) {
         direccion: '',
         start_date: '',
         end_date: '',
+        celular: '',
+        contrato: null,
+        monto_mensual: '',
+        logo: null,
         availability: [
             {
                 day_of_week: 1,
@@ -72,11 +80,14 @@ export default function Create({ categories }: Props) {
                 cantidad: null,
             },
         ],
+        crear_usuario: false, // ← nuevo campo
     });
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [pdfPreview, setPdfPreview] = useState<string | null>(null);
 
     const handleAddAvailability = () => {
         setData('availability', [...data.availability, { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null }]);
@@ -266,9 +277,7 @@ export default function Create({ categories }: Props) {
                     </div>
 
                     {/* El resto del formulario sigue igual, pero aplica el mismo patrón de clases: 
-                - Fondo degradado
-                - Sombras más suaves
-                - Inputs con focus ring azul
+                
                 - Botones mejorados con hover y transición */}
                     {/* Dirección con el mapa */}
                     <div>
@@ -291,7 +300,6 @@ export default function Create({ categories }: Props) {
                         {errors.direccion && <div className="mt-1 text-red-600">{errors.direccion}</div>}
                     </div>
 
-                    {/* Modal con el mapa */}
                     <Dialog open={openMapModal} onClose={handleCloseMap} maxWidth="md" fullWidth>
                         <DialogTitle>
                             Seleccionar Ubicación
@@ -374,7 +382,102 @@ export default function Create({ categories }: Props) {
                             onChange={(e) => setData('description', e.target.value)}
                         />
                     </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* celular */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Celular</label>
+                            <input
+                                type="text"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.celular}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (/^\d*$/.test(value)) {
+                                        setData('celular', value);
+                                    }
+                                }}
+                            />
+                            {errors.celular && <div className="mt-1 text-red-600">{errors.celular}</div>}
+                        </div>
 
+                        {/* monto mensual */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Monto Mensual</label>
+                            <input
+                                type="text"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.monto_mensual}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (/^\d*\.?\d*$/.test(value)) {
+                                        setData('monto_mensual', value);
+                                    }
+                                }}
+                            />
+                            {errors.monto_mensual && <div className="mt-1 text-red-600">{errors.monto_mensual}</div>}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* contrato */}
+                        {/* contrato */}
+                        <div>
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                className="mt-2 w-full"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    setData('contrato', file);
+                                    if (file) {
+                                        setPdfPreview(URL.createObjectURL(file));
+                                    } else {
+                                        setPdfPreview(null);
+                                    }
+                                }}
+                            />
+                            {/* Vista previa del contrato PDF */}
+                            {pdfPreview && (
+                                <div className="mt-2">
+                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="400px" />
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            {/* logo */}
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="mt-2 w-full"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0] || null;
+                                    setData('logo', file);
+                                    if (file) {
+                                        setLogoPreview(URL.createObjectURL(file));
+                                    } else {
+                                        setLogoPreview(null);
+                                    }
+                                }}
+                            />
+                            {/* Vista previa del logo imagen */}
+                            {logoPreview && (
+                                <div className="mt-2">
+                                    <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 rounded border" />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                    <div className="mt-6">
+                        <label className="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                className="form-checkbox"
+                                checked={data.crear_usuario}
+                                onChange={(e) => setData('crear_usuario', e.target.checked)}
+                            />
+                            <span className="ml-2 text-sm text-gray-700">¿Desea crear usuario para esta empresa?</span>
+                        </label>
+                    </div>
                     {/* Disponibilidad (como la tienes, sin cambios grandes) */}
                     <div className="mt-6">
                         <label className="mb-2 block text-sm font-medium text-gray-700">Días de disponibilidad</label>

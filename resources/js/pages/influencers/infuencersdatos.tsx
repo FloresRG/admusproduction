@@ -231,7 +231,6 @@ export default function InfluencersDatos() {
         setUserPhotos([]);
     };
 
-   
     // Manejar selección de archivos
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files || []);
