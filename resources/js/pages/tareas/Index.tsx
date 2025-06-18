@@ -518,6 +518,24 @@ export default function Tareas() {
             setError('No se pudo actualizar la asignación');
         }
     }
+    const saveEdit = async () => {
+        if (!editFormData.titulo.trim()) return;
+
+        try {
+            const payload = {
+                ...editFormData,
+                tipo_id: editFormData.tipo_id ? Number(editFormData.tipo_id) : null,
+                company_id: editFormData.company_id ? Number(editFormData.company_id) : null,
+            };
+
+            await axios.put(`/tareas/${editingTask}`, payload);
+            setEditingTask(null);
+            fetchData();
+        } catch (err) {
+            console.error('Error al actualizar tarea:', err);
+            setError('Error al actualizar la tarea');
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Tareas', href: '/tareas' }]}>
@@ -1533,6 +1551,7 @@ export default function Tareas() {
                                                                         <Edit />
                                                                     </IconButton>
                                                                 </Tooltip>
+
                                                                 <Tooltip title="Eliminar tarea">
                                                                     <IconButton
                                                                         onClick={() => handleDelete(tarea.id)}

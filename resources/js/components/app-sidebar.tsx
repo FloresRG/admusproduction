@@ -42,12 +42,12 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import GroupIcon from '@mui/icons-material/Group';
 import PeopleIcon from '@mui/icons-material/Groups';
-import PersonIcon from '@mui/icons-material/Person';
-import WorkIcon from '@mui/icons-material/Work';
-import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
+import PersonIcon from '@mui/icons-material/Person';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import RateReviewIcon from '@mui/icons-material/RateReview';
+import WorkIcon from '@mui/icons-material/Work';
 // 6. Props que trae Inertia
 type PageProps = {
     auth: {
@@ -199,11 +199,14 @@ export function AppSidebar() {
                 title: 'Pasante',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Administrar Tareas', href: '/asignaciones/fechas', icon: AssignmentIcon },
-                    { title: 'Tareas de La Semana', href: '/vertareas', icon: DateRangeIcon },
-                    { title: 'Asignar Tarea', href: '/tareas', icon: DateRangeIcon },
+                    
+                    { title: 'Asignar Tareas', href: '/tareas', icon: DateRangeIcon },
+                    { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: DateRangeIcon },
+                    { title: 'Tareas en revicion', href: '/tareas/revicion', icon: DateRangeIcon },
                     { title: 'Historial de Tareas', href: '/mis-asignaciones/fechas', icon: DateRangeIcon },
                     { title: 'Mis Tareas', href: '/pasante', icon: FormatIndentIncreaseIcon },
+                    { title: 'Administrar Tareas', href: '/asignaciones/fechas', icon: AssignmentIcon },
+                    { title: 'Tareas de La Semana', href: '/vertareas', icon: DateRangeIcon },
 
                 ],
                 isCollapsible: true,
@@ -217,8 +220,7 @@ export function AppSidebar() {
                 items: [
                     { title: 'Influencers', href: '/influencers', icon: GroupIcon },
                     { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
-                   { title: 'Mi perfil', href: '/tiposinfluencers', icon: EventNoteIcon },
-             
+                    { title: 'Mi perfil', href: '/tiposinfluencers', icon: EventNoteIcon },
                 ],
                 isCollapsible: false,
             });
@@ -234,8 +236,6 @@ export function AppSidebar() {
                     { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
-
-
                 ],
                 isCollapsible: false,
             });
