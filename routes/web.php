@@ -17,6 +17,7 @@ use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
+use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
@@ -229,6 +230,8 @@ Route::get('/tareas', function () {
 Route::get('/tareas-con-asignaciones',   [TareaController::class, 'tareasConAsignaciones']);
 Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion'])
      ->name('asignaciones.actualizar');
+// PATCH /asignaciones/{id}/intercambiar
+Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'intercambiarUsuario']);
 
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
@@ -364,8 +367,25 @@ Route::get('/influencersts', [InfluencerDatosController::class, 'index'])
 Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
     ->name('influencers.show');
 
+     Route::get('/tareas/hoy', function () {
+    return Inertia::render('tareas/tareashoy');
+})->name('tareas.index');
 
-Route::middleware(['auth'])->group(function () {
+ Route::get('/tareas/revicion', function () {
+    return Inertia::render('tareas/tareasrevicion');
+})->name('tareas.index');
+
+Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
+Route::delete('/asignacion/{id}', [TareaController::class, 'eliminarAsignacion']);
+
+Route::get('/pagos', function () {
+    return Inertia::render('pagos/index');
+});
+
+Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanies']);
+
+Route::get('/api/companies', [PagosController::class, 'getCompanies']);
+Route::post('/comprobante', [PagosController::class, 'storeComprobante']);Route::middleware(['auth'])->group(function () {
     // Ruta para mostrar todos los videos
     Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');
     Route::get('/videosmes', [VideosController::class, 'indexmes'])->name('videos.indexmes');

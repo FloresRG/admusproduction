@@ -196,6 +196,34 @@ public function tareasConAsignaciones()
         return response()->json(['message' => 'Asignación actualizada con éxito.']);
     }
 
+public function intercambiarUsuario(Request $request, $id)
+{
+    $asignacion = AsignacionTarea::findOrFail($id);
+    $asignacion->user_id = $request->input('user_id');
+    $asignacion->estado = 'pendiente'; // reinicia estado si deseas
+    $asignacion->save();
+
+    return response()->json(['message' => 'Pasante actualizado.']);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
