@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Dato;
+use App\Models\Photo;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 use Inertia\Inertia;
 
@@ -108,5 +110,164 @@ class DatoInfluencersController extends Controller
     {
         $user->delete();
         return redirect()->back()->with('success', 'Usuario eliminado exitosamente');
+    }
+
+    public function uploadPhotos(Request $request, User $user)
+    {
+        $request->validate([
+            'photos' => 'required|array|max:10',
+            'photos.*' => 'required|file|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+        ]);
+
+        $uploadedPhotos = [];
+
+        foreach ($request->file('photos') as $photo) {
+            // Generar nombre único para la foto
+            $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+
+            // Guardar en storage/app/public/influencers
+            $path = $photo->storeAs('influencers', $filename, 'public');
+
+            // Crear registro en la base de datos
+            $photoRecord = Photo::create([
+                'path' => $path,
+                'nombre' => $photo->getClientOriginalName(),
+                'tipo' => $photo->getClientMimeType(),
+            ]);
+
+            // Asociar la foto con el usuario
+            $user->photos()->attach($photoRecord->id);
+
+            $uploadedPhotos[] = [
+                'id' => $photoRecord->id,
+                'path' => Storage::url($path),
+                'nombre' => $photoRecord->nombre,
+            ];
+        }
+
+        return response()->json([
+            'message' => 'Fotos subidas exitosamente',
+            'photos' => $uploadedPhotos
+        ]);
+    }
+
+    public function deletePhoto(User $user, Photo $photo)
+    {
+        // Verificar que la foto pertenece al usuario
+        if (!$user->photos()->where('photo_id', $photo->id)->exists()) {
+            return response()->json(['error' => 'Foto no encontrada'], 404);
+        }
+
+        // Eliminar archivo del storage
+        if (Storage::disk('public')->exists($photo->path)) {
+            Storage::disk('public')->delete($photo->path);
+        }
+
+        // Desasociar de la tabla pivot
+        $user->photos()->detach($photo->id);
+
+        // Si no hay más usuarios asociados a esta foto, eliminarla completamente
+        if ($photo->users()->count() === 0) {
+            $photo->delete();
+        }
+
+        return response()->json(['message' => 'Foto eliminada exitosamente']);
+    }
+
+    public function getPhotos(User $user)
+    {
+        $photos = $user->photos()->get()->map(function ($photo) {
+            return [
+                'id' => $photo->id,
+                'path' => Storage::url($photo->path),
+                'nombre' => $photo->nombre,
+                'tipo' => $photo->tipo,
+            ];
+        });
+
+        return response()->json(['photos' => $photos]);
+    }
+
+    public function uploadVideos(Request $request, User $user)
+    {
+        $request->validate([
+            'video_url' => 'required|url',
+            'influencer_data' => 'required|array',
+            'influencer_data.nombre' => 'required|string|max:255',
+            'influencer_data.edad' => 'required|integer|min:1|max:120',
+            'influencer_data.descripcion' => 'required|string|max:1000',
+        ]);
+
+        try {
+            // Crear registro en la tabla photos (reutilizando la misma tabla)
+            $videoRecord = Photo::create([
+                'path' => json_encode([
+                    'url' => $request->video_url,
+                    'influencer_data' => $request->influencer_data
+                ]),
+                'nombre' => $request->influencer_data['nombre'] . ' - Video',
+                'tipo' => 'video/url', // Tipo especial para videos
+            ]);
+
+            // Asociar el video con el usuario
+            $user->photos()->attach($videoRecord->id);
+
+            return response()->json([
+                'message' => 'Video y datos guardados exitosamente',
+                'video' => [
+                    'id' => $videoRecord->id,
+                    'url' => $request->video_url,
+                    'nombre' => $videoRecord->nombre,
+                    'influencer_data' => $request->influencer_data,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al guardar el video: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getVideos(User $user)
+    {
+        $videos = $user->photos()
+            ->where('tipo', 'video/url')
+            ->get()
+            ->map(function ($video) {
+                $pathData = json_decode($video->path, true);
+                return [
+                    'id' => $video->id,
+                    'url' => $pathData['url'] ?? null,
+                    'nombre' => $video->nombre,
+                    'tipo' => $video->tipo,
+                    'influencer_data' => $pathData['influencer_data'] ?? null,
+                    'created_at' => $video->created_at,
+                ];
+            });
+
+        return response()->json(['videos' => $videos]);
+    }
+
+    public function deleteVideo(User $user, Photo $video)
+    {
+        // Verificar que el video pertenece al usuario
+        if (!$user->photos()->where('photo_id', $video->id)->exists()) {
+            return response()->json(['error' => 'Video no encontrado'], 404);
+        }
+
+        // Verificar que es un video
+        if ($video->tipo !== 'video/url') {
+            return response()->json(['error' => 'El elemento no es un video'], 400);
+        }
+
+        // Desasociar de la tabla pivot
+        $user->photos()->detach($video->id);
+
+        // Si no hay más usuarios asociados a este video, eliminarlo completamente
+        if ($video->users()->count() === 0) {
+            $video->delete();
+        }
+
+        return response()->json(['message' => 'Video eliminado exitosamente']);
     }
 }

@@ -18,11 +18,14 @@ class Company extends Model
         'direccion',
         'start_date',
         'end_date',
+        'contrato',
+        'monto_mensual',
+        'celular',
     ];
-protected $casts = [
-    'start_date' => 'date:Y-m-d',
-    'end_date' => 'date:Y-m-d',
-];
+    protected $casts = [
+        'start_date' => 'date:Y-m-d',
+        'end_date' => 'date:Y-m-d',
+    ];
     public function category()
     {
         return $this->belongsTo(CompanyCategory::class, 'company_category_id');
@@ -36,5 +39,9 @@ protected $casts = [
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+    public function linkComprobantes()
+    {
+        return $this->hasMany(CompanyLinkComprobante::class);
     }
 }

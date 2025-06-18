@@ -233,7 +233,7 @@ Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'i
 
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
-     ->name('tareas.fecha');
+    ->name('tareas.fecha');
 
 
 
@@ -285,8 +285,18 @@ Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'
 Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
 Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfDisponibilidad'])->name('disponibilidad.semanal.pdf');
 
-Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
-Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
+Route::post('/infuencersdatos/{user}/photos', [DatoInfluencersController::class, 'uploadPhotos'])->name('influencers.photos.upload');
+Route::delete('/infuencersdatos/{user}/photos/{photo}', [DatoInfluencersController::class, 'deletePhoto'])->name('influencers.photos.delete');
+Route::get('/infuencersdatos/{user}/photos', [DatoInfluencersController::class, 'getPhotos'])->name('influencers.photos.get');
+// Rutas para videos (añadir junto a las rutas de fotos existentes)
+Route::post('/infuencersdatos/{user}/videos', [DatoInfluencersController::class, 'uploadVideos'])
+    ->name('influencers.videos.upload');
+
+Route::get('/infuencersdatos/{user}/videos', [DatoInfluencersController::class, 'getVideos'])
+    ->name('influencers.videos.get');
+
+Route::delete('/infuencersdatos/{user}/videos/{video}', [DatoInfluencersController::class, 'deleteVideo'])
+    ->name('influencers.videos.delete');
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
 Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
@@ -310,6 +320,8 @@ Route::get('/pasante/mistareas/publicadas', function () {
 });
 Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
 
+Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->name('users.photos.upload');
+Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
 Route::get('/tiposinfluencers', function () {
     return Inertia::render('influencers/tipoinfluencers');
@@ -366,6 +378,6 @@ Route::delete('/asignacion/{id}', [TareaController::class, 'eliminarAsignacion']
 
 
 
-    
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
