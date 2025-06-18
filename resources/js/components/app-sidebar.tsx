@@ -181,6 +181,9 @@ export function AppSidebar() {
                 items: [
                     { title: 'Categorías', href: '/categories', icon: CategoryIcon },
                     { title: 'Companies', href: '/companies', icon: BusinessIcon },
+                    { title: '+ Link de Compañias', href: '/company-links', icon: BusinessIcon },
+                    { title: 'Pagos del MES', href: '/pagos-del-mes', icon: BusinessIcon },
+                    { title: 'Pagos del ANUALES', href: '/reportes/pagos-por-anio', icon: BusinessIcon },
                 ],
                 isCollapsible: true,
             },
@@ -199,7 +202,6 @@ export function AppSidebar() {
                 title: 'Pasante',
                 icon: WorkIcon,
                 items: [
-                    
                     { title: 'Asignar Tareas', href: '/tareas', icon: DateRangeIcon },
                     { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: DateRangeIcon },
                     { title: 'Tareas en revicion', href: '/tareas/revicion', icon: DateRangeIcon },
@@ -207,7 +209,6 @@ export function AppSidebar() {
                     { title: 'Mis Tareas', href: '/pasante', icon: FormatIndentIncreaseIcon },
                     { title: 'Administrar Tareas', href: '/asignaciones/fechas', icon: AssignmentIcon },
                     { title: 'Tareas de La Semana', href: '/vertareas', icon: DateRangeIcon },
-
                 ],
                 isCollapsible: true,
             },

@@ -12,6 +12,7 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 use App\Http\Controllers\CompanyCategoryController;
+use App\Http\Controllers\CompanyLinkComprobanteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
@@ -377,13 +378,20 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
 
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
 Route::delete('/asignacion/{id}', [TareaController::class, 'eliminarAsignacion']);
+/////////empresas G
 
+Route::get('/company-links', [CompanyLinkComprobanteController::class, 'index'])->name('company-links.index');
+Route::post('/company-links', [CompanyLinkComprobanteController::class, 'store'])->name('company-links.store');
+Route::put('/company-links/{registro}', [CompanyLinkComprobanteController::class, 'update'])->name('company-links.update');
+Route::delete('/company-links/{registro}', [CompanyLinkComprobanteController::class, 'destroy'])->name('company-links.destroy');
 Route::get('/pagos', function () {
     return Inertia::render('pagos/index');
 });
 
 Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanies']);
 
+///pagos empresas
+Route::get('/pagos-del-mes', [CompanyLinkComprobanteController::class, 'pagosDelMes'])->name('company-links.pagos-del-mes');
 Route::get('/api/companies', [PagosController::class, 'getCompanies']);
 Route::post('/comprobante', [PagosController::class, 'storeComprobante']);Route::middleware(['auth'])->group(function () {
     // Ruta para mostrar todos los videos
@@ -391,6 +399,8 @@ Route::post('/comprobante', [PagosController::class, 'storeComprobante']);Route:
     Route::get('/videosmes', [VideosController::class, 'indexmes'])->name('videos.indexmes');
 });
 
+Route::get('/reportes/pagos-por-anio', [\App\Http\Controllers\CompanyLinkComprobanteController::class, 'reporteAnual'])
+    ->name('company-links.reporte-anual');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
