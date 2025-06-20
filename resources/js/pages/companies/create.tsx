@@ -8,8 +8,8 @@ import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from 'react-leaf
 
 // Corregir los iconos de Leaflet
 const defaultIcon = L.icon({
-    iconUrl: '/path/to/marker-icon.png',
-    shadowUrl: '/path/to/marker-shadow.png',
+    iconUrl: '/Gflores/ubicacion.png',
+    //shadowUrl: '/path/to/marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
@@ -418,55 +418,60 @@ export default function Create({ categories }: Props) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* contrato */}
-                        {/* contrato */}
-                        <div>
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                className="mt-2 w-full"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setData('contrato', file);
-                                    if (file) {
-                                        setPdfPreview(URL.createObjectURL(file));
-                                    } else {
-                                        setPdfPreview(null);
-                                    }
-                                }}
-                            />
+                    <div className="grid grid-cols-1 gap-8 p-4 md:grid-cols-2">
+                        {/* Subida de contrato PDF */}
+                        <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
+                            <h3 className="mb-3 text-lg font-semibold">Subir contrato (PDF)</h3>
+                            <label className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition hover:border-blue-500">
+                                <span className="text-gray-600">Haz clic o arrastra un archivo PDF aquí</span>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setData('contrato', file);
+                                        setPdfPreview(file ? URL.createObjectURL(file) : null);
+                                    }}
+                                />
+                            </label>
+
                             {/* Vista previa del contrato PDF */}
                             {pdfPreview && (
-                                <div className="mt-2">
-                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="400px" />
+                                <div className="mt-4">
+                                    <h4 className="mb-2 text-sm font-medium text-gray-700">Vista previa:</h4>
+                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="400px" className="rounded border" />
                                 </div>
                             )}
                         </div>
-                        <div>
-                            {/* logo */}
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="mt-2 w-full"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setData('logo', file);
-                                    if (file) {
-                                        setLogoPreview(URL.createObjectURL(file));
-                                    } else {
-                                        setLogoPreview(null);
-                                    }
-                                }}
-                            />
+
+                        {/* Subida de logo (imagen) */}
+                        <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
+                            <h3 className="mb-3 text-lg font-semibold">Subir logo (imagen)</h3>
+                            <label className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition hover:border-green-500">
+                                <span className="text-gray-600">Haz clic o arrastra una imagen aquí</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setData('logo', file);
+                                        setLogoPreview(file ? URL.createObjectURL(file) : null);
+                                    }}
+                                />
+                            </label>
+
                             {/* Vista previa del logo imagen */}
                             {logoPreview && (
-                                <div className="mt-2">
-                                    <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 rounded border" />
+                                <div className="mt-4">
+                                    <h4 className="mb-2 text-sm font-medium text-gray-700">Vista previa:</h4>
+                                    <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 w-full rounded border object-contain" />
                                 </div>
                             )}
                         </div>
                     </div>
+
                     <div className="mt-6">
                         <label className="inline-flex items-center">
                             <input

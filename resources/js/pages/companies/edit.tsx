@@ -8,8 +8,8 @@ import { MapContainer, Marker, Popup, TileLayer, useMapEvents } from 'react-leaf
 
 // Corregir los iconos de Leaflet
 const defaultIcon = L.icon({
-    iconUrl: '/path/to/marker-icon.png',
-    shadowUrl: '/path/to/marker-shadow.png',
+    iconUrl: '/Gflores/ubicacion.png',
+    //shadowUrl: '/path/to/marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
@@ -279,7 +279,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                             {errors.contract_duration && <div className="mt-1 text-red-600">{errors.contract_duration}</div>}
                         </div>
 
-                       {/* Fecha de inicio */}
+                        {/* Fecha de inicio */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Fecha de inicio</label>
                             <input
@@ -444,55 +444,58 @@ export default function Edit({ company, categories, has_user }: Props) {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Contrato */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Contrato (PDF)</label>
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                className="mt-2 w-full"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setData('contrato', file);
-                                    if (file) {
-                                        setPdfPreview(URL.createObjectURL(file));
-                                    }
-                                }}
-                            />
-                            {/* Vista previa del contrato PDF */}
+                    <div className="grid grid-cols-1 gap-8 p-4 md:grid-cols-2">
+                        {/* Contrato PDF */}
+                        <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
+                            <h3 className="mb-3 text-lg font-semibold">Contrato (PDF)</h3>
+                            <label className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition hover:border-blue-500">
+                                <span className="text-gray-600">Haz clic o arrastra un archivo PDF aquí</span>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setData('contrato', file);
+                                        setPdfPreview(file ? URL.createObjectURL(file) : null);
+                                    }}
+                                />
+                            </label>
+
                             {pdfPreview && (
-                                <div className="mt-2">
+                                <div className="mt-4">
                                     <p className="mb-2 text-sm text-gray-600">{data.contrato ? 'Nuevo archivo seleccionado' : 'Archivo actual'}</p>
-                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="300px" />
+                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="300px" className="rounded border" />
                                 </div>
                             )}
                         </div>
 
-                        {/* Logo */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Logo</label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                className="mt-2 w-full"
-                                onChange={(e) => {
-                                    const file = e.target.files?.[0] || null;
-                                    setData('logo', file);
-                                    if (file) {
-                                        setLogoPreview(URL.createObjectURL(file));
-                                    }
-                                }}
-                            />
-                            {/* Vista previa del logo */}
+                        {/* Logo imagen */}
+                        <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
+                            <h3 className="mb-3 text-lg font-semibold">Logo</h3>
+                            <label className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition hover:border-green-500">
+                                <span className="text-gray-600">Haz clic o arrastra una imagen aquí</span>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setData('logo', file);
+                                        setLogoPreview(file ? URL.createObjectURL(file) : null);
+                                    }}
+                                />
+                            </label>
+
                             {logoPreview && (
-                                <div className="mt-2">
+                                <div className="mt-4">
                                     <p className="mb-2 text-sm text-gray-600">{data.logo ? 'Nueva imagen seleccionada' : 'Imagen actual'}</p>
-                                    <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 rounded border" />
+                                    <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 w-full rounded border object-contain" />
                                 </div>
                             )}
                         </div>
                     </div>
+
                     {!has_user && (
                         <div className="mt-6">
                             <label className="inline-flex items-center">
