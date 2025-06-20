@@ -20,11 +20,15 @@ class CompanyController extends Controller
     // Listar compañías con sus categorías y días de disponibilidad
     public function index()
     {
-        $companies = Company::with(['category', 'availabilityDays'])->get();
+        $companies = Company::with(['category', 'availabilityDays'])
+            ->orderBy('created_at', 'desc') // 👈 Aquí está el ordenamiento
+            ->get();
+
         return Inertia::render('companies/Index', [
             'companies' => $companies,
         ]);
     }
+
 
     // Mostrar formulario para crear una nueva compañía
     public function create()
@@ -101,110 +105,12 @@ class CompanyController extends Controller
             ->with('success', 'Empresa creada correctamente');
     }
 
-    /* public function edit($id)
-    {
-        $company = Company::with('availabilityDays')->findOrFail($id);
-        $categories = CompanyCategory::all();
-
-        // Formatear disponibilidad para el frontend
-        $availability = $company->availabilityDays->map(function ($item) {
-            return [
-                'day_of_week' => is_numeric($item->day_of_week) ? $item->day_of_week : array_search($item->day_of_week, [
-                    1 => 'monday',
-                    2 => 'tuesday',
-                    3 => 'wednesday',
-                    4 => 'thursday',
-                    5 => 'friday',
-                    6 => 'saturday',
-                    7 => 'sunday',
-                ]),
-                'start_time' => $item->start_time,
-                'end_time' => $item->end_time,
-                'turno' => $item->turno,
-                'cantidad' => $item->cantidad,
-            ];
-        });
-
-        return Inertia::render('companies/edit', [
-            'company' => $company,
-            'categories' => $categories,
-            'availability' => $availability,
-        ]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'name' => 'string|max:255',
-            'company_category_id' => 'exists:company_categories,id',
-            'contract_duration' => 'string',
-            'description' => 'nullable|string',
-            'direccion' => 'string',
-            'start_date' => 'date',
-            'end_date' => 'date|after:start_date',
-            'celular' => 'nullable|string',
-            'monto_mensual' => 'nullable|string',
-            'contrato' => 'nullable|file|mimes:pdf', // Max 2MB
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'crear_usuario' => 'nullable|boolean',
-            'availability' => 'required|array',
-            'availability.*.day_of_week' => 'required|integer|between:1,7',
-            'availability.*.turno' => 'required|in:mañana,tarde',
-            'availability.*.start_time' => 'required',
-            'availability.*.end_time' => 'required',
-            'availability.*.cantidad' => 'nullable|integer|min:0',
-        ]);
-
-        $company = Company::findOrFail($id);
-        if ($request->hasFile('contrato')) {
-            $validated['contrato'] = $request->file('contrato')->store('contratos', 'public');
-        }
-
-        if ($request->hasFile('logo')) {
-            $validated['logo'] = $request->file('logo')->store('logos', 'public');
-        }
-
-        $company->update($validated);
-
-        // Actualizar disponibilidad
-        $company->availabilityDays()->delete();
-
-        $days = [
-            1 => 'monday',
-            2 => 'tuesday',
-            3 => 'wednesday',
-            4 => 'thursday',
-            5 => 'friday',
-            6 => 'saturday',
-            7 => 'sunday',
-        ];
-
-        foreach ($validated['availability'] as $availability) {
-            $availability['day_of_week'] = $days[$availability['day_of_week']] ?? $availability['day_of_week'];
-            $company->availabilityDays()->create($availability);
-        }
-        if ($request->boolean('crear_usuario')) {
-            $email = Str::slug($company->name, '') . '@gmail.com'; // sin espacios ni símbolos
-            $password = $email;
-
-            $user = User::create([
-                'name' => $company->name,
-                'email' => $email,
-                'password' => Hash::make($password),
-            ]);
-
-            $user->assignRole('empresa'); // Spatie Role
-        }
-
-        return redirect()->route('companies.index')
-            ->with('success', 'Empresa actualizada correctamente');
-    } */
     // Mostrar formulario para editar una compañía existente
     public function edit($id)
     {
         $company = Company::with(['availabilityDays', 'category'])->findOrFail($id);
         $categories = CompanyCategory::all();
-// Verifica si existe un usuario con el mismo nombre de la empresa
+        // Verifica si existe un usuario con el mismo nombre de la empresa
         $hasUser = User::where('name', $company->name)->exists();
 
         // Convertir los días de disponibilidad al formato esperado por el frontend
