@@ -190,64 +190,104 @@ class DatoInfluencersController extends Controller
 
     public function uploadVideos(Request $request, User $user)
     {
-        $request->validate([
-            'video_url' => 'required|url',
-            'influencer_data' => 'required|array',
-            'influencer_data.nombre' => 'required|string|max:255',
-            'influencer_data.edad' => 'required|integer|min:1|max:120',
-            'influencer_data.descripcion' => 'required|string|max:1000',
-        ]);
-
-        try {
-            // Crear registro en la tabla photos (reutilizando la misma tabla)
-            $videoRecord = Photo::create([
-                'path' => json_encode([
-                    'url' => $request->video_url,
-                    'influencer_data' => $request->influencer_data
-                ]),
-                'nombre' => $request->influencer_data['nombre'] . ' - Video',
-                'tipo' => 'video/url', // Tipo especial para videos
+        // Validar según el tipo de contenido
+        if ($request->has('content_type') && $request->content_type === 'datos') {
+            // Validación para datos del influencer
+            $request->validate([
+                'content_type' => 'required|string',
+                'influencer_data' => 'required|array',
+                'influencer_data.nombre' => 'required|string|max:255',
+                'influencer_data.edad' => 'required|integer|min:1|max:120',
+                'influencer_data.descripcion' => 'required|string|max:1000',
             ]);
 
-            // Asociar el video con el usuario
-            $user->photos()->attach($videoRecord->id);
+            try {
+                // Crear registro para datos del influencer
+                $dataRecord = Photo::create([
+                    'path' => json_encode($request->influencer_data),
+                    'nombre' => $request->influencer_data['nombre'] . ' - Datos',
+                    'tipo' => 'datos', // Tipo datos
+                ]);
 
-            return response()->json([
-                'message' => 'Video y datos guardados exitosamente',
-                'video' => [
-                    'id' => $videoRecord->id,
-                    'url' => $request->video_url,
-                    'nombre' => $videoRecord->nombre,
-                    'influencer_data' => $request->influencer_data,
-                ]
+                // Asociar los datos con el usuario
+                $user->photos()->attach($dataRecord->id);
+
+                return response()->json([
+                    'message' => 'Datos del influencer guardados exitosamente',
+                    'data' => [
+                        'id' => $dataRecord->id,
+                        'nombre' => $dataRecord->nombre,
+                        'tipo' => $dataRecord->tipo,
+                        'influencer_data' => $request->influencer_data,
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Error al guardar los datos: ' . $e->getMessage()
+                ], 500);
+            }
+        } else {
+            // Validación para video
+            $request->validate([
+                'video_url' => 'required|url',
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'error' => 'Error al guardar el video: ' . $e->getMessage()
-            ], 500);
+
+            try {
+                // Crear registro para video
+                $videoRecord = Photo::create([
+                    'path' => $request->video_url, // Solo la URL del video
+                    'nombre' => 'Video - ' . date('Y-m-d H:i:s'),
+                    'tipo' => 'video', // Tipo video
+                ]);
+
+                // Asociar el video con el usuario
+                $user->photos()->attach($videoRecord->id);
+
+                return response()->json([
+                    'message' => 'Video guardado exitosamente',
+                    'video' => [
+                        'id' => $videoRecord->id,
+                        'url' => $request->video_url,
+                        'nombre' => $videoRecord->nombre,
+                        'tipo' => $videoRecord->tipo,
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => 'Error al guardar el video: ' . $e->getMessage()
+                ], 500);
+            }
         }
     }
 
     public function getVideos(User $user)
     {
-        $videos = $user->photos()
-            ->where('tipo', 'video/url')
+        // Obtener tanto videos como datos
+        $items = $user->photos()
+            ->whereIn('tipo', ['video', 'datos'])
             ->get()
-            ->map(function ($video) {
-                $pathData = json_decode($video->path, true);
-                return [
-                    'id' => $video->id,
-                    'url' => $pathData['url'] ?? null,
-                    'nombre' => $video->nombre,
-                    'tipo' => $video->tipo,
-                    'influencer_data' => $pathData['influencer_data'] ?? null,
-                    'created_at' => $video->created_at,
+            ->map(function ($item) {
+                $result = [
+                    'id' => $item->id,
+                    'nombre' => $item->nombre,
+                    'tipo' => $item->tipo,
+                    'created_at' => $item->created_at,
                 ];
+
+                if ($item->tipo === 'video') {
+                    // Para videos, path contiene directamente la URL
+                    $result['url'] = $item->path;
+                } else if ($item->tipo === 'datos') {
+                    // Para datos, path contiene JSON con los datos del influencer
+                    $pathData = json_decode($item->path, true);
+                    $result['influencer_data'] = $pathData;
+                }
+
+                return $result;
             });
 
-        return response()->json(['videos' => $videos]);
+        return response()->json(['videos' => $items]); // Mantenemos el nombre 'videos' para compatibilidad
     }
-
     public function deleteVideo(User $user, Photo $video)
     {
         // Verificar que el video pertenece al usuario
@@ -256,7 +296,7 @@ class DatoInfluencersController extends Controller
         }
 
         // Verificar que es un video
-        if ($video->tipo !== 'video/url') {
+        if ($video->tipo !== 'video') {
             return response()->json(['error' => 'El elemento no es un video'], 400);
         }
 
@@ -269,5 +309,33 @@ class DatoInfluencersController extends Controller
         }
 
         return response()->json(['message' => 'Video eliminado exitosamente']);
+    }
+    public function updateInfluencerData(Request $request, User $user, Photo $photo)
+    {
+        // Solo permite actualizar si el tipo es 'datos'
+        if ($photo->tipo !== 'datos') {
+            return response()->json(['error' => 'El elemento no es datos de influencer'], 400);
+        }
+
+        $request->validate([
+            'influencer_data' => 'required|array',
+            'influencer_data.nombre' => 'required|string|max:255',
+            'influencer_data.edad' => 'required|integer|min:1|max:120',
+            'influencer_data.descripcion' => 'required|string|max:1000',
+        ]);
+
+        $photo->path = json_encode($request->influencer_data);
+        $photo->nombre = $request->influencer_data['nombre'] . ' - Datos';
+        $photo->save();
+
+        return response()->json([
+            'message' => 'Datos actualizados exitosamente',
+            'data' => [
+                'id' => $photo->id,
+                'nombre' => $photo->nombre,
+                'tipo' => $photo->tipo,
+                'influencer_data' => $request->influencer_data,
+            ]
+        ]);
     }
 }

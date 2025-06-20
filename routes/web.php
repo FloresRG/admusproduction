@@ -24,6 +24,7 @@ use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
+use App\Http\Controllers\VideosController;
 use App\Http\Controllers\WeekController;
 
 
@@ -231,7 +232,7 @@ Route::get('/tareas-con-asignaciones',   [TareaController::class, 'tareasConAsig
 Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion'])
      ->name('asignaciones.actualizar');
 // PATCH /asignaciones/{id}/intercambiar
-Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'intercambiarUsuario']);
+//Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'intercambiarUsuario']);
 
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
@@ -272,6 +273,7 @@ Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 Route::get('/infuencersdatos', function () {
     return Inertia::render('influencers/infuencersdatos');
 });
+Route::put('/infuencersdatos/{user}/datos/{photo}', [DatoInfluencersController::class, 'updateInfluencerData']);
 // Rutas para el controlador de influencers con Inertia
 Route::get('/infuencersdatos', [DatoInfluencersController::class, 'index'])->name('infuencersdatos.index');
 Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store'])->name('infuencersdatos.store');
@@ -299,6 +301,7 @@ Route::get('/infuencersdatos/{user}/videos', [DatoInfluencersController::class, 
 
 Route::delete('/infuencersdatos/{user}/videos/{video}', [DatoInfluencersController::class, 'deleteVideo'])
     ->name('influencers.videos.delete');
+
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
 Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
@@ -394,7 +397,11 @@ Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanie
 ///pagos empresas
 Route::get('/pagos-del-mes', [CompanyLinkComprobanteController::class, 'pagosDelMes'])->name('company-links.pagos-del-mes');
 Route::get('/api/companies', [PagosController::class, 'getCompanies']);
-Route::post('/comprobante', [PagosController::class, 'storeComprobante']);
+Route::post('/comprobante', [PagosController::class, 'storeComprobante']);Route::middleware(['auth'])->group(function () {
+    // Ruta para mostrar todos los videos
+    Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');
+    Route::get('/videosmes', [VideosController::class, 'indexmes'])->name('videos.indexmes');
+});
 
 Route::get('/reportes/pagos-por-anio', [\App\Http\Controllers\CompanyLinkComprobanteController::class, 'reporteAnual'])
     ->name('company-links.reporte-anual');

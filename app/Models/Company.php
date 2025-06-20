@@ -21,6 +21,7 @@ class Company extends Model
         'contrato',
         'monto_mensual',
         'celular',
+        'logo',
     ];
     protected $casts = [
         'start_date' => 'date:Y-m-d',
