@@ -252,21 +252,34 @@ public function intercambiarUsuario(Request $request, $id)
 
 
 
-    public function update(Request $request, Tarea $tarea)
-    {
-        $data = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'prioridad' => 'nullable|string|max:255',
-            'descripcion' => 'nullable|string',
-            'fecha' => 'nullable|date',
-            'tipo_id' => 'nullable|exists:tipos,id',
-            'company_id' => 'nullable|exists:companies,id',
-        ]);
+    public function update(Request $request, Tarea $tarea, $id)
+{
+    // Validaciones para actualizar la tarea
+    $data = $request->validate([
+        'titulo' => 'required|string|max:255',
+        'prioridad' => 'nullable|string|max:255',
+        'descripcion' => 'nullable|string',
+        'fecha' => 'nullable|date',
+        'tipo_id' => 'nullable|exists:tipos,id',
+        'company_id' => 'nullable|exists:companies,id',
+    ]);
 
-        $tarea->update($data);
+    // Si se envía user_id, actualizamos la asignación relacionada
+    if ($request->filled('user_id')) {
+        $asignacion = $tarea->asignaciones()->where('id', $id)->first();
 
-        return response()->json(['message' => 'Tarea actualizada']);
+        if ($asignacion) {
+            $asignacion->user_id = $request->user_id;
+            $asignacion->save();
+        }
     }
+
+    // Se actualiza la tarea como antes
+    $tarea->update($data);
+
+    return response()->json(['message' => 'Tarea y asignación actualizadas']);
+}
+
 
     public function destroy(Tarea $tarea)
     {

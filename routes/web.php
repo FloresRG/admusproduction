@@ -380,6 +380,8 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
 
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
 Route::delete('/asignacion/{id}', [TareaController::class, 'eliminarAsignacion']);
+Route::patch('/asignaciones/{id}', [TareaController::class, 'update']);
+
 /////////empresas G
 
 Route::get('/company-links', [CompanyLinkComprobanteController::class, 'index'])->name('company-links.index');

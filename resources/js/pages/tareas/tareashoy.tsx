@@ -38,6 +38,7 @@ import {
     Grid,
     IconButton,
     InputAdornment,
+    MenuItem,
     Paper,
     Radio,
     RadioGroup,
@@ -1320,51 +1321,7 @@ export default function Tareas() {
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
                                                                     </Tooltip>
-                                                                    <Tooltip title="Cambiar pasante">
-                                                                        <IconButton
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                setEditandoAsignacionId(tarea.id); // tarea.id o asignacion.id, según tu contexto
-                                                                            }}
-                                                                            size="small"
-                                                                            color="warning"
-                                                                            sx={{
-                                                                                bgcolor: alpha('#ff9800', 0.1),
-                                                                                '&:hover': { bgcolor: alpha('#ff9800', 0.2) },
-                                                                            }}
-                                                                        >
-                                                                            <SwapHoriz fontSize="small" />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                    {editandoAsignacionId === tarea.id && (
-                                                                        <Box mt={1}>
-                                                                            <TextField
-                                                                                select
-                                                                                size="small"
-                                                                                label="Nuevo pasante"
-                                                                                value={nuevoUserId ?? ''}
-                                                                                onChange={async (e) => {
-                                                                                    const selectedUserId = Number(e.target.value);
-                                                                                    setNuevoUserId(selectedUserId);
-
-                                                                                    await axios.patch(`/asignaciones/${asignacion.id}/intercambiar`, {
-                                                                                        user_id: selectedUserId,
-                                                                                    });
-
-                                                                                    setEditandoAsignacionId(null);
-                                                                                    // Actualiza solo si necesitas reflejarlo en pantalla sin recargar
-                                                                                    // Ej: actualizar tareas con setTareas(...)
-                                                                                }}
-                                                                                sx={{ width: 200 }}
-                                                                            >
-                                                                                {pasantes.map((p) => (
-                                                                                    <MenuItem key={p.id} value={p.id}>
-                                                                                        {p.name}
-                                                                                    </MenuItem>
-                                                                                ))}
-                                                                            </TextField>
-                                                                        </Box>
-                                                                    )}
+                                                                    
 
                                                                     {/* Icono de expandir/colapsar */}
                                                                     <IconButton size="small" sx={{ color: '#1976d2' }}>
@@ -1630,60 +1587,6 @@ export default function Tareas() {
                                                             </Collapse>
                                                         </Card>
                                                     </Zoom>
-                                                ))}
-                                                {tareas.map((tarea) => (
-                                                    <Box key={tarea.id} sx={{ p: 2, mb: 2, border: '1px solid #ccc', borderRadius: 2 }}>
-                                                        <Typography variant="h6">{tarea.titulo}</Typography>
-
-                                                        {tarea.asignados.map((asignado) => (
-                                                            <Box key={asignado.id} sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 1 }}>
-                                                                <Typography>
-                                                                    👤 {asignado.user_name} | Estado: <strong>{asignado.estado}</strong>
-                                                                </Typography>
-
-                                                                <IconButton
-                                                                    onClick={() => {
-                                                                        setEditandoAsignacionId(asignado.id);
-                                                                        setNuevoUserId(asignado.user_id); // preseleccionar
-                                                                    }}
-                                                                    size="small"
-                                                                    color="warning"
-                                                                >
-                                                                    <SwapHoriz fontSize="small" />
-                                                                </IconButton>
-
-                                                                {editandoAsignacionId === asignado.id && (
-                                                                    <TextField
-                                                                        select
-                                                                        size="small"
-                                                                        value={nuevoUserId ?? ''}
-                                                                        onChange={async (e) => {
-                                                                            const nuevoId = Number(e.target.value);
-                                                                            setNuevoUserId(nuevoId);
-
-                                                                            try {
-                                                                                await axios.patch(`/asignaciones/${asignado.id}/intercambiar`, {
-                                                                                    user_id: nuevoId,
-                                                                                });
-
-                                                                                setEditandoAsignacionId(null);
-                                                                                // Aquí podrías recargar los datos o hacer un refetch de tareas
-                                                                            } catch (err) {
-                                                                                console.error('Error al cambiar de usuario:', err);
-                                                                            }
-                                                                        }}
-                                                                        sx={{ width: 200 }}
-                                                                    >
-                                                                        {pasantes.map((p) => (
-                                                                            <MenuItem key={p.id} value={p.id}>
-                                                                                {p.name}
-                                                                            </MenuItem>
-                                                                        ))}
-                                                                    </TextField>
-                                                                )}
-                                                            </Box>
-                                                        ))}
-                                                    </Box>
                                                 ))}
                                             </Box>
                                         </Collapse>
