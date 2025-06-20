@@ -7,7 +7,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import SearchIcon from '@mui/icons-material/Search';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
-
 import {
     Box,
     Button,
@@ -26,6 +25,7 @@ import {
     ImageListItemBar,
     Paper,
     Snackbar,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -131,9 +131,12 @@ export default function InfluencersDatos() {
         edad: 0,
         descripcion: '',
     });
-    const [userVideos, setUserVideos] = useState<Video[]>([]);
+    const [userItems, setUserItems] = useState<any[]>([]);
     const [videoUploadLoading, setVideoUploadLoading] = useState(false);
     const [videosLoading, setVideosLoading] = useState(false);
+    const [contentType, setContentType] = useState<'video' | 'datos'>('video');
+    const [existingDataId, setExistingDataId] = useState<number | null>(null);
+
     // Sorting & Selecting state
     const [order, setOrder] = useState<Order>('asc');
     const [orderBy, setOrderBy] = useState<keyof User>('id');
@@ -154,16 +157,6 @@ export default function InfluencersDatos() {
             setNotification(flash.error);
         }
     }, [flash]);
-
-    // Eliminar usuario
-    const handleDelete = async (id: number) => {
-        if (!window.confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
-
-        router.delete(`/infuencersdatos/${id}`, {
-            preserveState: true,
-            preserveScroll: true,
-        });
-    };
 
     // Editar el campo cantidad y manejar la creación de un nuevo dato si no existe
     const handleEditField = (id: number, field: string, value: string | number) => {
@@ -296,40 +289,55 @@ export default function InfluencersDatos() {
             setNotification('Error al eliminar la foto');
         }
     };
-    // Abrir modal de videos
+    // Función modificada para abrir el modal
     const handleOpenVideoModal = async (userId: number) => {
         setSelectedVideoUserId(userId);
         setVideoModalOpen(true);
+        setContentType('video'); // Inicializar en video
         await loadUserVideos(userId);
     };
 
-    // Cerrar modal de videos
+    // Función modificada para cerrar el modal
     const handleCloseVideoModal = () => {
         setVideoModalOpen(false);
         setSelectedVideoUserId(null);
         setVideoUrl('');
         setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
-        setUserVideos([]);
+        setUserItems([]);
+        setExistingDataId(null);
+        setContentType('video');
     };
 
-    // Cargar videos del usuario
+    // Función para cargar items (usa la misma ruta existente)
+    // Modifica loadUserVideos para guardar el id si existe
     const loadUserVideos = async (userId: number) => {
         setVideosLoading(true);
         try {
             const response = await fetch(`/infuencersdatos/${userId}/videos`);
             const data = await response.json();
-            setUserVideos(data.videos || []);
+            setUserItems(data.videos || []);
+
+            // Buscar si hay datos de influencer
+            const datosItem = (data.videos || []).find((item: any) => item.tipo === 'datos');
+            if (datosItem) {
+                setExistingDataId(datosItem.id);
+                setInfluencerData(datosItem.influencer_data || { nombre: '', edad: 0, descripcion: '' });
+            } else {
+                setExistingDataId(null);
+                setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
+            }
         } catch (error) {
-            setNotification('Error al cargar los videos');
+            setNotification('Error al cargar el contenido');
         } finally {
             setVideosLoading(false);
         }
     };
 
     // Subir video con datos del influencer
+    // Función modificada para subir video
     const handleUploadVideo = async () => {
-        if (!selectedVideoUserId || !videoUrl.trim() || !influencerData.nombre.trim()) {
-            setNotification('Por favor completa todos los campos requeridos');
+        if (!selectedVideoUserId || !videoUrl.trim()) {
+            setNotification('Por favor ingresa una URL válida');
             return;
         }
 
@@ -343,17 +351,16 @@ export default function InfluencersDatos() {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
                 body: JSON.stringify({
+                    content_type: 'video',
                     video_url: videoUrl,
-                    influencer_data: influencerData,
                 }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                setNotification('Video y datos guardados exitosamente');
+                setNotification('Video guardado exitosamente');
                 setVideoUrl('');
-                setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
                 await loadUserVideos(selectedVideoUserId);
             } else {
                 setNotification(data.error || data.message || 'Error al guardar el video');
@@ -364,13 +371,66 @@ export default function InfluencersDatos() {
             setVideoUploadLoading(false);
         }
     };
+    const handleUploadInfluencerData = async () => {
+        if (!selectedVideoUserId || !influencerData.nombre.trim() || !influencerData.descripcion.trim()) {
+            setNotification('Por favor completa todos los campos requeridos');
+            return;
+        }
 
-    // Eliminar video
-    const handleDeleteVideo = async (videoId: number) => {
-        if (!selectedVideoUserId || !window.confirm('¿Estás seguro de que deseas eliminar este video?')) return;
+        setVideoUploadLoading(true);
 
         try {
-            const response = await fetch(`/infuencersdatos/${selectedVideoUserId}/videos/${videoId}`, {
+            let response;
+            if (existingDataId) {
+                // Actualizar
+                response = await fetch(`/infuencersdatos/${selectedVideoUserId}/datos/${existingDataId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({
+                        influencer_data: influencerData,
+                    }),
+                });
+            } else {
+                // Crear
+                response = await fetch(`/infuencersdatos/${selectedVideoUserId}/videos`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    },
+                    body: JSON.stringify({
+                        content_type: 'datos',
+                        influencer_data: influencerData,
+                    }),
+                });
+            }
+
+            const data = await response.json();
+            console.log('Respuesta backend:', data);
+
+            if (response.ok) {
+                setNotification(existingDataId ? 'Datos actualizados exitosamente' : 'Datos guardados exitosamente');
+                setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
+                await loadUserVideos(selectedVideoUserId);
+            } else {
+                setNotification(data.error || data.message || 'Error al guardar los datos');
+            }
+        } catch (error) {
+            setNotification('Error al guardar los datos');
+        } finally {
+            setVideoUploadLoading(false);
+        }
+    };
+
+    // Eliminar video
+    const handleDeleteVideo = async (itemId: number) => {
+        if (!selectedVideoUserId || !window.confirm('¿Estás seguro de que deseas eliminar este elemento?')) return;
+
+        try {
+            const response = await fetch(`/infuencersdatos/${selectedVideoUserId}/videos/${itemId}`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
@@ -380,13 +440,13 @@ export default function InfluencersDatos() {
             const data = await response.json();
 
             if (response.ok) {
-                setNotification('Video eliminado exitosamente');
+                setNotification('Elemento eliminado exitosamente');
                 await loadUserVideos(selectedVideoUserId);
             } else {
-                setNotification(data.error || 'Error al eliminar el video');
+                setNotification(data.error || 'Error al eliminar el elemento');
             }
         } catch (error) {
-            setNotification('Error al eliminar el video');
+            setNotification('Error al eliminar el elemento');
         }
     };
 
@@ -731,16 +791,6 @@ export default function InfluencersDatos() {
                                             >
                                                 Subir Videos
                                             </Button>
-                                            <IconButton
-                                                size="small"
-                                                color="error"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDelete(row.id);
-                                                }}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
                                         </Box>
                                     </TableCell>
                                 </TableRow>
@@ -894,221 +944,268 @@ export default function InfluencersDatos() {
                     <Button onClick={handleClosePhotoModal}>Cerrar</Button>
                 </DialogActions>
             </Dialog>
-            {/* Modal de Videos */}
-            <Dialog open={videoModalOpen} onClose={handleCloseVideoModal} fullWidth maxWidth="lg">
+            <Dialog open={videoModalOpen} onClose={handleCloseVideoModal} fullWidth maxWidth="md">
                 <DialogTitle>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="h6">Gestionar Videos del Influencer</Typography>
+                        <Typography variant="h6">Gestionar Contenido del Influencer</Typography>
                         <IconButton onClick={handleCloseVideoModal}>
                             <CloseIcon />
                         </IconButton>
                     </Box>
                 </DialogTitle>
 
-                <DialogContent>
+                <DialogContent
+                    dividers
+                    sx={{
+                        maxHeight: '75vh',
+                        overflowY: 'auto',
+                    }}
+                >
                     <Grid container spacing={3}>
-                        {/* Sección de subir video */}
-                        <Grid item xs={12} md={6}>
-                            <Card variant="outlined" sx={{ height: '100%' }}>
+                        {/* Tipo de contenido */}
+                        <Grid item xs={12}>
+                            <Card variant="outlined">
                                 <CardContent>
                                     <Typography variant="h6" gutterBottom>
-                                        Subir Video
+                                        Tipo de Contenido
                                     </Typography>
+                                    <Stack direction="row" spacing={2}>
+                                        <Button
+                                            variant={contentType === 'video' ? 'contained' : 'outlined'}
+                                            onClick={() => setContentType('video')}
+                                            startIcon={<VideoLibraryIcon />}
+                                            fullWidth
+                                        >
+                                            Video
+                                        </Button>
+                                        <Button
+                                            variant={contentType === 'datos' ? 'contained' : 'outlined'}
+                                            onClick={() => setContentType('datos')}
+                                            startIcon={<EditIcon />}
+                                            fullWidth
+                                        >
+                                            Datos del Influencer
+                                        </Button>
+                                    </Stack>
+                                </CardContent>
+                            </Card>
+                        </Grid>
 
-                                    <TextField
-                                        fullWidth
-                                        label="Link del video"
-                                        placeholder="https://www.youtube.com/watch?v=..."
-                                        variant="outlined"
-                                        margin="normal"
-                                        value={videoUrl}
-                                        onChange={(e) => setVideoUrl(e.target.value)}
-                                        error={videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')}
-                                        helperText={
-                                            videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')
-                                                ? 'Por favor ingresa una URL válida de YouTube'
-                                                : ''
-                                        }
-                                    />
+                        {/* Contenido dinámico */}
+                        <Grid item xs={12}>
+                            <Card variant="outlined">
+                                <CardContent>
+                                    {contentType === 'video' ? (
+                                        <Stack spacing={2}>
+                                            <Typography variant="h6">Agregar Video</Typography>
 
-                                    {/* Vista previa del video */}
-                                    {videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) && (
-                                        <Box sx={{ mt: 2, mb: 2 }}>
-                                            <Typography variant="body2" gutterBottom>
-                                                Vista previa:
-                                            </Typography>
-                                            {(() => {
-                                                const videoId = getYouTubeVideoId(videoUrl);
-                                                return videoId ? (
-                                                    <Box
-                                                        sx={{
-                                                            position: 'relative',
-                                                            paddingBottom: '56.25%',
-                                                            height: 0,
-                                                            overflow: 'hidden',
-                                                            borderRadius: 1,
-                                                        }}
-                                                    >
-                                                        <iframe
-                                                            style={{
-                                                                position: 'absolute',
-                                                                top: 0,
-                                                                left: 0,
-                                                                width: '100%',
-                                                                height: '100%',
-                                                            }}
-                                                            src={`https://www.youtube.com/embed/${videoId}`}
-                                                            title="Vista previa del video"
-                                                            frameBorder="0"
-                                                            allowFullScreen
-                                                        />
-                                                    </Box>
-                                                ) : (
-                                                    <Typography variant="body2" color="error">
-                                                        URL de video no válida
-                                                    </Typography>
-                                                );
-                                            })()}
-                                        </Box>
+                                            <TextField
+                                                fullWidth
+                                                label="Link del video"
+                                                placeholder="https://www.youtube.com/watch?v=..."
+                                                variant="outlined"
+                                                value={videoUrl}
+                                                onChange={(e) => setVideoUrl(e.target.value)}
+                                                error={videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')}
+                                                helperText={
+                                                    videoUrl && !videoUrl.includes('youtube.com') && !videoUrl.includes('youtu.be')
+                                                        ? 'Por favor ingresa una URL válida de YouTube'
+                                                        : ''
+                                                }
+                                            />
+
+                                            {/* Vista previa */}
+                                            {videoUrl && (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) && (
+                                                <Box>
+                                                    <Typography variant="body2">Vista previa:</Typography>
+                                                    {(() => {
+                                                        const videoId = getYouTubeVideoId(videoUrl);
+                                                        return videoId ? (
+                                                            <Box
+                                                                sx={{
+                                                                    position: 'relative',
+                                                                    paddingBottom: '56.25%',
+                                                                    height: 0,
+                                                                    overflow: 'hidden',
+                                                                    borderRadius: 1,
+                                                                }}
+                                                            >
+                                                                <iframe
+                                                                    style={{
+                                                                        position: 'absolute',
+                                                                        top: 0,
+                                                                        left: 0,
+                                                                        width: '100%',
+                                                                        height: '100%',
+                                                                    }}
+                                                                    src={`https://www.youtube.com/embed/${videoId}`}
+                                                                    title="Vista previa del video"
+                                                                    frameBorder="0"
+                                                                    allowFullScreen
+                                                                />
+                                                            </Box>
+                                                        ) : (
+                                                            <Typography variant="body2" color="error">
+                                                                URL de video no válida
+                                                            </Typography>
+                                                        );
+                                                    })()}
+                                                </Box>
+                                            )}
+
+                                            <Button
+                                                variant="contained"
+                                                startIcon={videoUploadLoading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+                                                onClick={handleUploadVideo}
+                                                disabled={videoUploadLoading || !videoUrl.trim()}
+                                                fullWidth
+                                            >
+                                                {videoUploadLoading ? 'Guardando...' : 'Guardar Video'}
+                                            </Button>
+                                        </Stack>
+                                    ) : (
+                                        <Stack spacing={2}>
+                                            <Typography variant="h6">Datos del Influencer</Typography>
+
+                                            <TextField
+                                                fullWidth
+                                                label="Nombre"
+                                                value={influencerData.nombre}
+                                                onChange={(e) => setInfluencerData((prev) => ({ ...prev, nombre: e.target.value }))}
+                                            />
+
+                                            <TextField
+                                                fullWidth
+                                                label="Edad"
+                                                type="number"
+                                                value={influencerData.edad || ''}
+                                                onChange={(e) =>
+                                                    setInfluencerData((prev) => ({
+                                                        ...prev,
+                                                        edad: parseInt(e.target.value) || 0,
+                                                    }))
+                                                }
+                                                inputProps={{ min: 1, max: 120 }}
+                                            />
+
+                                            <TextField
+                                                fullWidth
+                                                label="Descripción"
+                                                multiline
+                                                rows={4}
+                                                value={influencerData.descripcion}
+                                                onChange={(e) => setInfluencerData((prev) => ({ ...prev, descripcion: e.target.value }))}
+                                            />
+
+                                            <Button
+                                                variant="contained"
+                                                startIcon={videoUploadLoading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+                                                onClick={handleUploadInfluencerData}
+                                                disabled={videoUploadLoading || !influencerData.nombre.trim() || !influencerData.descripcion.trim()}
+                                                fullWidth
+                                            >
+                                                {videoUploadLoading ? 'Guardando...' : 'Guardar Datos'}
+                                            </Button>
+                                        </Stack>
                                     )}
-
-                                    <Button
-                                        variant="contained"
-                                        startIcon={videoUploadLoading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
-                                        onClick={handleUploadVideo}
-                                        disabled={videoUploadLoading || !videoUrl.trim() || !influencerData.nombre.trim()}
-                                        sx={{ mt: 2 }}
-                                        fullWidth
-                                    >
-                                        {videoUploadLoading ? 'Guardando...' : 'Guardar Video y Datos'}
-                                    </Button>
                                 </CardContent>
                             </Card>
                         </Grid>
 
-                        {/* Sección de datos del influencer */}
-                        <Grid item xs={12} md={6}>
-                            <Card variant="outlined" sx={{ height: '100%' }}>
-                                <CardContent>
-                                    <Typography variant="h6" gutterBottom>
-                                        Datos del Influencer
-                                    </Typography>
-
-                                    <TextField
-                                        fullWidth
-                                        label="Nombre"
-                                        variant="outlined"
-                                        margin="normal"
-                                        value={influencerData.nombre}
-                                        onChange={(e) => setInfluencerData((prev) => ({ ...prev, nombre: e.target.value }))}
-                                        required
-                                    />
-
-                                    <TextField
-                                        fullWidth
-                                        label="Edad"
-                                        type="number"
-                                        variant="outlined"
-                                        margin="normal"
-                                        value={influencerData.edad || ''}
-                                        onChange={(e) => setInfluencerData((prev) => ({ ...prev, edad: parseInt(e.target.value) || 0 }))}
-                                        inputProps={{ min: 1, max: 120 }}
-                                        required
-                                    />
-
-                                    <TextField
-                                        fullWidth
-                                        label="Descripción"
-                                        multiline
-                                        rows={3}
-                                        variant="outlined"
-                                        margin="normal"
-                                        value={influencerData.descripcion}
-                                        onChange={(e) => setInfluencerData((prev) => ({ ...prev, descripcion: e.target.value }))}
-                                        required
-                                    />
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                    </Grid>
-
-                    {/* Sección de videos existentes */}
-                    <Box sx={{ mt: 4 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Videos Actuales
-                        </Typography>
-
-                        {videosLoading ? (
-                            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                                <CircularProgress />
-                            </Box>
-                        ) : userVideos.length === 0 ? (
-                            <Typography variant="body2" color="textSecondary" sx={{ textAlign: 'center', py: 3 }}>
-                                No hay videos guardados para este influencer
+                        {/* Contenido actual */}
+                        <Grid item xs={12}>
+                            <Typography variant="h6" gutterBottom>
+                                Contenido Actual
                             </Typography>
-                        ) : (
-                            <Grid container spacing={2}>
-                                {userVideos.map((video) => {
-                                    const videoId = getYouTubeVideoId(video.url);
-                                    return (
-                                        <Grid item xs={12} sm={6} md={4} key={video.id}>
+
+                            {videosLoading ? (
+                                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                                    <CircularProgress />
+                                </Box>
+                            ) : userItems.length === 0 ? (
+                                <Typography variant="body2" color="textSecondary" align="center" sx={{ py: 3 }}>
+                                    No hay contenido guardado para este influencer
+                                </Typography>
+                            ) : (
+                                <Grid container spacing={2}>
+                                    {userItems.map((item) => (
+                                        <Grid item xs={12} sm={6} md={4} lg={3} key={item.id}>
                                             <Card variant="outlined">
                                                 <CardContent>
-                                                    {/* Thumbnail del video */}
-                                                    {videoId && (
-                                                        <Box
-                                                            sx={{
-                                                                position: 'relative',
-                                                                paddingBottom: '56.25%',
-                                                                height: 0,
-                                                                overflow: 'hidden',
-                                                                borderRadius: 1,
-                                                                mb: 2,
-                                                            }}
-                                                        >
-                                                            <iframe
-                                                                style={{
-                                                                    position: 'absolute',
-                                                                    top: 0,
-                                                                    left: 0,
-                                                                    width: '100%',
-                                                                    height: '100%',
-                                                                }}
-                                                                src={`https://www.youtube.com/embed/${videoId}`}
-                                                                title={video.nombre}
-                                                                frameBorder="0"
-                                                                allowFullScreen
-                                                            />
-                                                        </Box>
+                                                    {item.tipo === 'video' ? (
+                                                        <>
+                                                            {(() => {
+                                                                const videoId = getYouTubeVideoId(item.url);
+                                                                return videoId ? (
+                                                                    <Box
+                                                                        sx={{
+                                                                            position: 'relative',
+                                                                            paddingBottom: '56.25%',
+                                                                            height: 0,
+                                                                            overflow: 'hidden',
+                                                                            borderRadius: 1,
+                                                                            mb: 2,
+                                                                        }}
+                                                                    >
+                                                                        <iframe
+                                                                            style={{
+                                                                                position: 'absolute',
+                                                                                top: 0,
+                                                                                left: 0,
+                                                                                width: '100%',
+                                                                                height: '100%',
+                                                                            }}
+                                                                            src={`https://www.youtube.com/embed/${videoId}`}
+                                                                            title={item.nombre}
+                                                                            frameBorder="0"
+                                                                            allowFullScreen
+                                                                        />
+                                                                    </Box>
+                                                                ) : (
+                                                                    <Typography variant="body2" color="error">
+                                                                        Video no disponible
+                                                                    </Typography>
+                                                                );
+                                                            })()}
+                                                            <Typography variant="subtitle1" fontWeight="bold">
+                                                                Video
+                                                            </Typography>
+                                                            <Typography variant="body2" color="textSecondary">
+                                                                {item.nombre}
+                                                            </Typography>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Box sx={{ mb: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                                                                <Typography variant="subtitle2" color="primary">
+                                                                    DATOS DEL INFLUENCER
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="subtitle1" fontWeight="bold">
+                                                                {item.influencer_data?.nombre || 'Sin nombre'}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="textSecondary">
+                                                                Edad: {item.influencer_data?.edad || 'No especificada'}
+                                                            </Typography>
+                                                            <Typography variant="body2" color="textSecondary">
+                                                                {item.influencer_data?.descripcion || 'Sin descripción'}
+                                                            </Typography>
+                                                        </>
                                                     )}
 
-                                                    {/* Información del influencer */}
-                                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                                                        {video.influencer_data?.nombre || 'Sin nombre'}
-                                                    </Typography>
-
-                                                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                                                        Edad: {video.influencer_data?.edad || 'No especificada'}
-                                                    </Typography>
-
-                                                    <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-                                                        {video.influencer_data?.descripcion || 'Sin descripción'}
-                                                    </Typography>
-
-                                                    {/* Botón de eliminar */}
-                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                        <IconButton color="error" onClick={() => handleDeleteVideo(video.id)} size="small">
+                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                                                        <IconButton color="error" onClick={() => handleDeleteVideo(item.id)} size="small">
                                                             <DeleteIcon />
                                                         </IconButton>
                                                     </Box>
                                                 </CardContent>
                                             </Card>
                                         </Grid>
-                                    );
-                                })}
-                            </Grid>
-                        )}
-                    </Box>
+                                    ))}
+                                </Grid>
+                            )}
+                        </Grid>
+                    </Grid>
                 </DialogContent>
 
                 <DialogActions>

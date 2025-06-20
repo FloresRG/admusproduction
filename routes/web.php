@@ -232,7 +232,7 @@ Route::get('/tareas-con-asignaciones',   [TareaController::class, 'tareasConAsig
 Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion'])
      ->name('asignaciones.actualizar');
 // PATCH /asignaciones/{id}/intercambiar
-Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'intercambiarUsuario']);
+//Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'intercambiarUsuario']);
 
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
@@ -273,6 +273,7 @@ Route::post('/asignar-tareas', [TareaController::class, 'asignarTareas']);
 Route::get('/infuencersdatos', function () {
     return Inertia::render('influencers/infuencersdatos');
 });
+Route::put('/infuencersdatos/{user}/datos/{photo}', [DatoInfluencersController::class, 'updateInfluencerData']);
 // Rutas para el controlador de influencers con Inertia
 Route::get('/infuencersdatos', [DatoInfluencersController::class, 'index'])->name('infuencersdatos.index');
 Route::post('/infuencersdatos', [DatoInfluencersController::class, 'store'])->name('infuencersdatos.store');
@@ -300,6 +301,7 @@ Route::get('/infuencersdatos/{user}/videos', [DatoInfluencersController::class, 
 
 Route::delete('/infuencersdatos/{user}/videos/{video}', [DatoInfluencersController::class, 'deleteVideo'])
     ->name('influencers.videos.delete');
+
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
 Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
