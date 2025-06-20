@@ -135,7 +135,7 @@ export default function Index({ empresas, registros }) {
                 <div className="px-6 py-8">
                     <div className="mb-2 flex items-center gap-3">
                         <LinkIcon className="h-8 w-8" />
-                        <h1 className="text-3xl font-bold">Gestión de Links por Empresa</h1>
+                        <h1 className="text-3xl font-bold">Gestión De Links Por Empresa</h1>
                     </div>
                     <p className="text-lg text-blue-100">Administra los enlaces y comprobantes de cada empresa</p>
                 </div>
