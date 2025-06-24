@@ -116,7 +116,7 @@ class DatoInfluencersController extends Controller
     {
         $request->validate([
             'photos' => 'required|array|max:10',
-            'photos.*' => 'required|file|image|mimes:jpeg,png,jpg,gif|max:10240', // 10MB max
+            'photos.*' => 'required|file|image|mimes:jpeg,png,jpg|max:10240', // 10MB max
         ]);
 
         $uploadedPhotos = [];
