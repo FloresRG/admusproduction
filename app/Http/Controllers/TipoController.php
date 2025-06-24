@@ -16,8 +16,11 @@ class TipoController extends Controller
      */
     public function index()
     {
-        $users = User::all(); // Obtiene todos los usuarios
-        $tipos = Tipo::all(); // Obtiene todos los tipos
+        // Obtiene solo los usuarios con el rol 'pasante'
+        $users = User::role('pasante')->get();
+
+        // Obtiene todos los tipos
+        $tipos = Tipo::all();
 
         // Retorna la vista con los usuarios y tipos
         return Inertia::render('Tipos/Index', [
@@ -108,7 +111,7 @@ class TipoController extends Controller
 
         return response()->json(['message' => 'Tipo eliminado con éxito']);
     }
-     public function store(Request $request)
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'nombre_tipo' => 'required|string|max:255|unique:tipos,nombre_tipo',
