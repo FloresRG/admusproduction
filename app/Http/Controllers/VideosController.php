@@ -168,13 +168,13 @@ class VideosController extends Controller
     {
         $user = auth()->user();
 
-        /* if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
+         if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
             abort(403, 'Acceso no autorizado');
-        } */
+        } 
         // Verificar si el usuario está autenticado y tiene el rol 'empresa'
-        if (!$user || !$user->hasRole('empresa')) {
-            abort(403, 'Acceso no autorizado');
-        }
+        // if (!$user || !$user->hasRole('empresa')) {
+        //     abort(403, 'Acceso no autorizado');
+        // }
         $empresaNombre = null;
         if ($user->hasRole('empresa')) {
             $empresaNombre = $user->name;
@@ -268,13 +268,13 @@ class VideosController extends Controller
     {
         $user = auth()->user();
 
-        /* if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
+         if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
             abort(403, 'Acceso no autorizado');
-        } */
+        } 
         // Verificar si el usuario está autenticado y tiene el rol 'empresa'
-        if (!$user || !$user->hasRole('empresa')) {
-            abort(403, 'Acceso no autorizado');
-        }
+        // if (!$user || !$user->hasRole('empresa')) {
+        //     abort(403, 'Acceso no autorizado');
+        // }
 
         $search = $request->get('search', '');
         $companyFilter = $request->get('company', '');
