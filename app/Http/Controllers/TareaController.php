@@ -178,6 +178,14 @@ public function tareasConAsignaciones()
         return response()->json($resultado);
     }
 
+    public function listarEmpresas()
+{
+    $empresas = \App\Models\Company::select('id', 'name')->get();
+
+    return response()->json($empresas);
+}
+
+
     /**F
      * Actualiza el estado y detalle de una asignación concreta.
      * Esta ruta debe estar en web.php (no api.php) para poder respetar
@@ -186,7 +194,7 @@ public function tareasConAsignaciones()
     public function actualizarAsignacion(Request $request, $id)
     {
         $data = $request->validate([
-            'estado'  => 'required|string|in:pendiente,en_revision,publicada',
+            'estado'  => 'nullable|string|in:pendiente,en_revision,publicada',
             'detalle' => 'nullable|string',
         ]);
 
@@ -196,14 +204,34 @@ public function tareasConAsignaciones()
         return response()->json(['message' => 'Asignación actualizada con éxito.']);
     }
 
-public function intercambiarUsuario(Request $request, $id)
+public function reasignarUsuario(Request $request, $id)
 {
-    $asignacion = AsignacionTarea::findOrFail($id);
-    $asignacion->user_id = $request->input('user_id');
-    $asignacion->estado = 'pendiente'; // reinicia estado si deseas
-    $asignacion->save();
+    $request->validate([
+        'user_id' => 'required|exists:users,id',
+    ]);
 
-    return response()->json(['message' => 'Pasante actualizado.']);
+    $asignacionAnterior = AsignacionTarea::findOrFail($id);
+
+    // Copiar los datos de la asignación actual
+    $tareaId = $asignacionAnterior->tarea_id;
+    $fecha   = $asignacionAnterior->fecha;
+
+    // Eliminar asignación anterior
+    $asignacionAnterior->delete();
+
+    // Crear nueva asignación
+    $nuevaAsignacion = AsignacionTarea::create([
+        'user_id'  => $request->input('user_id'),
+        'tarea_id' => $tareaId,
+        'estado'   => 'pendiente',
+        'detalle'  => '',
+        'fecha'    => $fecha,
+    ]);
+
+    return response()->json([
+        'message' => 'Pasante reasignado correctamente.',
+        'nueva_asignacion' => $nuevaAsignacion,
+    ]);
 }
 
 
@@ -252,9 +280,11 @@ public function intercambiarUsuario(Request $request, $id)
 
 
 
-    public function update(Request $request, Tarea $tarea, $id)
+
+ public function update(Request $request, $id)
 {
-    // Validaciones para actualizar la tarea
+    $tarea = Tarea::findOrFail($id);
+
     $data = $request->validate([
         'titulo' => 'required|string|max:255',
         'prioridad' => 'nullable|string|max:255',
@@ -264,21 +294,25 @@ public function intercambiarUsuario(Request $request, $id)
         'company_id' => 'nullable|exists:companies,id',
     ]);
 
-    // Si se envía user_id, actualizamos la asignación relacionada
-    if ($request->filled('user_id')) {
-        $asignacion = $tarea->asignaciones()->where('id', $id)->first();
-
-        if ($asignacion) {
-            $asignacion->user_id = $request->user_id;
-            $asignacion->save();
-        }
-    }
-
-    // Se actualiza la tarea como antes
     $tarea->update($data);
 
-    return response()->json(['message' => 'Tarea y asignación actualizadas']);
+    return response()->json(['message' => 'Tarea actualizada con éxito']);
 }
+
+public function actualizarDescripcion(Request $request, $id)
+{
+    $request->validate([
+        'descripcion' => 'required|string',
+    ]);
+
+    $tarea = Tarea::findOrFail($id);
+    $tarea->descripcion = $request->input('descripcion');
+    $tarea->save();
+
+    return response()->json(['message' => 'Descripción actualizada con éxito']);
+}
+
+
 
 
     public function destroy(Tarea $tarea)

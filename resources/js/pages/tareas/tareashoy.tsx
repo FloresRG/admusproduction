@@ -38,10 +38,12 @@ import {
     Grid,
     IconButton,
     InputAdornment,
+    InputLabel,
     MenuItem,
     Paper,
     Radio,
     RadioGroup,
+    Select,
     Skeleton,
     Slide,
     Stack,
@@ -57,7 +59,7 @@ import { debounce } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface Asignado {
-    id: number; // ← PK de la asignación
+    id: number;
     user_id: number;
     user_name: string;
     estado: string;
@@ -82,42 +84,30 @@ interface TipoTarea {
 
 interface Empresa {
     id: number;
-    nombre: string;
+    name: string;
+}
+
+interface Usuario {
+    id: number;
+    name: string;
+    email: string;
 }
 
 export default function Tareas() {
-    // TODOS LOS HOOKS AL PRINCIPIO
     // Estados principales
     const [tareas, setTareas] = useState<TareaAsignada[]>([]);
     const [tipos, setTipos] = useState<TipoTarea[]>([]);
     const [empresas, setEmpresas] = useState<Empresa[]>([]);
-    const [asignacionTipo, setAsignacionTipo] = useState<'aleatoria' | 'manual'>('aleatoria');
-    const [pasantes, setPasantes] = useState<Array<{ id: number; name: string; email: string }>>([]);
-    const [selectedPasanteId, setSelectedPasanteId] = useState<string>('');
+    const [usuarios, setUsuarios] = useState<Usuario[]>([]);
 
     // Estados de UI
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Estados de vista
-    const [viewMode, setViewMode] = useState<'dia'>('dia');
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
-
     // Estados de filtrado
     const [searchTerm, setSearchTerm] = useState('');
     const [filterUser, setFilterUser] = useState<string>('');
     const [filterPriority, setFilterPriority] = useState<string>('');
-
-    // Estados de edición inline
-    const [editingTask, setEditingTask] = useState<number | null>(null);
-    const [editFormData, setEditFormData] = useState({
-        titulo: '',
-        prioridad: '',
-        descripcion: '',
-        fecha: '',
-        tipo_id: '',
-        company_id: '',
-    });
 
     // Estados para nueva tarea
     const [showNewTaskForm, setShowNewTaskForm] = useState(false);
@@ -129,37 +119,46 @@ export default function Tareas() {
         tipo_id: '',
         company_id: '',
     });
+    const [asignacionTipo, setAsignacionTipo] = useState<'aleatoria' | 'manual'>('aleatoria');
+    const [selectedPasanteId, setSelectedPasanteId] = useState<string>('');
     const [asignarEmpresa, setAsignarEmpresa] = useState('no');
+
+    // Estados de edición
+    const [editingTask, setEditingTask] = useState<number | null>(null);
+    const [editFormData, setEditFormData] = useState({
+        titulo: '',
+        prioridad: '',
+        descripcion: '',
+        fecha: '',
+        tipo_id: '',
+        company_id: '',
+    });
     const [editarEmpresa, setEditarEmpresa] = useState('no');
 
-    // Estados de edición de asignaciones
-    const [editAsignacionId, setEditAsignacionId] = useState<number | null>(null);
-    const [editAsignData, setEditAsignData] = useState<{ estado: string; detalle: string }>({
-        estado: '',
-        detalle: '',
-    });
+    // Estados para cambio de pasante
+    const [taskToChange, setTaskToChange] = useState<number | null>(null);
+    const [newUserId, setNewUserId] = useState<number | null>(null);
 
+    // Estados de vista
     const [expandedUsers, setExpandedUsers] = useState<Record<string, boolean>>({});
+    const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({});
+    const [savingStates, setSavingStates] = useState<Record<number, boolean>>({});
 
     // Estados para edición en tiempo real
-    const [savingStates, setSavingStates] = useState<Record<number, boolean>>({});
     const [editingDescripcion, setEditingDescripcion] = useState<number | null>(null);
     const [tempDescripcion, setTempDescripcion] = useState<string>('');
-
-    // Estados para tareas expandidas
-    const [expandedTasks, setExpandedTasks] = useState<Record<number, boolean>>({});
 
     // Hooks de Material-UI
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // TODOS LOS useCallback y useMemo AQUÍ
+    // Función principal para cargar datos
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
-            const [tareasRes, tiposRes, empresasRes, pasantesRes] = await Promise.all([
+            const [tareasRes, tiposRes, empresasRes, usuariosRes] = await Promise.all([
                 axios.get('/tareas-con-asignaciones'),
                 axios.get('/api/tipos'),
                 axios.get('/api/companies'),
@@ -169,7 +168,7 @@ export default function Tareas() {
             setTareas(tareasRes.data);
             setTipos(tiposRes.data);
             setEmpresas(empresasRes.data);
-            setPasantes(pasantesRes.data.data);
+            setUsuarios(usuariosRes.data.data);
         } catch (err) {
             console.error('Error al cargar datos:', err);
             setError('Hubo un error al cargar los datos. Por favor, intenta de nuevo.');
@@ -178,10 +177,7 @@ export default function Tareas() {
         }
     }, []);
 
-    const [editandoAsignacionId, setEditandoAsignacionId] = useState<number | null>(null);
-    const [nuevoUserId, setNuevoUserId] = useState<number | null>(null);
-
-    // Función para auto-guardar estado (inmediato)
+    // Función para auto-guardar estado
     const autoSaveEstado = useCallback(
         async (asignacionId: number, nuevoEstado: string) => {
             setSavingStates((prev) => ({ ...prev, [asignacionId]: true }));
@@ -199,7 +195,7 @@ export default function Tareas() {
         [fetchData],
     );
 
-    // Función para auto-guardar detalle (con debounce)
+    // Función para auto-guardar detalle con debounce
     const autoSaveDetalle = useCallback(
         debounce(async (asignacionId: number, nuevoDetalle: string) => {
             setSavingStates((prev) => ({ ...prev, [asignacionId]: true }));
@@ -217,13 +213,15 @@ export default function Tareas() {
         [fetchData],
     );
 
-    // Función para auto-guardar descripción de tarea (con debounce)
+    // Función para auto-guardar descripción con debounce
     const autoSaveDescripcion = useCallback(
         debounce(async (tareaId: number, nuevaDescripcion: string) => {
             setSavingStates((prev) => ({ ...prev, [tareaId]: true }));
 
             try {
-                await axios.put(`/tareas/${tareaId}`, { descripcion: nuevaDescripcion });
+                await axios.patch(`/tareas/${tareaId}/descripcion`, {
+                    descripcion: nuevaDescripcion,
+                });
                 await fetchData();
                 setEditingDescripcion(null);
             } catch (err) {
@@ -236,7 +234,7 @@ export default function Tareas() {
         [fetchData],
     );
 
-    // Filtrado de tareas para la vista actual
+    // Filtrado de tareas
     const filteredTareas = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
         let result = tareas.filter((t) => t.fecha === today);
@@ -271,7 +269,7 @@ export default function Tareas() {
         return mapa;
     }, [filteredTareas]);
 
-    // Obtener lista de usuarios únicos
+    // Obtener usuarios únicos
     const usuariosUnicos = useMemo(() => {
         const setNames = new Set<string>();
         tareas.forEach((t) => {
@@ -282,12 +280,11 @@ export default function Tareas() {
         return Array.from(setNames).sort();
     }, [tareas]);
 
-    // TODOS LOS useEffect AQUÍ
+    // Effects
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    // Inicializar expandedUsers
     useEffect(() => {
         const initialExpandedState: Record<string, boolean> = {};
         Object.keys(tareasPorUsuario).forEach((userName) => {
@@ -296,7 +293,14 @@ export default function Tareas() {
         setExpandedUsers(initialExpandedState);
     }, [tareasPorUsuario]);
 
-    // FUNCIONES REGULARES (NO HOOKS) DESPUÉS DE TODOS LOS HOOKS
+    ///empresas
+    useEffect(() => {
+        axios
+            .get('/empresas') // o '/api/empresas' según tu configuración
+            .then((res) => setEmpresas(res.data))
+            .catch((err) => console.error('Error al cargar empresas:', err));
+    }, []);
+    // Funciones de manejo
     const toggleUserExpanded = (userName: string) => {
         setExpandedUsers((prev) => ({
             ...prev,
@@ -304,10 +308,15 @@ export default function Tareas() {
         }));
     };
 
-    // Funciones de manejo
+    const toggleTaskExpanded = (taskId: number) => {
+        setExpandedTasks((prev) => ({
+            ...prev,
+            [taskId]: !prev[taskId],
+        }));
+    };
 
-    // Funciones de edición inline
-    const startEditing = (tarea: TareaAsignada) => {
+    // Funciones de edición
+    const handleEdit = (tarea: TareaAsignada) => {
         setEditingTask(tarea.id);
         setEditFormData({
             titulo: tarea.titulo,
@@ -349,6 +358,18 @@ export default function Tareas() {
         } catch (err) {
             console.error('Error al actualizar tarea:', err);
             setError('Error al actualizar la tarea');
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!confirm('¿Estás seguro de que deseas eliminar esta tarea?')) return;
+
+        try {
+            await axios.delete(`/tareas/${id}`);
+            fetchData();
+        } catch (err) {
+            console.error('Error al eliminar tarea:', err);
+            setError('Error al eliminar la tarea');
         }
     };
 
@@ -396,7 +417,6 @@ export default function Tareas() {
             await axios.post('/create/tareas', payload);
             setShowNewTaskForm(false);
             fetchData();
-            // Limpiar estados
             setAsignacionTipo('aleatoria');
             setSelectedPasanteId('');
         } catch (err) {
@@ -405,40 +425,71 @@ export default function Tareas() {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Estás seguro de que deseas eliminar esta tarea?')) return;
+    // Funciones para cambio de pasante
+    const handleChangeUser = async (taskId: number) => {
+        if (!newUserId) return;
 
         try {
-            await axios.delete(`/tareas/${id}`);
+            // Buscar la asignación de esta tarea
+            const tarea = tareas.find((t) => t.id === taskId);
+            if (!tarea || !tarea.asignados.length) return;
+
+            const asignacionId = tarea.asignados[0].id; // Tomar la primera asignación
+
+            await axios
+                .delete(`/asignaciones/reasignar/${asignacionId}`, {
+                    data: {
+                        user_id: newUserId,
+                    },
+                })
+                .then((res) => {
+                    console.log(res.data.message);
+                    // refresca la vista si deseas
+                })
+                .catch((err) => {
+                    console.error('Error al reasignar:', err);
+                });
+
+            setTaskToChange(null);
+            setNewUserId(null);
             fetchData();
         } catch (err) {
-            console.error('Error al eliminar tarea:', err);
-            setError('Error al eliminar la tarea');
+            console.error('Error al cambiar pasante:', err);
+            setError('Error al cambiar el pasante');
         }
     };
 
-    // Función para obtener el color de prioridad - COLORES VIVOS
+    // Funciones para edición de descripción
+    const startEditingDescripcion = (tarea: TareaAsignada) => {
+        setEditingDescripcion(tarea.id);
+        setTempDescripcion(tarea.descripcion || '');
+    };
+
+    const cancelEditingDescripcion = () => {
+        setEditingDescripcion(null);
+        setTempDescripcion('');
+    };
+
+    // Funciones de utilidad
     const getPriorityColor = (prioridad: string) => {
         switch (prioridad.toLowerCase()) {
             case 'alta':
-                return '#FF1744'; // Rojo vibrante
+                return '#FF1744';
             case 'media':
-                return '#FF9100'; // Naranja vibrante
+                return '#FF9100';
             case 'baja':
-                return '#00E676'; // Verde vibrante
+                return '#00E676';
             default:
                 return '#9E9E9E';
         }
     };
 
-    // Función para obtener el color de avatar para usuarios
     const getAvatarColor = (name: string) => {
         const colors = ['#1976d2', '#1565c0', '#0d47a1', '#2196f3', '#0288d1', '#01579b', '#03a9f4', '#00b0ff', '#0091ea', '#3f51b5'];
         const index = name.charCodeAt(0) % colors.length;
         return colors[index];
     };
 
-    // Función para obtener iniciales
     const getInitials = (name: string) => {
         return name
             .split(' ')
@@ -448,25 +499,14 @@ export default function Tareas() {
             .slice(0, 2);
     };
 
-    // Función para obtener el gradiente del día - COLORES MÁS VIVOS
-    const getDayGradient = (index: number, isToday = false) => {
-        if (isToday) {
-            return 'linear-gradient(135deg, #FF6B35 0%, #F7931E 50%, #FFD23F 100%)'; // Gradiente dorado vibrante para HOY
+    // CSS para animaciones
+    const spinKeyframes = `
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
+    `;
 
-        const gradients = [
-            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // Lunes - Azul púrpura
-            'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', // Martes - Rosa fucsia
-            'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', // Miércoles - Azul cyan
-            'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', // Jueves - Verde turquesa
-            'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', // Viernes - Rosa amarillo
-            'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)', // Sábado - Turquesa rosa
-            'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)', // Domingo - Melocotón
-        ];
-        return gradients[index % gradients.length];
-    };
-
-    // Renderizado condicional para estados de carga
     if (loading) {
         return (
             <AppLayout breadcrumbs={[{ title: 'Tareas', href: '/tareas' }]}>
@@ -484,62 +524,6 @@ export default function Tareas() {
             </AppLayout>
         );
     }
-    function startEditAsignacion(asignado: Asignado) {
-        setEditAsignacionId(asignado.id);
-        setEditAsignData({
-            estado: asignado.estado,
-            detalle: asignado.detalle ?? '',
-        });
-    }
-
-    function cancelEditAsignacion() {
-        setEditAsignacionId(null);
-        setEditAsignData({ estado: '', detalle: '' });
-    }
-
-    async function saveEditAsignacion() {
-        if (!editAsignacionId) return;
-
-        try {
-            // Para actualizar una asignación
-            await axios.patch(`/asignaciones/${editAsignacionId}`, {
-                estado: editAsignData.estado,
-                detalle: editAsignData.detalle,
-            });
-            await fetchData();
-            setEditAsignacionId(null);
-        } catch (err) {
-            console.error('Error al actualizar asignación:', err);
-            setError('No se pudo actualizar la asignación');
-        }
-    }
-
-    // Función para iniciar edición de descripción
-    const startEditingDescripcion = (tarea: TareaAsignada) => {
-        setEditingDescripcion(tarea.id);
-        setTempDescripcion(tarea.descripcion || '');
-    };
-
-    // Función para cancelar edición de descripción
-    const cancelEditingDescripcion = () => {
-        setEditingDescripcion(null);
-        setTempDescripcion('');
-    };
-
-    // Agregar este estilo CSS en el head o como parte del tema
-    const spinKeyframes = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-    const toggleTaskExpanded = (taskId: number) => {
-        setExpandedTasks((prev) => ({
-            ...prev,
-            [taskId]: !prev[taskId],
-        }));
-    };
 
     return (
         <AppLayout breadcrumbs={[{ title: 'Tareas', href: '/tareas' }]}>
@@ -611,7 +595,7 @@ export default function Tareas() {
                                 </Tooltip>
                                 <Button
                                     variant="contained"
-                                    onClick={() => startNewTask()}
+                                    onClick={startNewTask}
                                     startIcon={<Add />}
                                     sx={{
                                         borderRadius: 2,
@@ -654,7 +638,6 @@ export default function Tareas() {
                                     value={filterUser || null}
                                     onChange={(_, newValue) => setFilterUser(newValue || '')}
                                     clearOnEscape
-                                    sx={{ minWidth: 300 }}
                                     renderInput={(params) => (
                                         <TextField {...params} label="👤 Filtrar por Usuario" placeholder="Filtrar por usuario" fullWidth />
                                     )}
@@ -668,7 +651,6 @@ export default function Tareas() {
                                     value={filterPriority || null}
                                     onChange={(_, newValue) => setFilterPriority(newValue || '')}
                                     clearOnEscape
-                                    sx={{ minWidth: 300 }}
                                     renderInput={(params) => (
                                         <TextField {...params} label="⚡ Filtrar por Prioridad" placeholder="Filtrar por prioridad" fullWidth />
                                     )}
@@ -685,29 +667,25 @@ export default function Tareas() {
                                 variant="outlined"
                                 sx={{ fontWeight: 'bold' }}
                             />
-                            {viewMode !== 'dia' && (
-                                <>
-                                    <Chip
-                                        icon={<Person />}
-                                        label={`${usuariosUnicos.length} usuarios`}
-                                        color="primary"
-                                        variant="outlined"
-                                        sx={{ fontWeight: 'bold' }}
-                                    />
-                                    <Chip
-                                        icon={<BusinessIcon />}
-                                        label={`${new Set(tareas.map((t) => t.company?.name).filter(Boolean)).size} empresas`}
-                                        color="primary"
-                                        variant="outlined"
-                                        sx={{ fontWeight: 'bold' }}
-                                    />
-                                </>
-                            )}
+                            <Chip
+                                icon={<Person />}
+                                label={`${usuariosUnicos.length} usuarios`}
+                                color="primary"
+                                variant="outlined"
+                                sx={{ fontWeight: 'bold' }}
+                            />
+                            <Chip
+                                icon={<BusinessIcon />}
+                                label={`${new Set(tareas.map((t) => t.company?.name).filter(Boolean)).size} empresas`}
+                                color="primary"
+                                variant="outlined"
+                                sx={{ fontWeight: 'bold' }}
+                            />
                         </Box>
                     </Stack>
                 </Paper>
 
-                {/* Formulario para nueva tarea - Mejorado y más visible */}
+                {/* Formulario para nueva tarea */}
                 {showNewTaskForm && (
                     <Zoom in>
                         <Card
@@ -734,34 +712,6 @@ export default function Tareas() {
                             </Box>
                             <Box sx={{ p: 4, background: 'white' }}>
                                 <Grid container spacing={3}>
-                                    <Grid item xs={12}>
-                                        <Autocomplete
-                                            options={tareas}
-                                            getOptionLabel={(option) => `${option.titulo} - ${option.fecha}`}
-                                            filterOptions={(options, { inputValue }) =>
-                                                options.filter((option) => option.titulo.toLowerCase().includes(inputValue.toLowerCase()))
-                                            }
-                                            onChange={(_, tarea) => {
-                                                if (tarea) {
-                                                    // Puedes decidir copiar datos al formulario si quieres
-                                                    setNewTaskData((prev) => ({
-                                                        ...prev,
-                                                        titulo: tarea.titulo,
-                                                        descripcion: tarea.descripcion,
-                                                    }));
-                                                }
-                                            }}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    label="🔍 Buscar tareas existentes"
-                                                    placeholder="Escribe para buscar una tarea similar..."
-                                                    fullWidth
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
-
                                     <Grid item xs={12} md={6}>
                                         <TextField
                                             label="📝 Título"
@@ -790,7 +740,6 @@ export default function Tareas() {
                                             onChange={(_, newValue) =>
                                                 setNewTaskData({ ...newTaskData, tipo_id: newValue ? String(newValue.id) : '' })
                                             }
-                                            sx={{ minWidth: 280 }} // 👈 Aumenta el ancho mínimo
                                             renderInput={(params) => <TextField {...params} label="🏷️ Tipo de tarea" fullWidth />}
                                         />
                                     </Grid>
@@ -827,11 +776,10 @@ export default function Tareas() {
                                     {asignacionTipo === 'manual' && (
                                         <Grid item xs={12} md={6}>
                                             <Autocomplete
-                                                options={pasantes}
+                                                options={usuarios}
                                                 getOptionLabel={(option) => `${option.name} (${option.email})`}
-                                                value={pasantes.find((p) => String(p.id) === selectedPasanteId) || null}
+                                                value={usuarios.find((p) => String(p.id) === selectedPasanteId) || null}
                                                 onChange={(_, newValue) => setSelectedPasanteId(newValue ? String(newValue.id) : '')}
-                                                sx={{ minWidth: 300 }} // 👈 ancho mínimo mejorado
                                                 renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Pasante" fullWidth />}
                                             />
                                         </Grid>
@@ -860,12 +808,14 @@ export default function Tareas() {
                                         <Grid item xs={12} md={6}>
                                             <Autocomplete
                                                 options={empresas}
-                                                getOptionLabel={(option) => option.nombre}
+                                                getOptionLabel={(option) => option.name}
                                                 value={empresas.find((e) => e.id === Number(newTaskData.company_id)) || null}
                                                 onChange={(_, newValue) =>
-                                                    setNewTaskData({ ...newTaskData, company_id: newValue ? String(newValue.id) : '' })
+                                                    setNewTaskData({
+                                                        ...newTaskData,
+                                                        company_id: newValue ? newValue.id : null, // ✅ Solo el ID
+                                                    })
                                                 }
-                                                sx={{ minWidth: 280 }} // 👈 Puedes subir hasta 320 o más si gustas
                                                 renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
                                             />
                                         </Grid>
@@ -887,22 +837,10 @@ export default function Tareas() {
                                             variant="outlined"
                                             onClick={cancelNewTask}
                                             startIcon={<Cancel />}
-                                            sx={{
-                                                borderRadius: 2,
-                                                px: 3,
-                                                py: 1,
-                                                fontWeight: 'bold',
-                                                borderColor: '#9e9e9e',
-                                                color: '#424242',
-                                                '&:hover': {
-                                                    backgroundColor: '#f5f5f5',
-                                                    borderColor: '#616161',
-                                                },
-                                            }}
+                                            sx={{ borderRadius: 2, px: 3, py: 1 }}
                                         >
                                             Cancelar
                                         </Button>
-
                                         <Button
                                             variant="contained"
                                             onClick={saveNewTask}
@@ -912,13 +850,10 @@ export default function Tareas() {
                                                 borderRadius: 2,
                                                 px: 3,
                                                 py: 1,
-                                                fontWeight: 'bold',
                                                 background: 'linear-gradient(45deg, #4caf50 0%, #2e7d32 100%)',
                                                 '&:hover': {
                                                     background: 'linear-gradient(45deg, #388e3c 0%, #1b5e20 100%)',
-                                                    transform: 'scale(1.02)',
                                                 },
-                                                transition: 'all 0.3s ease',
                                             }}
                                         >
                                             Crear Tarea
@@ -930,7 +865,7 @@ export default function Tareas() {
                     </Zoom>
                 )}
 
-                {/* Formulario de edición - Igual que nueva tarea */}
+                {/* Formulario de edición */}
                 {editingTask && (
                     <Zoom in>
                         <Card
@@ -939,7 +874,6 @@ export default function Tareas() {
                                 borderRadius: 3,
                                 border: '3px solid #FF9100',
                                 boxShadow: '0 8px 32px rgba(255, 145, 0, 0.2)',
-                                overflow: 'hidden',
                             }}
                         >
                             <Box
@@ -949,31 +883,22 @@ export default function Tareas() {
                                     color: 'white',
                                 }}
                             >
-                                <Typography variant="h5" fontWeight="bold" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="h5" fontWeight="bold">
                                     ✏️ Editar Tarea
                                 </Typography>
-                                <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-                                    Modifica los campos que necesites actualizar
-                                </Typography>
                             </Box>
-                            <Box sx={{ p: 4, background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)' }}>
+                            <Box sx={{ p: 4 }}>
                                 <Grid container spacing={3}>
                                     <Grid item xs={12} md={6}>
                                         <TextField
                                             fullWidth
-                                            label="📝 Título de la tarea"
+                                            label="📝 Título"
                                             value={editFormData.titulo}
                                             onChange={(e) => setEditFormData({ ...editFormData, titulo: e.target.value })}
                                             required
-                                            sx={{
-                                                '& .MuiOutlinedInput-root': {
-                                                    borderRadius: 2,
-                                                    '&:hover': { borderColor: '#FF9100' },
-                                                },
-                                            }}
                                         />
                                     </Grid>
-                                    <Grid item xs={12} md={3}>
+                                    <Grid item xs={12} md={6}>
                                         <TextField
                                             type="date"
                                             fullWidth
@@ -981,10 +906,9 @@ export default function Tareas() {
                                             value={editFormData.fecha}
                                             onChange={(e) => setEditFormData({ ...editFormData, fecha: e.target.value })}
                                             InputLabelProps={{ shrink: true }}
-                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                         />
                                     </Grid>
-                                    <Grid item xs={12} md={4}>
+                                    <Grid item xs={12} md={6}>
                                         <Autocomplete
                                             options={tipos}
                                             getOptionLabel={(option) => option.nombre}
@@ -995,47 +919,26 @@ export default function Tareas() {
                                                     tipo_id: newValue ? String(newValue.id) : '',
                                                 })
                                             }
-                                            sx={{ minWidth: 300 }}
-                                            renderInput={(params) => (
-                                                <TextField {...params} label="🏷️ Tipo de tarea" placeholder="Selecciona un tipo" fullWidth />
-                                            )}
+                                            renderInput={(params) => <TextField {...params} label="🏷️ Tipo de tarea" fullWidth />}
                                         />
                                     </Grid>
-
                                     <Grid item xs={12} md={6}>
                                         <FormControl component="fieldset" fullWidth>
-                                            <FormLabel component="legend" sx={{ fontWeight: 'bold', mb: 1, color: '#FF9100' }}>
-                                                ⚡ Prioridad
-                                            </FormLabel>
+                                            <FormLabel>⚡ Prioridad</FormLabel>
                                             <RadioGroup
                                                 row
                                                 value={editFormData.prioridad}
                                                 onChange={(e) => setEditFormData({ ...editFormData, prioridad: e.target.value })}
                                             >
-                                                <FormControlLabel
-                                                    value="alta"
-                                                    control={<Radio sx={{ color: '#FF1744', '&.Mui-checked': { color: '#FF1744' } }} />}
-                                                    label="Alta"
-                                                />
-                                                <FormControlLabel
-                                                    value="media"
-                                                    control={<Radio sx={{ color: '#FF9100', '&.Mui-checked': { color: '#FF9100' } }} />}
-                                                    label="Media"
-                                                />
-                                                <FormControlLabel
-                                                    value="baja"
-                                                    control={<Radio sx={{ color: '#00E676', '&.Mui-checked': { color: '#00E676' } }} />}
-                                                    label="Baja"
-                                                />
+                                                <FormControlLabel value="alta" control={<Radio />} label="Alta" />
+                                                <FormControlLabel value="media" control={<Radio />} label="Media" />
+                                                <FormControlLabel value="baja" control={<Radio />} label="Baja" />
                                             </RadioGroup>
                                         </FormControl>
                                     </Grid>
-
                                     <Grid item xs={12} md={6}>
                                         <FormControl component="fieldset" fullWidth>
-                                            <FormLabel component="legend" sx={{ fontWeight: 'bold', mb: 1, color: '#FF9100' }}>
-                                                🏢 ¿Cambiar empresa?
-                                            </FormLabel>
+                                            <FormLabel>🏢 ¿Cambiar empresa?</FormLabel>
                                             <RadioGroup
                                                 row
                                                 value={editarEmpresa}
@@ -1051,7 +954,6 @@ export default function Tareas() {
                                             </RadioGroup>
                                         </FormControl>
                                     </Grid>
-
                                     {editarEmpresa === 'si' && (
                                         <Grid item xs={12} md={6}>
                                             <Autocomplete
@@ -1064,14 +966,10 @@ export default function Tareas() {
                                                         company_id: newValue ? String(newValue.id) : '',
                                                     })
                                                 }
-                                                sx={{ minWidth: 300 }}
-                                                renderInput={(params) => (
-                                                    <TextField {...params} label="🏢 Empresa" placeholder="Selecciona una empresa" fullWidth />
-                                                )}
+                                                renderInput={(params) => <TextField {...params} label="🏢 Empresa" fullWidth />}
                                             />
                                         </Grid>
                                     )}
-
                                     <Grid item xs={12}>
                                         <TextField
                                             fullWidth
@@ -1080,19 +978,11 @@ export default function Tareas() {
                                             label="📄 Descripción"
                                             value={editFormData.descripcion}
                                             onChange={(e) => setEditFormData({ ...editFormData, descripcion: e.target.value })}
-                                            placeholder="Describe la tarea en detalle..."
-                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                         />
                                     </Grid>
-
                                     <Grid item xs={12}>
                                         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                                            <Button
-                                                variant="outlined"
-                                                startIcon={<Cancel />}
-                                                onClick={cancelEditing}
-                                                sx={{ borderRadius: 2, minWidth: 120 }}
-                                            >
+                                            <Button variant="outlined" startIcon={<Cancel />} onClick={cancelEditing}>
                                                 Cancelar
                                             </Button>
                                             <Button
@@ -1101,12 +991,7 @@ export default function Tareas() {
                                                 onClick={saveEdit}
                                                 disabled={!editFormData.titulo.trim()}
                                                 sx={{
-                                                    borderRadius: 2,
-                                                    minWidth: 120,
                                                     background: 'linear-gradient(45deg, #FF9100 0%, #FF6F00 100%)',
-                                                    '&:hover': {
-                                                        background: 'linear-gradient(45deg, #FF8F00 0%, #E65100 100%)',
-                                                    },
                                                 }}
                                             >
                                                 Actualizar
@@ -1119,47 +1004,22 @@ export default function Tareas() {
                     </Zoom>
                 )}
 
-                {/* Vista de Tareas de Hoy - Lista editable agrupada por usuarios */}
+                {/* Vista de Tareas */}
                 <Fade in>
                     <Box>
                         {Object.keys(tareasPorUsuario).length === 0 ? (
-                            <Paper
-                                sx={{
-                                    p: 6,
-                                    textAlign: 'center',
-                                    borderRadius: 3,
-                                    background: 'linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%)',
-                                }}
-                            >
+                            <Paper sx={{ p: 6, textAlign: 'center', borderRadius: 3 }}>
                                 <Typography variant="h5" color="text.secondary" sx={{ mb: 2 }}>
                                     📝 No hay tareas para hoy
                                 </Typography>
-                                <Typography color="text.secondary" sx={{ mb: 3 }}>
-                                    No se encontraron tareas programadas para hoy
-                                </Typography>
-                                <Button
-                                    variant="contained"
-                                    startIcon={<Add />}
-                                    onClick={() => startNewTask()}
-                                    sx={{
-                                        borderRadius: 2,
-                                        background: 'linear-gradient(45deg, #1976d2 0%, #0d47a1 100%)',
-                                    }}
-                                >
+                                <Button variant="contained" startIcon={<Add />} onClick={startNewTask}>
                                     Crear primera tarea
                                 </Button>
                             </Paper>
                         ) : (
                             Object.entries(tareasPorUsuario).map(([userName, tareas], userIndex) => (
                                 <Fade key={userName} in timeout={300 + userIndex * 100}>
-                                    <Card
-                                        sx={{
-                                            mb: 3,
-                                            borderRadius: 3,
-                                            overflow: 'hidden',
-                                            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                                        }}
-                                    >
+                                    <Card sx={{ mb: 3, borderRadius: 3, overflow: 'hidden' }}>
                                         {/* Cabecera de usuario */}
                                         <Box
                                             sx={{
@@ -1170,10 +1030,6 @@ export default function Tareas() {
                                                 background: 'linear-gradient(135deg, #1976d2 0%, #2196f3 100%)',
                                                 color: 'white',
                                                 cursor: 'pointer',
-                                                '&:hover': {
-                                                    background: 'linear-gradient(135deg, #1565c0 0%, #1976d2 100%)',
-                                                },
-                                                transition: 'background 0.3s ease',
                                             }}
                                             onClick={() => toggleUserExpanded(userName)}
                                         >
@@ -1213,15 +1069,10 @@ export default function Tareas() {
                                                                 mb: 2,
                                                                 borderRadius: 2,
                                                                 border: '1px solid rgba(0,0,0,0.1)',
-                                                                transition: 'all 0.3s ease',
-                                                                '&:hover': {
-                                                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                                                },
                                                                 borderLeft: `6px solid ${getPriorityColor(tarea.prioridad)}`,
-                                                                overflow: 'hidden',
                                                             }}
                                                         >
-                                                            {/* Header compacto de la tarea */}
+                                                            {/* Header de la tarea */}
                                                             <Box
                                                                 onClick={() => toggleTaskExpanded(tarea.id)}
                                                                 sx={{
@@ -1230,22 +1081,11 @@ export default function Tareas() {
                                                                     display: 'flex',
                                                                     alignItems: 'center',
                                                                     justifyContent: 'space-between',
-                                                                    bgcolor: expandedTasks[tarea.id] ? alpha('#1976d2', 0.02) : 'transparent',
-                                                                    '&:hover': {
-                                                                        bgcolor: alpha('#1976d2', 0.05),
-                                                                    },
-                                                                    transition: 'background-color 0.2s ease',
+                                                                    '&:hover': { bgcolor: alpha('#1976d2', 0.05) },
                                                                 }}
                                                             >
                                                                 <Box sx={{ flexGrow: 1 }}>
-                                                                    <Typography
-                                                                        variant="h6"
-                                                                        fontWeight="bold"
-                                                                        sx={{
-                                                                            mb: 1,
-                                                                            color: expandedTasks[tarea.id] ? '#1976d2' : 'text.primary',
-                                                                        }}
-                                                                    >
+                                                                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 1 }}>
                                                                         {tarea.titulo}
                                                                     </Typography>
                                                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
@@ -1256,7 +1096,6 @@ export default function Tareas() {
                                                                                 bgcolor: getPriorityColor(tarea.prioridad),
                                                                                 color: 'white',
                                                                                 fontWeight: 'bold',
-                                                                                fontSize: '0.75rem',
                                                                             }}
                                                                         />
                                                                         <Chip
@@ -1288,15 +1127,14 @@ export default function Tareas() {
                                                                 </Box>
 
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                    {/* Botones de acción siempre visibles */}
+                                                                    {/* Botones de acción */}
                                                                     <Tooltip title="Editar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                startEditing(tarea);
+                                                                                handleEdit(tarea);
                                                                             }}
                                                                             size="small"
-                                                                            color="primary"
                                                                             sx={{
                                                                                 bgcolor: alpha('#1976d2', 0.1),
                                                                                 '&:hover': { bgcolor: alpha('#1976d2', 0.2) },
@@ -1305,6 +1143,7 @@ export default function Tareas() {
                                                                             <Edit fontSize="small" />
                                                                         </IconButton>
                                                                     </Tooltip>
+
                                                                     <Tooltip title="Eliminar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
@@ -1321,20 +1160,87 @@ export default function Tareas() {
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
                                                                     </Tooltip>
-                                                                    
 
-                                                                    {/* Icono de expandir/colapsar */}
+                                                                    <Tooltip title="Cambiar pasante">
+                                                                        <IconButton
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                setTaskToChange(tarea.id);
+                                                                            }}
+                                                                            size="small"
+                                                                            sx={{
+                                                                                bgcolor: alpha('#4caf50', 0.1),
+                                                                                '&:hover': { bgcolor: alpha('#4caf50', 0.2) },
+                                                                            }}
+                                                                        >
+                                                                            <SwapHoriz fontSize="small" />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+
                                                                     <IconButton size="small" sx={{ color: '#1976d2' }}>
                                                                         {expandedTasks[tarea.id] ? <ExpandLess /> : <ExpandMore />}
                                                                     </IconButton>
                                                                 </Box>
                                                             </Box>
 
-                                                            {/* Contenido expandible de la tarea */}
+                                                            {/* Formulario de cambio de pasante */}
+                                                            {tarea.id === taskToChange && (
+                                                                <Box
+                                                                    sx={{
+                                                                        p: 3,
+                                                                        bgcolor: alpha('#4caf50', 0.05),
+                                                                        borderTop: '1px solid rgba(0,0,0,0.1)',
+                                                                    }}
+                                                                >
+                                                                    <Typography variant="h6" sx={{ mb: 2, color: '#4caf50', fontWeight: 'bold' }}>
+                                                                        🔄 Cambiar Pasante
+                                                                    </Typography>
+                                                                    <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                                                                        <InputLabel>Nuevo Pasante</InputLabel>
+                                                                        <Select
+                                                                            value={newUserId ?? ''}
+                                                                            onChange={(e) => setNewUserId(Number(e.target.value))}
+                                                                            label="Nuevo Pasante"
+                                                                        >
+                                                                            {usuarios.map((user) => (
+                                                                                <MenuItem key={user.id} value={user.id}>
+                                                                                    {user.name} ({user.email})
+                                                                                </MenuItem>
+                                                                            ))}
+                                                                        </Select>
+                                                                    </FormControl>
+                                                                    <Box sx={{ display: 'flex', gap: 2 }}>
+                                                                        <Button
+                                                                            variant="outlined"
+                                                                            onClick={() => {
+                                                                                setTaskToChange(null);
+                                                                                setNewUserId(null);
+                                                                            }}
+                                                                            size="small"
+                                                                        >
+                                                                            Cancelar
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="contained"
+                                                                            onClick={() => handleChangeUser(tarea.id)}
+                                                                            disabled={!newUserId}
+                                                                            size="small"
+                                                                            sx={{
+                                                                                bgcolor: '#4caf50',
+                                                                                '&:hover': { bgcolor: '#388e3c' },
+                                                                            }}
+                                                                        >
+                                                                            Confirmar cambio
+                                                                        </Button>
+                                                                    </Box>
+                                                                </Box>
+                                                            )}
+
+                                                            {/* Contenido expandible */}
                                                             <Collapse in={expandedTasks[tarea.id] ?? false}>
                                                                 <Box sx={{ px: 3, pb: 3 }}>
                                                                     <Box sx={{ borderTop: '1px solid rgba(0,0,0,0.1)', pt: 2 }}>
-                                                                        {/* Sección de asignaciones */}
+                                                                        {/* Asignaciones */}
                                                                         {tarea.asignados.map((asignado) => (
                                                                             <Box
                                                                                 key={asignado.id}
@@ -1346,23 +1252,20 @@ export default function Tareas() {
                                                                                     border: '1px solid rgba(25, 118, 210, 0.1)',
                                                                                 }}
                                                                             >
-                                                                                {/* Estado - Edición en tiempo real */}
+                                                                                {/* Estado */}
                                                                                 <Box sx={{ mb: 2 }}>
                                                                                     <Typography
                                                                                         variant="body2"
                                                                                         color="text.secondary"
-                                                                                        sx={{
-                                                                                            mb: 1,
-                                                                                            fontWeight: 'bold',
-                                                                                            display: 'flex',
-                                                                                            alignItems: 'center',
-                                                                                            gap: 1,
-                                                                                        }}
+                                                                                        sx={{ mb: 1, fontWeight: 'bold' }}
                                                                                     >
                                                                                         📊 Estado de la tarea:
                                                                                         {savingStates[asignado.id] && (
                                                                                             <Box
+                                                                                                component="span"
                                                                                                 sx={{
+                                                                                                    ml: 1,
+                                                                                                    display: 'inline-block',
                                                                                                     width: 16,
                                                                                                     height: 16,
                                                                                                     border: '2px solid #1976d2',
@@ -1384,100 +1287,31 @@ export default function Tareas() {
                                                                                         >
                                                                                             <FormControlLabel
                                                                                                 value="pendiente"
-                                                                                                control={
-                                                                                                    <Radio
-                                                                                                        size="small"
-                                                                                                        sx={{
-                                                                                                            color: '#FF9100',
-                                                                                                            '&.Mui-checked': { color: '#FF9100' },
-                                                                                                            '&:hover': {
-                                                                                                                bgcolor: alpha('#FF9100', 0.1),
-                                                                                                            },
-                                                                                                        }}
-                                                                                                    />
-                                                                                                }
-                                                                                                label={
-                                                                                                    <Typography
-                                                                                                        variant="body2"
-                                                                                                        sx={{ fontSize: '0.875rem' }}
-                                                                                                    >
-                                                                                                        🟡 Pendiente
-                                                                                                    </Typography>
-                                                                                                }
+                                                                                                control={<Radio size="small" />}
+                                                                                                label="🟡 Pendiente"
                                                                                             />
                                                                                             <FormControlLabel
                                                                                                 value="en_revision"
-                                                                                                control={
-                                                                                                    <Radio
-                                                                                                        size="small"
-                                                                                                        sx={{
-                                                                                                            color: '#2196F3',
-                                                                                                            '&.Mui-checked': { color: '#2196F3' },
-                                                                                                            '&:hover': {
-                                                                                                                bgcolor: alpha('#2196F3', 0.1),
-                                                                                                            },
-                                                                                                        }}
-                                                                                                    />
-                                                                                                }
-                                                                                                label={
-                                                                                                    <Typography
-                                                                                                        variant="body2"
-                                                                                                        sx={{ fontSize: '0.875rem' }}
-                                                                                                    >
-                                                                                                        🔵 En revisión
-                                                                                                    </Typography>
-                                                                                                }
+                                                                                                control={<Radio size="small" />}
+                                                                                                label="🔵 En revisión"
                                                                                             />
                                                                                             <FormControlLabel
                                                                                                 value="publicada"
-                                                                                                control={
-                                                                                                    <Radio
-                                                                                                        size="small"
-                                                                                                        sx={{
-                                                                                                            color: '#4CAF50',
-                                                                                                            '&.Mui-checked': { color: '#4CAF50' },
-                                                                                                            '&:hover': {
-                                                                                                                bgcolor: alpha('#4CAF50', 0.1),
-                                                                                                            },
-                                                                                                        }}
-                                                                                                    />
-                                                                                                }
-                                                                                                label={
-                                                                                                    <Typography
-                                                                                                        variant="body2"
-                                                                                                        sx={{ fontSize: '0.875rem' }}
-                                                                                                    >
-                                                                                                        🟢 Publicada
-                                                                                                    </Typography>
-                                                                                                }
+                                                                                                control={<Radio size="small" />}
+                                                                                                label="🟢 Publicada"
                                                                                             />
                                                                                         </RadioGroup>
                                                                                     </FormControl>
                                                                                 </Box>
 
-                                                                                {/* Detalle - Edición en tiempo real */}
+                                                                                {/* Detalle */}
                                                                                 <Box sx={{ mb: 2 }}>
                                                                                     <Typography
                                                                                         variant="body2"
                                                                                         color="text.secondary"
-                                                                                        sx={{
-                                                                                            mb: 1,
-                                                                                            fontWeight: 'bold',
-                                                                                            display: 'flex',
-                                                                                            alignItems: 'center',
-                                                                                            gap: 1,
-                                                                                        }}
+                                                                                        sx={{ mb: 1, fontWeight: 'bold' }}
                                                                                     >
                                                                                         📝 Detalle del progreso:
-                                                                                        {savingStates[asignado.id] && (
-                                                                                            <Typography
-                                                                                                variant="caption"
-                                                                                                color="primary"
-                                                                                                sx={{ fontStyle: 'italic' }}
-                                                                                            >
-                                                                                                Guardando...
-                                                                                            </Typography>
-                                                                                        )}
                                                                                     </Typography>
                                                                                     <TextField
                                                                                         fullWidth
@@ -1491,14 +1325,6 @@ export default function Tareas() {
                                                                                             '& .MuiOutlinedInput-root': {
                                                                                                 borderRadius: 2,
                                                                                                 bgcolor: 'white',
-                                                                                                '&:hover': {
-                                                                                                    bgcolor: 'white',
-                                                                                                    borderColor: '#1976d2',
-                                                                                                },
-                                                                                                '&.Mui-focused': {
-                                                                                                    bgcolor: 'white',
-                                                                                                    borderColor: '#1976d2',
-                                                                                                },
                                                                                             },
                                                                                         }}
                                                                                     />
@@ -1506,29 +1332,14 @@ export default function Tareas() {
                                                                             </Box>
                                                                         ))}
 
-                                                                        {/* Descripción de la tarea - Edición en tiempo real */}
+                                                                        {/* Descripción de la tarea */}
                                                                         <Box sx={{ mt: 2 }}>
                                                                             <Typography
                                                                                 variant="body2"
                                                                                 color="text.secondary"
-                                                                                sx={{
-                                                                                    mb: 1,
-                                                                                    fontWeight: 'bold',
-                                                                                    display: 'flex',
-                                                                                    alignItems: 'center',
-                                                                                    gap: 1,
-                                                                                }}
+                                                                                sx={{ mb: 1, fontWeight: 'bold' }}
                                                                             >
                                                                                 📄 Descripción de la tarea:
-                                                                                {savingStates[tarea.id] && (
-                                                                                    <Typography
-                                                                                        variant="caption"
-                                                                                        color="primary"
-                                                                                        sx={{ fontStyle: 'italic' }}
-                                                                                    >
-                                                                                        Guardando...
-                                                                                    </Typography>
-                                                                                )}
                                                                             </Typography>
                                                                             {editingDescripcion === tarea.id ? (
                                                                                 <TextField
@@ -1543,13 +1354,6 @@ export default function Tareas() {
                                                                                     onBlur={() => setEditingDescripcion(null)}
                                                                                     autoFocus
                                                                                     placeholder="Describe la tarea en detalle..."
-                                                                                    sx={{
-                                                                                        '& .MuiOutlinedInput-root': {
-                                                                                            borderRadius: 2,
-                                                                                            bgcolor: 'white',
-                                                                                            '&:hover': { borderColor: '#1976d2' },
-                                                                                        },
-                                                                                    }}
                                                                                 />
                                                                             ) : (
                                                                                 <Box
@@ -1560,11 +1364,9 @@ export default function Tareas() {
                                                                                         bgcolor: 'white',
                                                                                         border: '1px dashed rgba(25, 118, 210, 0.3)',
                                                                                         cursor: 'pointer',
-                                                                                        transition: 'all 0.2s ease',
                                                                                         '&:hover': {
                                                                                             bgcolor: alpha('#1976d2', 0.02),
                                                                                             borderColor: '#1976d2',
-                                                                                            borderStyle: 'solid',
                                                                                         },
                                                                                     }}
                                                                                 >
@@ -1573,7 +1375,6 @@ export default function Tareas() {
                                                                                         color={tarea.descripcion ? 'text.primary' : 'text.secondary'}
                                                                                         sx={{
                                                                                             fontStyle: tarea.descripcion ? 'normal' : 'italic',
-                                                                                            lineHeight: 1.5,
                                                                                         }}
                                                                                     >
                                                                                         {tarea.descripcion ||
@@ -1597,12 +1398,11 @@ export default function Tareas() {
                     </Box>
                 </Fade>
 
-                {/* Botón flotante para agregar tarea */}
+                {/* Botón flotante */}
                 {!showNewTaskForm && !editingTask && (
                     <Fab
                         color="primary"
-                        aria-label="Nueva tarea para hoy"
-                        onClick={() => startNewTask()}
+                        onClick={startNewTask}
                         sx={{
                             position: 'fixed',
                             bottom: 24,
@@ -1622,18 +1422,4 @@ export default function Tareas() {
             </Container>
         </AppLayout>
     );
-
-    function groupByUser(tareas: TareaAsignada[]) {
-        const grouped: { [key: string]: TareaAsignada[] } = {};
-        tareas.forEach((tarea) => {
-            tarea.asignados.forEach((asignado) => {
-                const userName = asignado.user_name;
-                if (!grouped[userName]) {
-                    grouped[userName] = [];
-                }
-                grouped[userName].push(tarea);
-            });
-        });
-        return grouped;
-    }
 }

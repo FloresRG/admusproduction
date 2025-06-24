@@ -184,6 +184,9 @@ export function AppSidebar() {
                     { title: '+ Link de Compañias', href: '/company-links', icon: BusinessIcon },
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: BusinessIcon },
                     { title: 'Pagos del ANUALES', href: '/reportes/pagos-por-anio', icon: BusinessIcon },
+                    { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
+                    { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
+
                 ],
                 isCollapsible: true,
             },

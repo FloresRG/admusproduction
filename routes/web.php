@@ -226,13 +226,17 @@ Route::get('/vertareas', function () {
 Route::get('/tareas', function () {
     return Inertia::render('tareas/index');
 })->name('tareas.index');
+Route::patch('/tareas/{id}/descripcion', [TareaController::class, 'actualizarDescripcion']);
+///intercambiar user
+Route::delete('/asignaciones/reasignar/{id}', [TareaController::class, 'reasignarUsuario'])->middleware('auth');
+
+///empresas
+Route::get('/empresas', [TareaController::class, 'listarEmpresas']);
 
 
 Route::get('/tareas-con-asignaciones',   [TareaController::class, 'tareasConAsignaciones']);
 Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion'])
      ->name('asignaciones.actualizar');
-// PATCH /asignaciones/{id}/intercambiar
-//Route::patch('/asignaciones/{id}/intercambiar', [AsignacionController::class, 'intercambiarUsuario']);
 
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
@@ -380,7 +384,7 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
 
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
 Route::delete('/asignacion/{id}', [TareaController::class, 'eliminarAsignacion']);
-Route::patch('/asignaciones/{id}', [TareaController::class, 'update']);
+// Route::patch('/asignaciones/{id}', [TareaController::class, 'update']);
 
 /////////empresas G
 
