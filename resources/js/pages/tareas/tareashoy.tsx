@@ -409,10 +409,12 @@ export default function Tareas() {
             const payload = {
                 ...newTaskData,
                 tipo_id: newTaskData.tipo_id ? Number(newTaskData.tipo_id) : null,
-                company_id: newTaskData.company_id ? Number(newTaskData.company_id) : null,
+                company_id: newTaskData.company_id ? Number(newTaskData.company_id) : null, // ✅ aquí se convierte a número
                 asignacion_aleatoria: asignacionTipo === 'aleatoria',
                 pasante_id: asignacionTipo === 'manual' ? Number(selectedPasanteId) : null,
             };
+
+            console.log('🟦 Payload que se envía al backend:', payload); // 👈 AQUÍ
 
             await axios.post('/create/tareas', payload);
             setShowNewTaskForm(false);
@@ -813,7 +815,7 @@ export default function Tareas() {
                                                 onChange={(_, newValue) =>
                                                     setNewTaskData({
                                                         ...newTaskData,
-                                                        company_id: newValue ? newValue.id : null, // ✅ Solo el ID
+                                                        company_id: newValue ? String(newValue.id) : '', // ✅ Solo el ID
                                                     })
                                                 }
                                                 renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
@@ -958,15 +960,15 @@ export default function Tareas() {
                                         <Grid item xs={12} md={6}>
                                             <Autocomplete
                                                 options={empresas}
-                                                getOptionLabel={(option) => option.nombre}
-                                                value={empresas.find((e) => e.id === Number(editFormData.company_id)) || null}
+                                                getOptionLabel={(option) => option.name}
+                                                value={empresas.find((e) => e.id === Number(newTaskData.company_id)) || null}
                                                 onChange={(_, newValue) =>
-                                                    setEditFormData({
-                                                        ...editFormData,
-                                                        company_id: newValue ? String(newValue.id) : '',
+                                                    setNewTaskData({
+                                                        ...newTaskData,
+                                                        company_id: newValue ? String(newValue.id) : '', // ✅ Solo el ID
                                                     })
                                                 }
-                                                renderInput={(params) => <TextField {...params} label="🏢 Empresa" fullWidth />}
+                                                renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
                                             />
                                         </Grid>
                                     )}
