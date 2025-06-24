@@ -111,6 +111,45 @@ class DatoInfluencersController extends Controller
         $user->delete();
         return redirect()->back()->with('success', 'Usuario eliminado exitosamente');
     }
+
+    /*  public function uploadPhotos(Request $request, User $user)
+    {
+        $request->validate([
+            'photos' => 'required|array|max:10',
+            'photos.*' => 'required|file|image|mimes:jpeg,png,jpg|max:10240', // 10MB max
+        ]);
+
+        $uploadedPhotos = [];
+
+        foreach ($request->file('photos') as $photo) {
+            // Generar nombre único para la foto
+            $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
+
+            // Guardar en storage/app/public/influencers
+            $path = $photo->storeAs('influencers', $filename, 'public');
+
+            // Crear registro en la base de datos
+            $photoRecord = Photo::create([
+                'path' => $path,
+                'nombre' => $photo->getClientOriginalName(),
+                'tipo' => $photo->getClientMimeType(),
+            ]);
+
+            // Asociar la foto con el usuario
+            $user->photos()->attach($photoRecord->id);
+
+            $uploadedPhotos[] = [
+                'id' => $photoRecord->id,
+                'path' => Storage::url($path),
+                'nombre' => $photoRecord->nombre,
+            ];
+        }
+
+        return response()->json([
+            'message' => 'Fotos subidas exitosamente',
+            'photos' => $uploadedPhotos
+        ]);
+    } */
     public function uploadPhotos(Request $request, User $user)
     {
         $request->validate([
@@ -123,19 +162,20 @@ class DatoInfluencersController extends Controller
         foreach ($request->file('photos') as $photo) {
             $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
 
-            // Directorio absoluto en public_html/influencers
-            $destination = $_SERVER['DOCUMENT_ROOT'] . '/influencers';
+            if (app()->environment('production')) {
+                // Guardar directamente en public_html/influencers (en producción)
+                $destinationPath = public_path('influencers');
+                if (!file_exists($destinationPath)) {
+                    mkdir($destinationPath, 0775, true);
+                }
 
-            if (!file_exists($destination)) {
-                mkdir($destination, 0755, true);
+                $photo->move($destinationPath, $filename);
+                $path = 'influencers/' . $filename;
+            } else {
+                // En local, usar storage/app/public/influencers
+                $path = $photo->storeAs('influencers', $filename, 'public');
             }
 
-            // Mover archivo al destino
-            $photo->move($destination, $filename);
-
-            $path = 'influencers/' . $filename;
-
-            // Guardar en base de datos
             $photoRecord = Photo::create([
                 'path' => $path,
                 'nombre' => $photo->getClientOriginalName(),
@@ -146,7 +186,7 @@ class DatoInfluencersController extends Controller
 
             $uploadedPhotos[] = [
                 'id' => $photoRecord->id,
-                'path' => asset($path),
+                'path' => asset($path), // Usamos asset() para ambas ubicaciones
                 'nombre' => $photoRecord->nombre,
             ];
         }
@@ -158,8 +198,6 @@ class DatoInfluencersController extends Controller
     }
 
 
-
-
     public function deletePhoto(User $user, Photo $photo)
     {
         // Verificar que la foto pertenece al usuario
@@ -167,25 +205,25 @@ class DatoInfluencersController extends Controller
             return response()->json(['error' => 'Foto no encontrada'], 404);
         }
 
-        // Ruta completa absoluta
-        $fullPath = $_SERVER['DOCUMENT_ROOT'] . '/' . $photo->path;
+        // Verificar si la foto está en public_path
+        $fullPublicPath = public_path($photo->path);
 
-        // Eliminar archivo si existe
-        if (file_exists($fullPath)) {
-            unlink($fullPath);
+        if (file_exists($fullPublicPath)) {
+            unlink($fullPublicPath); // Eliminar desde public_html
+        } elseif (Storage::disk('public')->exists($photo->path)) {
+            Storage::disk('public')->delete($photo->path); // Eliminar desde storage
         }
 
         // Desasociar la relación con el usuario
         $user->photos()->detach($photo->id);
 
-        // Eliminar la foto si no está asociada a ningún otro usuario
+        // Si no hay más usuarios asociados, eliminar el registro
         if ($photo->users()->count() === 0) {
             $photo->delete();
         }
 
         return response()->json(['message' => 'Foto eliminada exitosamente']);
     }
-
 
 
     public function getPhotos(User $user)
