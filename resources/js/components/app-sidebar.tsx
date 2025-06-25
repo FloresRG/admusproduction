@@ -164,6 +164,7 @@ export function AppSidebar() {
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
+    const isEmpresa = roles.includes('empresa');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);
@@ -244,6 +245,17 @@ export function AppSidebar() {
                     { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
+                ],
+                isCollapsible: false,
+            });
+        }
+        if (isEmpresa) {
+            menuSections.push({
+                title: 'Empresa',
+                icon: BusinessIcon,
+                items: [
+                    { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
+                    { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
                 ],
                 isCollapsible: false,
             });
