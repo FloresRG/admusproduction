@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { Avatar } from '@mui/material'; // Mantener Avatar de Material-UI
+import { Avatar } from '@mui/material';
 import { motion } from 'framer-motion';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
@@ -19,8 +19,8 @@ type LoginForm = {
 
 // Propiedades esperadas por el componente Login
 interface LoginProps {
-    status?: string; // Mensaje de estado, por ejemplo, después de un restablecimiento de contraseña
-    canResetPassword: boolean; // Indica si la opción de restablecer contraseña está disponible
+    status?: string;
+    canResetPassword: boolean;
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
@@ -33,47 +33,34 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
     // Manejador para el envío del formulario
     const submit: FormEventHandler = (e) => {
-        e.preventDefault(); // Previene el comportamiento por defecto del formulario
-        post(route('login'), { // Envía la solicitud POST a la ruta de login
-            onFinish: () => reset('password'), // Limpia el campo de contraseña al finalizar
+        e.preventDefault();
+        post(route('login'), {
+            onFinish: () => reset('password'),
         });
     };
 
     return (
-        // Layout de autenticación que envuelve el formulario
-        <AuthLayout title="Admus Production" description="Gestión Integral">
+        // El AuthLayout debe tener un fondo que complemente los colores beige.
+        // Podrías establecer el fondo en AuthLayout o directamente en el body de tu CSS global.
+        <AuthLayout title="Admus Production" description="">
             {/* Título de la página para SEO */}
             <Head title="Iniciar Sesión" />
 
             {/* Contenedor principal del formulario con animaciones de Framer Motion */}
             <motion.div
-                initial={{ opacity: 0, y: -20 }} // Estado inicial de la animación
-                animate={{ opacity: 1, y: 0 }} // Estado final de la animación
-                transition={{ duration: 0.5 }} // Duración de la transición
-                className="mx-auto max-w-md rounded-xl border border-white/20 bg-white/5 p-8 shadow-2xl backdrop-blur-md"
+                initial={{ opacity: 0, y: -50, scale: 0.9 }} // Animación de entrada más pronunciada
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.7, ease: 'easeOut' }} // Transición más suave y duradera
+                className="mx-auto max-w-md rounded-xl border border-[#C0C0C0]/50 bg-[#FDF5E6] p-8 shadow-2xl backdrop-blur-sm" // Fondo beige claro, borde suave
             >
                 {/* Sección del avatar central */}
                 <div className="mb-6 flex justify-center">
                     <motion.div
-                        whileHover={{ scale: 1.1, rotate: 10 }} // Animación al pasar el ratón
-                        whileTap={{ scale: 0.95, rotate: 0 }} // Animación al hacer click
+                        whileHover={{ scale: 1.1, rotate: 5 }} // Animación al pasar el ratón más sutil
+                        whileTap={{ scale: 0.95 }} // Animación al hacer click
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }} // Transición tipo muelle para el avatar
                         className="cursor-pointer"
                     >
-                        <Avatar
-                            alt="Avatar de Usuario"
-                            src="/assets/avatar-user.png" // Ruta de la imagen del avatar
-                            sx={{
-                                width: 80,
-                                height: 80,
-                                bgcolor: '#c9ebf7', // Color de fondo del avatar
-                                color: '#140f07', // Color del texto del avatar
-                                fontWeight: 'bold',
-                                fontSize: '2rem',
-                                textTransform: 'uppercase',
-                            }}
-                        >
-                            AD {/* Texto de fallback si la imagen no carga */}
-                        </Avatar>
                     </motion.div>
                 </div>
 
@@ -81,8 +68,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                 <form className="space-y-6" onSubmit={submit} noValidate>
                     <div className="space-y-5">
                         {/* Campo de correo electrónico */}
-                        <div>
-                            <Label htmlFor="email" className="mb-1 block font-semibold text-[#c9ebf7]">
+                        <motion.div
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.2, duration: 0.5 }}
+                        >
+                            <Label htmlFor="email" className="mb-1 block font-semibold text-[#6B5B4C]">
                                 Correo Electrónico
                             </Label>
                             <Input
@@ -95,21 +86,25 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 value={data.email}
                                 onChange={(e) => setData('email', e.target.value)}
                                 placeholder="correo@ejemplo.com"
-                                className="w-full rounded-lg border border-[#3c5db7] bg-white/10 p-3 text-white placeholder:text-[#c9ebf7] focus:ring-2 focus:ring-[#7a9efd] focus:outline-none"
+                                className="w-full rounded-lg border border-[#C0C0C0] bg-white/70 p-3 text-[#6B5B4C] placeholder:text-[#A9A9A9] focus:ring-2 focus:ring-[#D2B48C] focus:outline-none transition-colors duration-200" // Colores actualizados y transición
                             />
                             <InputError message={errors.email} />
-                        </div>
+                        </motion.div>
 
                         {/* Campo de contraseña */}
-                        <div>
+                        <motion.div
+                            initial={{ x: 20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: 0.3, duration: 0.5 }}
+                        >
                             <div className="mb-1 flex items-center justify-between">
-                                <Label htmlFor="password" className="font-semibold text-[#c9ebf7]">
+                                <Label htmlFor="password" className="font-semibold text-[#6B5B4C]">
                                     Contraseña
                                 </Label>
-                                {canResetPassword && ( // Condicional para mostrar el enlace de "olvidé mi contraseña"
+                                {canResetPassword && (
                                     <a
                                         href={route('password.request')}
-                                        className="text-sm text-[#7a9efd] hover:underline focus:ring-1 focus:ring-[#7a9efd] focus:outline-none"
+                                        className="text-sm text-[#D2B48C] hover:underline focus:ring-1 focus:ring-[#D2B48C] focus:outline-none transition-colors duration-200" // Color de enlace actualizado
                                         tabIndex={5}
                                     >
                                         ¿Olvidaste tu contraseña?
@@ -125,48 +120,59 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 placeholder="Contraseña"
-                                className="w-full rounded-lg border border-[#3c5db7] bg-white/10 p-3 text-white placeholder:text-[#c9ebf7] focus:ring-2 focus:ring-[#7a9efd] focus:outline-none"
+                                className="w-full rounded-lg border border-[#C0C0C0] bg-white/70 p-3 text-[#6B5B4C] placeholder:text-[#A9A9A9] focus:ring-2 focus:ring-[#D2B48C] focus:outline-none transition-colors duration-200" // Colores actualizados y transición
                             />
                             <InputError message={errors.password} />
-                        </div>
+                        </motion.div>
 
                         {/* Opción "Recordarme" */}
-                        <div className="flex items-center space-x-3">
+                        <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.4, duration: 0.5 }}
+                            className="flex items-center space-x-3"
+                        >
                             <Checkbox
                                 id="remember"
                                 name="remember"
                                 checked={data.remember}
                                 onClick={() => setData('remember', !data.remember)}
                                 tabIndex={3}
-                                className="text-[#7a9efd] focus:ring-2 focus:ring-[#7a9efd]"
+                                className="border-[#C0C0C0] text-[#D2B48C] focus:ring-2 focus:ring-[#D2B48C] transition-colors duration-200" // Colores de checkbox actualizados
                             />
-                            <Label htmlFor="remember" className="cursor-pointer text-[#c9ebf7] select-none">
+                            <Label htmlFor="remember" className="cursor-pointer text-[#6B5B4C] select-none">
                                 Recordarme
                             </Label>
-                        </div>
+                        </motion.div>
 
                         {/* Botón de envío del formulario */}
-                        <Button
-                            type="submit"
-                            className="w-full rounded-lg bg-[#3c5db7] p-3 font-semibold text-white shadow-md transition-transform duration-300 hover:scale-[1.05] hover:bg-[#12264f] focus:ring-2 focus:ring-[#7a9efd] focus:outline-none"
-                            tabIndex={4}
-                            disabled={processing} // Deshabilita el botón mientras se procesa la solicitud
-                            aria-busy={processing} // Indica estado de ocupado para accesibilidad
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.5, duration: 0.5, type: "spring", stiffness: 300 }}
                         >
-                            {processing && <LoaderCircle className="mr-2 inline h-5 w-5 animate-spin" />}
-                            Iniciar Sesión
-                        </Button>
+                            <Button
+                                type="submit"
+                                className="w-full rounded-lg bg-[#D2B48C] p-3 font-semibold text-white shadow-md transition-all duration-300 hover:scale-[1.02] hover:bg-[#A9A9A9] focus:ring-2 focus:ring-[#6B5B4C] focus:outline-none" // Colores del botón actualizados
+                                tabIndex={4}
+                                disabled={processing}
+                                aria-busy={processing}
+                            >
+                                {processing && <LoaderCircle className="mr-2 inline h-5 w-5 animate-spin text-white" />}
+                                Iniciar Sesión
+                            </Button>
+                        </motion.div>
                     </div>
                 </form>
 
                 {/* Mensaje de estado (por ejemplo, de éxito o error) */}
                 {status && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="mt-4 text-center text-sm text-green-300"
-                        role="alert" // Para accesibilidad
+                        className="mt-4 text-center text-sm text-[#D2B48C]" // Color del mensaje de estado actualizado
+                        role="alert"
                     >
                         {status}
                     </motion.div>
