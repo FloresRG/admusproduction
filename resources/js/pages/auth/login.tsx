@@ -74,7 +74,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             transition={{ delay: 0.2, duration: 0.5 }}
                         >
                             <Label htmlFor="email" className="mb-1 block font-semibold text-[#6B5B4C]">
-                                Correo Electrónico
+                                ingrese Correo Electrónico
                             </Label>
                             <Input
                                 id="email"
