@@ -21,18 +21,19 @@ interface Company {
     celular?: string;
 }
 
+interface EmpresaDashboardProps {
+    user: User;
+    company: Company;
+}
+
 interface TikTokVideoProps {
-    id: number;
     title: string;
-    description: string;
-    videoUrl: string;
-    thumbnailUrl: string;
     views: number;
     likes: number;
-    fecha: string;
-    mes: string;
+    thumbnailUrl: string;
     videoId: string;
     embedHtml: string;
+    description: string;
 }
 
 interface MonthlyStats {
@@ -40,13 +41,6 @@ interface MonthlyStats {
     videos: number;
     totalViews: number;
     totalLikes: number;
-}
-
-interface EmpresaDashboardProps {
-    user: User;
-    company: Company;
-    tiktokVideos: TikTokVideoProps[];
-    monthlyStats: MonthlyStats[];
 }
 
 // --- Componente Auxiliar para Inyectar Estilos Globales de Animación ---
@@ -118,16 +112,59 @@ const GlobalAnimationStyles: FC = () => {
 // Constantes
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
-// Componente TikTokCard actualizado
-const TikTokCard: FC<TikTokVideoProps> = ({ title, description, views, likes, videoUrl, fecha }) => {
-    // Extrae el ID del video de la URL de TikTok
-    const getTikTokEmbedUrl = (url: string) => {
-        const match = url.match(/video\/(\d+)/);
-        const videoId = match ? match[1] : null;
-        return videoId ? `https://www.tiktok.com/embed/v2/${videoId}` : url;
-    };
+// Datos de videos específicos (ejemplo - estos deberían venir del backend en el futuro)
+const TIKTOK_VIDEOS: TikTokVideoProps[] = [
+    {
+        title: '¡Nuestros mejores productos! 🚀',
+        views: 45240,
+        likes: 8890,
+        thumbnailUrl: 'https://placehold.co/400x600/3B82F6/FFFFFF?text=Producto+1',
+        videoId: '1',
+        description: 'Descubre nuestra línea de productos más vendidos',
+        embedHtml: `<div class="bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg h-full flex items-center justify-center text-white font-bold">Video Promocional</div>`,
+    },
+    {
+        title: 'Ofertas especiales de temporada 💫',
+        views: 32150,
+        likes: 6420,
+        thumbnailUrl: 'https://placehold.co/400x600/EF4444/FFFFFF?text=Oferta+Especial',
+        videoId: '2',
+        description: 'No te pierdas nuestras ofertas limitadas',
+        embedHtml: `<div class="bg-gradient-to-br from-red-400 to-pink-500 rounded-lg h-full flex items-center justify-center text-white font-bold">Ofertas</div>`,
+    },
+];
 
-    const embedUrl = getTikTokEmbedUrl(videoUrl);
+// Utilidades
+const getRandomStats = () => ({
+    videos: Math.floor(Math.random() * 20) + 5,
+    totalViews: Math.floor(Math.random() * 200000) + 50000,
+    totalLikes: Math.floor(Math.random() * 80000) + 10000,
+});
+
+const generateMonthlyStats = (): MonthlyStats[] => {
+    const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    const stats = [];
+    const now = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        stats.push({
+            month: `${monthNames[date.getMonth()]} ${date.getFullYear()}`,
+            ...getRandomStats(),
+        });
+    }
+    return stats;
+};
+
+// Componente TikTokCard
+const TikTokCard: FC<TikTokVideoProps> = ({ title, views, likes, embedHtml, description }) => {
+    const embedRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (embedRef.current) {
+            embedRef.current.innerHTML = embedHtml;
+        }
+    }, [embedHtml]);
 
     return (
         <div
@@ -136,19 +173,11 @@ const TikTokCard: FC<TikTokVideoProps> = ({ title, description, views, likes, vi
         >
             <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-lg hover:shadow-xl">
                 <div className="flex aspect-[9/16] max-h-[400px] w-full items-center justify-center overflow-hidden bg-gray-200">
-                    <iframe
-                        src={embedUrl}
-                        width="100%"
-                        height="100%"
-                        allowFullScreen
-                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
-                        className="h-full w-full border-none"
-                    ></iframe>
+                    <div ref={embedRef} className="flex h-full w-full items-center justify-center"></div>
                 </div>
                 <div className="bg-gradient-to-t from-gray-50 to-white p-4">
                     <h3 className="mb-1 line-clamp-2 text-lg font-bold text-gray-900">{title}</h3>
-                    <p className="mb-2 line-clamp-2 text-sm text-gray-600">{description}</p>
-                    <p className="mb-3 text-xs text-gray-500">Publicado: {new Date(fecha).toLocaleDateString()}</p>
+                    <p className="mb-3 line-clamp-2 text-sm text-gray-600">{description}</p>
                     <div className="flex justify-between text-sm font-medium text-gray-600">
                         <span className="flex items-center text-purple-600">
                             <EyeIcon className="mr-1 h-4 w-4 text-purple-500" />
@@ -288,8 +317,10 @@ const PerformanceChart: FC<PerformanceChartProps> = ({ monthlyStats }) => {
     );
 };
 
-// Componente Dashboard principal actualizado
-const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVideos, monthlyStats }) => {
+// Componente Dashboard principal
+const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company }) => {
+    const monthlyStats = generateMonthlyStats();
+
     // Función para obtener la URL del logo
     const getLogoUrl = (logoPath: string | null) => {
         if (!logoPath) return null;
@@ -378,7 +409,9 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                     <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-white p-6 shadow-md">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total de Videos</p>
-                            <p className="mt-1 text-3xl font-bold text-indigo-600">{tiktokVideos.length}</p>
+                            <p className="mt-1 text-3xl font-bold text-indigo-600">
+                                {monthlyStats.reduce((sum, stat) => sum + stat.videos, 0).toLocaleString()}
+                            </p>
                         </div>
                         <PlayCircleIcon className="h-10 w-10 text-indigo-400 opacity-60" />
                     </div>
@@ -386,35 +419,21 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                         <div>
                             <p className="text-sm font-medium text-gray-500">Mes con más vistas</p>
                             <p className="mt-1 text-2xl font-bold text-blue-700">
-                                {monthlyStats.length > 0
-                                    ? monthlyStats.reduce((max, stat) => (stat.totalViews > max.totalViews ? stat : max), monthlyStats[0]).month
-                                    : 'N/A'}
+                                {monthlyStats.reduce((max, stat) => (stat.totalViews > max.totalViews ? stat : max), monthlyStats[0]).month}
                             </p>
                         </div>
                         <ChartBarIcon className="h-10 w-10 text-blue-400 opacity-60" />
                     </div>
                 </div>
-
                 {/* Videos destacados */}
-                <div className="mb-12">
-                    <h2 className="mb-6 text-2xl font-bold text-gray-800">Videos de TikTok ({tiktokVideos.length})</h2>
-                    {tiktokVideos.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
-                            {tiktokVideos.map((video) => (
-                                <TikTokCard key={video.id} {...video} />
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
-                            <div className="text-center">
-                                <PlayCircleIcon className="mx-auto h-16 w-16 text-gray-400" />
-                                <h3 className="mt-4 text-lg font-medium text-gray-900">No hay videos de TikTok</h3>
-                                <p className="mt-2 text-sm text-gray-500">Aún no se han registrado videos de TikTok para esta empresa.</p>
-                            </div>
-                        </div>
-                    )}
+                <div>
+                    <h2 className="mb-6 text-2xl font-bold text-gray-800">Videos Destacados</h2>
+                    <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
+                        {TIKTOK_VIDEOS.map((video) => (
+                            <TikTokCard key={video.videoId} {...video} />
+                        ))}
+                    </div>
                 </div>
-
                 {/* Gráfico de rendimiento */}
                 <div className="mb-12">
                     <PerformanceChart monthlyStats={monthlyStats} />

@@ -51,7 +51,7 @@ interface VideosPageProps extends PageProps {
     empresaNombre?: string;
 }
 
-export default function VideosIndex({ videos, companies, months, filters ,empresaNombre}: VideosPageProps) {
+export default function VideosIndex({ videos, companies, months, filters, empresaNombre }: VideosPageProps) {
     const [search, setSearch] = useState(filters.search);
     const [selectedCompany, setSelectedCompany] = useState(filters.company);
     const [selectedMonth, setSelectedMonth] = useState(filters.month);

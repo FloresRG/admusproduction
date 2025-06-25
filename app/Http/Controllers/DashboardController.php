@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking; // Asegúrate de tener estas importaciones
 use App\Models\Company;
+use App\Models\CompanyLinkComprobante;
 use App\Models\Dato;
 use App\Models\InfluencerAvailability;
 use App\Models\Photo;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use GuzzleHttp\Client;
 
 class DashboardController extends Controller
 {
@@ -30,20 +32,266 @@ class DashboardController extends Controller
             $user->hasRole('pasante') => Inertia::render('Dashboard/Pasante', [
                 'user' => $user,
             ]),
-            // Nuevo: vista para empresa
-    $user->hasRole('empresa') => Inertia::render('Dashboard/Empresa', [
-        'user' => $user,
-    ]),
+            $user->hasRole('empresa') => $this->showEmpresaDashboard($user),
             default => abort(403, 'Acceso no autorizado'),
         };
     }
 
+    protected function showEmpresaDashboard(User $user)
+    {
+        // Buscar la empresa por nombre (asumiendo que el nombre del usuario coincide con el nombre de la empresa)
+        $company = Company::where('name', $user->name)->first();
+
+        // Si no se encuentra la empresa, crear datos por defecto o manejar el error
+        if (!$company) {
+            // Opción 2: Crear datos por defecto (recomendado para desarrollo)
+            $company = (object) [
+                'id' => null,
+                'name' => $user->name,
+                'logo' => null,
+                'description' => 'Empresa sin información adicional',
+                'direccion' => 'No especificada', // Cambiado de 'ubicacion' a 'direccion' para coincidir con el componente React
+                'celular' => 'No especificado',
+            ];
+
+            $tiktokVideos = []; // Sin videos si no existe la empresa
+            $monthlyStats = $this->generateEmptyMonthlyStats();
+        } else {
+            // Obtener los videos de TikTok asociados a la empresa
+            $tiktokVideos = $this->getTikTokVideosForCompany($company->id);
+
+            // Generar estadísticas mensuales basadas en los videos reales
+            $monthlyStats = $this->generateMonthlyStatsForCompany($company->id);
+        }
+
+        return Inertia::render('Dashboard/Empresa', [
+            'user' => $user,
+            'company' => $company,
+            'tiktokVideos' => $tiktokVideos,
+            'monthlyStats' => $monthlyStats,
+        ]);
+    }
+
     /**
-     * Prepara los datos iniciales para el dashboard del influencer.
-     *
-     * @param  \App\Models\User  $user
-     * @return \Inertia\Response
+     * Obtiene los videos de TikTok para una empresa específica
      */
+    protected function getTikTokVideosForCompany($companyId)
+    {
+        $companyLinks = CompanyLinkComprobante::with(['link', 'comprobante'])
+            ->where('company_id', $companyId)
+            ->orderBy('fecha', 'desc')
+            ->get();
+
+        $videos = [];
+
+        foreach ($companyLinks as $association) {
+            $link = $association->link;
+
+            // Verificar si el link es de TikTok
+            if ($this->isTikTokLink($link->link)) {
+                $videoData = $this->extractTikTokVideoData($link, $association);
+                if ($videoData) {
+                    $videos[] = $videoData;
+                }
+            }
+        }
+
+        return $videos;
+    }
+
+    /**
+     * Verifica si un link es de TikTok
+     */
+    protected function isTikTokLink($url)
+    {
+        return strpos($url, 'tiktok.com') !== false || strpos($url, 'vm.tiktok.com') !== false;
+    }
+
+
+
+
+
+    protected function fetchTikTokData($url)
+    {
+        try {
+            $client = new Client([
+                'timeout' => 10,
+                'verify' => false, // Si tienes problemas con SSL en local
+            ]);
+
+            // Ejemplo usando la API pública de tikwm.com (no requiere API key para pruebas)
+            $response = $client->get('https://tikwm.com/api/', [
+                'query' => [
+                    'url' => $url,
+                ],
+                'headers' => [
+                    'Accept' => 'application/json',
+                ],
+            ]);
+
+            $data = json_decode($response->getBody(), true);
+
+            if (isset($data['data'])) {
+                return [
+                    'title' => $data['data']['title'] ?? null,
+                    'description' => $data['data']['desc'] ?? null,
+                    'thumbnail' => $data['data']['cover'] ?? null,
+                    'views' => $data['data']['play_count'] ?? null,
+                    'likes' => $data['data']['digg_count'] ?? null,
+                ];
+            }
+        } catch (\Exception $e) {
+            // Puedes loguear el error si quieres
+            // \Log::error('TikTok fetch error: ' . $e->getMessage());
+            return [];
+        }
+
+        return [];
+    }
+    /**
+     * Extrae datos del video de TikTok
+     */
+    protected function extractTikTokVideoData($link, $association)
+    {
+        try {
+            // Aquí podrías usar la API de TikTok o scraping (respetando términos de servicio)
+            $realData = $this->fetchTikTokData($link->link);
+
+            return [
+                'id' => $association->id,
+                'title' => $realData['title'] ?? $link->detalle ?? 'Video de TikTok',
+                'description' => $realData['description'] ?? $link->detalle ?? 'Contenido promocional',
+                'videoUrl' => $link->link,
+                'thumbnailUrl' => $realData['thumbnail'] ?? $this->generateThumbnailUrl($link->link),
+                'views' => $realData['views'] ?? $this->generateRandomViews(),
+                'likes' => $realData['likes'] ?? $this->generateRandomLikes(),
+                'fecha' => $association->fecha,
+                'mes' => $association->mes,
+                'videoId' => $this->extractVideoIdFromTikTokUrl($link->link),
+                'embedHtml' => $this->generateEmbedHtml($link->link, $link->detalle),
+            ];
+        } catch (\Exception $e) {
+            // Fallback a datos simulados si falla la extracción real
+            return $this->getFallbackVideoData($link, $association);
+        }
+    }
+
+    /**
+     * Genera una URL de thumbnail para el video
+     */
+    protected function generateThumbnailUrl($videoUrl)
+    {
+        // Por ahora usamos placeholder, pero podrías implementar lógica para obtener thumbnails reales
+        $colors = ['3B82F6', 'EF4444', '10B981', 'F59E0B', '8B5CF6'];
+        $color = $colors[array_rand($colors)];
+        return "https://placehold.co/400x600/{$color}/FFFFFF?text=TikTok+Video";
+    }
+
+    /**
+     * Genera vistas aleatorias (esto debería reemplazarse con datos reales de la API de TikTok)
+     */
+    protected function generateRandomViews()
+    {
+        return rand(1000, 100000);
+    }
+
+    /**
+     * Genera likes aleatorios (esto debería reemplazarse con datos reales de la API de TikTok)
+     */
+    protected function generateRandomLikes()
+    {
+        return rand(100, 10000);
+    }
+
+    /**
+     * Extrae el ID del video de la URL de TikTok
+     */
+    protected function extractVideoIdFromTikTokUrl($url)
+    {
+        // Lógica básica para extraer ID, puede necesitar ajustes según el formato de URLs
+        preg_match('/\/video\/(\d+)/', $url, $matches);
+        return $matches[1] ?? uniqid();
+    }
+
+    /**
+     * Genera HTML embed para el video
+     */
+    protected function generateEmbedHtml($videoUrl, $title)
+    {
+        $title = htmlspecialchars($title ?: 'Video TikTok');
+        return "<div class='bg-gradient-to-br from-pink-400 to-purple-500 rounded-lg h-full flex flex-col items-center justify-center text-white font-bold p-4'>
+                <div class='text-4xl mb-2'>📱</div>
+                <div class='text-center text-sm'>{$title}</div>
+                <div class='mt-2 text-xs opacity-75'>Clic para ver en TikTok</div>
+            </div>";
+    }
+
+    /**
+     * Genera estadísticas mensuales para la empresa
+     */
+    protected function generateMonthlyStatsForCompany($companyId)
+    {
+        $monthNames = [
+            'Enero',
+            'Febrero',
+            'Marzo',
+            'Abril',
+            'Mayo',
+            'Junio',
+            'Julio',
+            'Agosto',
+            'Septiembre',
+            'Octubre',
+            'Noviembre',
+            'Diciembre'
+        ];
+
+        $stats = [];
+        $now = new \DateTime();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = clone $now;
+            $date->modify("-{$i} months");
+
+            // Contar videos reales para este mes
+            $videosCount = CompanyLinkComprobante::where('company_id', $companyId)
+                ->where('mes', $date->format('Y-m'))
+                ->count();
+
+            $stats[] = [
+                'month' => $monthNames[$date->format('n') - 1] . ' ' . $date->format('Y'),
+                'videos' => $videosCount,
+                'totalViews' => $videosCount * rand(5000, 25000), // Simulado
+                'totalLikes' => $videosCount * rand(500, 5000),   // Simulado
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Genera estadísticas vacías cuando no hay empresa
+     */
+    protected function generateEmptyMonthlyStats()
+    {
+        $monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'];
+        $stats = [];
+        $now = new \DateTime();
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = clone $now;
+            $date->modify("-{$i} months");
+
+            $stats[] = [
+                'month' => $monthNames[$date->format('n') - 1] . ' ' . $date->format('Y'),
+                'videos' => 0,
+                'totalViews' => 0,
+                'totalLikes' => 0,
+            ];
+        }
+
+        return $stats;
+    }
     protected function showInfluencerDashboard(User $user)
     {
         $bookings = $user->bookings()->with(['week', 'company'])->get();
@@ -59,7 +307,7 @@ class DashboardController extends Controller
         $availabilities = $user->availabilities()->get();
         $totalBookings = $bookings->count();
         $bookingStatusCounts = $bookings->groupBy('status')->map->count();
-        $totalAvailabilityHours = $availabilities->sum(function($availability) {
+        $totalAvailabilityHours = $availabilities->sum(function ($availability) {
             try {
                 $start = Carbon::parse($availability->start_time);
                 $end = Carbon::parse($availability->end_time);
@@ -69,7 +317,7 @@ class DashboardController extends Controller
             }
         });
 
-        $nextBooking = $bookings->filter(function($booking) {
+        $nextBooking = $bookings->filter(function ($booking) {
             return Carbon::parse($booking->start_time)->isFuture();
         })->sortBy('start_time')->first();
 
@@ -81,7 +329,7 @@ class DashboardController extends Controller
         $daysOfWeek = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
         $availableDays = $availabilities->pluck('day_of_week')
             ->unique()
-            ->map(function($day) {
+            ->map(function ($day) {
                 return mb_strtolower($day, 'UTF-8');
             })
             ->toArray();
@@ -123,10 +371,10 @@ class DashboardController extends Controller
         }
 
         $weeks = $user->bookings()->with('week')
-                      ->get()
-                      ->pluck('week')
-                      ->unique('id')
-                      ->values();
+            ->get()
+            ->pluck('week')
+            ->unique('id')
+            ->values();
 
         return response()->json($weeks);
     }
@@ -146,17 +394,17 @@ class DashboardController extends Controller
         }
 
         $userHasBookingsInWeek = $user->bookings()
-                                      ->where('week_id', $week->id)
-                                      ->exists();
+            ->where('week_id', $week->id)
+            ->exists();
 
         if (!$userHasBookingsInWeek) {
             return response()->json(['message' => 'Semana no encontrada para este usuario o acceso no autorizado'], 404);
         }
 
         $bookingsInWeek = $user->bookings()
-                               ->where('week_id', $week->id)
-                               ->with('company')
-                               ->get();
+            ->where('week_id', $week->id)
+            ->with('company')
+            ->get();
 
         $uniqueDaysWorkedInWeek = $bookingsInWeek->pluck('day_of_week')->unique()->count();
         $companiesInWeek = $bookingsInWeek->pluck('company')->unique('id')->values();
@@ -185,9 +433,9 @@ class DashboardController extends Controller
 
         // Obtener todas las reservas del usuario para esta semana, cargando la empresa
         $bookingsInWeek = $user->bookings()
-                               ->where('week_id', $week->id)
-                               ->with('company')
-                               ->get();
+            ->where('week_id', $week->id)
+            ->with('company')
+            ->get();
 
         // Si el usuario no tiene reservas en esta semana, podría ser un intento de acceso no autorizado
         if ($bookingsInWeek->isEmpty()) {
