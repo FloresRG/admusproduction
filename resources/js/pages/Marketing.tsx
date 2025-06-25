@@ -163,7 +163,7 @@ const HeroSection = () => {
           transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
         >
           <img
-            src="/Gflores/6.gif"
+            src="/Gflores/fondo.jpeg"
             alt="Marketing Animation"
             className="w-full max-w-md rounded-lg shadow-2xl border-4 border-[#FF2400] hover:scale-105 transition-transform duration-300"
             style={{ boxShadow: '0 0 25px rgba(255, 36, 0, 0.5)' }}

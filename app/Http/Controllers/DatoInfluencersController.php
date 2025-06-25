@@ -111,6 +111,7 @@ class DatoInfluencersController extends Controller
         $user->delete();
         return redirect()->back()->with('success', 'Usuario eliminado exitosamente');
     }
+
     public function uploadPhotos(Request $request, User $user)
     {
         $request->validate([
@@ -139,7 +140,7 @@ class DatoInfluencersController extends Controller
             $photoRecord = Photo::create([
                 'path' => $path,
                 'nombre' => $photo->getClientOriginalName(),
-                'tipo' => $photo->getClientMimeType(),
+                'tipo' => 'foto',
             ]);
 
             $user->photos()->attach($photoRecord->id);
