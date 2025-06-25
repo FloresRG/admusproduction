@@ -48,13 +48,13 @@ class CompanyController extends Controller
             'company_category_id' => 'required|exists:company_categories,id',
             'contract_duration' => 'required|string',
             'description' => 'nullable|string',
-            'direccion' => 'required|string',
+            'direccion' => 'required|string', // Formato: "latitud,longitud"
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'celular' => 'nullable|string',
             'monto_mensual' => 'nullable|string',
-            'contrato' => 'nullable|file|mimes:pdf',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'contrato' => 'nullable|file|mimes:pdf', // Max 2MB
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'crear_usuario' => 'nullable|boolean',
             'availability' => 'required|array',
             'availability.*.day_of_week' => 'required|integer|between:1,7',
@@ -63,35 +63,33 @@ class CompanyController extends Controller
             'availability.*.end_time' => 'required',
             'availability.*.cantidad' => 'nullable|integer|min:0',
         ]);
-
-        // Guardar contrato
         if ($request->hasFile('contrato')) {
-            $filename = time() . '_' . uniqid() . '.' . $request->file('contrato')->getClientOriginalExtension();
-            $destination = $_SERVER['DOCUMENT_ROOT'] . '/contratos';
-            if (!file_exists($destination)) mkdir($destination, 0755, true);
-            $request->file('contrato')->move($destination, $filename);
-            $validated['contrato'] = 'contratos/' . $filename;
+            $validated['contrato'] = $request->file('contrato')->store('contratos', 'public');
         }
 
-        // Guardar logo
         if ($request->hasFile('logo')) {
-            $filename = time() . '_' . uniqid() . '.' . $request->file('logo')->getClientOriginalExtension();
-            $destination = $_SERVER['DOCUMENT_ROOT'] . '/logos';
-            if (!file_exists($destination)) mkdir($destination, 0755, true);
-            $request->file('logo')->move($destination, $filename);
-            $validated['logo'] = 'logos/' . $filename;
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
         }
+
 
         $company = Company::create($validated);
 
-        $days = [1 => 'monday', 2 => 'tuesday', 3 => 'wednesday', 4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'];
+        $days = [
+            1 => 'monday',
+            2 => 'tuesday',
+            3 => 'wednesday',
+            4 => 'thursday',
+            5 => 'friday',
+            6 => 'saturday',
+            7 => 'sunday',
+        ];
+
         foreach ($validated['availability'] as $availability) {
             $availability['day_of_week'] = $days[$availability['day_of_week']] ?? $availability['day_of_week'];
             $company->availabilityDays()->create($availability);
         }
-
         if ($request->boolean('crear_usuario')) {
-            $email = Str::slug($company->name, '') . '@gmail.com';
+            $email = Str::slug($company->name, '') . '@gmail.com'; // sin espacios ni símbolos
             $password = $email;
 
             $user = User::create([
@@ -100,13 +98,12 @@ class CompanyController extends Controller
                 'password' => Hash::make($password),
             ]);
 
-            $user->assignRole('empresa');
+            $user->assignRole('empresa'); // Spatie Role
         }
 
         return redirect()->route('companies.index')
             ->with('success', 'Empresa creada correctamente');
     }
-
 
     // Mostrar formulario para editar una compañía existente
     public function edit($id)
@@ -150,8 +147,8 @@ class CompanyController extends Controller
                 'end_date' => $company->end_date,
                 'celular' => $company->celular,
                 'monto_mensual' => $company->monto_mensual,
-                'contrato_url' => $company->contrato ? asset($company->contrato) : null,
-                'logo_url' => $company->logo ? asset($company->logo) : null,
+                'contrato_url' => $company->contrato ? Storage::url($company->contrato) : null,
+                'logo_url' => $company->logo ? Storage::url($company->logo) : null,
                 'availability' => $availability,
             ],
             'categories' => $categories,
@@ -174,8 +171,8 @@ class CompanyController extends Controller
             'end_date' => 'required|date|after:start_date',
             'celular' => 'nullable|string',
             'monto_mensual' => 'nullable|string',
-            'contrato' => 'nullable|file|mimes:pdf',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'contrato' => 'nullable|file|mimes:pdf|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'availability' => 'required|array',
             'availability.*.day_of_week' => 'required|integer|between:1,7',
             'availability.*.turno' => 'required|in:mañana,tarde',
@@ -185,47 +182,52 @@ class CompanyController extends Controller
             'crear_usuario' => 'nullable|boolean',
         ]);
 
-        // Contrato
+        // Manejar archivo de contrato
         if ($request->hasFile('contrato')) {
-            if ($company->contrato && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $company->contrato)) {
-                unlink($_SERVER['DOCUMENT_ROOT'] . '/' . $company->contrato);
+            if ($company->contrato) {
+                Storage::disk('public')->delete($company->contrato);
             }
-
-            $filename = time() . '_' . uniqid() . '.' . $request->file('contrato')->getClientOriginalExtension();
-            $destination = $_SERVER['DOCUMENT_ROOT'] . '/contratos';
-            if (!file_exists($destination)) mkdir($destination, 0755, true);
-            $request->file('contrato')->move($destination, $filename);
-            $validated['contrato'] = 'contratos/' . $filename;
+            $validated['contrato'] = $request->file('contrato')->store('contratos', 'public');
         } else {
+            // No se subió nuevo contrato, no actualizar el campo
             unset($validated['contrato']);
         }
 
-        // Logo
+        // Manejar archivo de logo
         if ($request->hasFile('logo')) {
-            if ($company->logo && file_exists($_SERVER['DOCUMENT_ROOT'] . '/' . $company->logo)) {
-                unlink($_SERVER['DOCUMENT_ROOT'] . '/' . $company->logo);
+            if ($company->logo) {
+                Storage::disk('public')->delete($company->logo);
             }
-
-            $filename = time() . '_' . uniqid() . '.' . $request->file('logo')->getClientOriginalExtension();
-            $destination = $_SERVER['DOCUMENT_ROOT'] . '/logos';
-            if (!file_exists($destination)) mkdir($destination, 0755, true);
-            $request->file('logo')->move($destination, $filename);
-            $validated['logo'] = 'logos/' . $filename;
+            $validated['logo'] = $request->file('logo')->store('logos', 'public');
         } else {
+            // No se subió nuevo logo, no actualizar el campo
             unset($validated['logo']);
         }
 
+        // Actualizar la compañía
         $company->update($validated);
 
-        $days = [1 => 'monday', 2 => 'tuesday', 3 => 'wednesday', 4 => 'thursday', 5 => 'friday', 6 => 'saturday', 7 => 'sunday'];
+        // Actualizar días de disponibilidad
+        $days = [
+            1 => 'monday',
+            2 => 'tuesday',
+            3 => 'wednesday',
+            4 => 'thursday',
+            5 => 'friday',
+            6 => 'saturday',
+            7 => 'sunday',
+        ];
+
+        // Eliminar disponibilidades anteriores
         $company->availabilityDays()->delete();
+
+        // Crear nuevas disponibilidades
         foreach ($validated['availability'] as $availability) {
             $availability['day_of_week'] = $days[$availability['day_of_week']] ?? $availability['day_of_week'];
             $company->availabilityDays()->create($availability);
         }
-
         if ($request->boolean('crear_usuario')) {
-            $email = Str::slug($company->name, '') . '@gmail.com';
+            $email = Str::slug($company->name, '') . '@gmail.com'; // sin espacios ni símbolos
             $password = $email;
 
             $user = User::create([
@@ -234,13 +236,11 @@ class CompanyController extends Controller
                 'password' => Hash::make($password),
             ]);
 
-            $user->assignRole('empresa');
+            $user->assignRole('empresa'); // Spatie Role
         }
-
         return redirect()->route('companies.index')
             ->with('success', 'Empresa actualizada correctamente');
     }
-
 
     public function destroy(Company $company)
     {

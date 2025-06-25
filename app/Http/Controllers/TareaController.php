@@ -52,95 +52,95 @@ class TareaController extends Controller
 
 
     public function store(Request $request)
-    {
-        // 1. Validar incluyendo el nuevo campo de asignación
-        $data = $request->validate([
-            'titulo'      => 'required|string|max:255',
-            'prioridad'   => 'nullable|string|max:255',
-            'descripcion' => 'nullable|string',
-            'fecha'       => 'nullable|date',
-            'tipo_id'     => 'nullable|exists:tipos,id',
-            'company_id'  => 'nullable|exists:companies,id',
-            'asignacion_aleatoria' => 'required|boolean', // Nuevo campo
-            'pasante_id' => 'required_if:asignacion_aleatoria,false|nullable|exists:users,id', // Solo requerido si no es aleatorio
-
-            // Agregar detalle y estado para la asignacion
-        'estado' => 'nullable|string|in:pendiente,en_progreso,finalizado', // ajusta según tus estados válidos
+{
+    // 1. Validar incluyendo el nuevo campo de asignación
+    $data = $request->validate([
+        'titulo' => 'required|string|max:255',
+        'prioridad' => 'nullable|string|max:255',
+        'descripcion' => 'nullable|string',
+        'fecha' => 'nullable|date',
+        'tipo_id' => 'nullable|exists:tipos,id',
+        'company_id' => 'nullable|exists:companies,id',
+        'asignacion_aleatoria' => 'required|boolean',
+        'pasante_id' => 'required_if:asignacion_aleatoria,false|nullable|exists:users,id',
+        'estado' => 'nullable|string|in:pendiente,en_progreso,finalizado',
         'detalle' => 'nullable|string',
+    ]);
 
+    // 2. Obtener el nombre de la empresa (si viene el ID)
+    $nombreEmpresa = null;
+    if (!empty($data['company_id'])) {
+        $empresa = Company::find($data['company_id']);
+        if ($empresa) {
+            $nombreEmpresa = $empresa->name;
+        }
+    }
 
-        ]);
+    // 3. Crear la tarea con nombre de empresa como texto
+    $tarea = Tarea::create([
+        'titulo' => $data['titulo'],
+        'prioridad' => $data['prioridad'],
+        'descripcion' => $data['descripcion'],
+        'fecha' => $data['fecha'],
+        'tipo_id' => $data['tipo_id'],
+        'empresa' => $nombreEmpresa, // ← se guarda el nombre aquí
+    ]);
 
-        // 2. Crear la tarea
-        $tarea = Tarea::create([
-            'titulo' => $data['titulo'],
-            'prioridad' => $data['prioridad'],
-            'descripcion' => $data['descripcion'],
-            'fecha' => $data['fecha'],
-            'tipo_id' => $data['tipo_id'],
-            'company_id' => $data['company_id'],
-        ]);
+    // 4. Determinar fecha de asignación
+    $fechaAsignacion = $data['fecha'] ?? now()->toDateString();
 
-        // 3. Determinar fecha de asignación
-        $fechaAsignacion = $data['fecha'] ?? Carbon::now()->toDateString();
+    // 5. Proceso de asignación según el tipo seleccionado
+    if ($data['asignacion_aleatoria']) {
+        $pasantesQuery = User::role('pasante');
 
-        // 4. Proceso de asignación según el tipo seleccionado
-        if ($data['asignacion_aleatoria']) {
-            // Asignación aleatoria
-            $pasantesQuery = User::role('pasante');
-
-            if (!empty($data['tipo_id'])) {
-                $pasantesQuery = $pasantesQuery->whereHas('tipos', function ($q) use ($data) {
-                    $q->where('tipo_id', $data['tipo_id']);
-                });
-            }
-
-            $pasantes = $pasantesQuery->get();
-
-            if ($pasantes->isEmpty()) {
-                $pasantes = User::role('pasante')->get();
-            }
-
-            if ($pasantes->isNotEmpty()) {
-                $pasanteElegido = $pasantes->random();
-                $pasanteId = $pasanteElegido->id;
-            } else {
-                return response()->json([
-                    'message' => 'No hay pasantes disponibles para asignar la tarea'
-                ], 400);
-            }
-        } else {
-            // Asignación manual
-            $pasanteId = $data['pasante_id'];
-
-            // Verificar que el usuario seleccionado sea un pasante
-            $esPasante = User::role('pasante')->where('id', $pasanteId)->exists();
-
-            if (!$esPasante) {
-                return response()->json([
-                    'message' => 'El usuario seleccionado no es un pasante'
-                ], 400);
-            }
+        if (!empty($data['tipo_id'])) {
+            $pasantesQuery = $pasantesQuery->whereHas('tipos', function ($q) use ($data) {
+                $q->where('tipo_id', $data['tipo_id']);
+            });
         }
 
-        // 5. Crear la asignación
-        AsignacionTarea::create([
-            'user_id'  => $pasanteId,
-            'tarea_id' => $tarea->id,
-            'estado'   => 'pendiente',
-            'detalle'  => '',
-            'fecha'    => $fechaAsignacion,
-        ]);
+        $pasantes = $pasantesQuery->get();
 
-        // 6. Respuesta al frontend
-        return response()->json([
-            'message' => 'Tarea creada y asignada correctamente',
-            'data' => [
-                'tarea' => $tarea,
-                'pasante_id' => $pasanteId
-            ]
-        ], 201);
+        if ($pasantes->isEmpty()) {
+            $pasantes = User::role('pasante')->get();
+        }
+
+        if ($pasantes->isNotEmpty()) {
+            $pasanteId = $pasantes->random()->id;
+        } else {
+            return response()->json([
+                'message' => 'No hay pasantes disponibles para asignar la tarea'
+            ], 400);
+        }
+    } else {
+        $pasanteId = $data['pasante_id'];
+
+        if (!User::role('pasante')->where('id', $pasanteId)->exists()) {
+            return response()->json([
+                'message' => 'El usuario seleccionado no es un pasante'
+            ], 400);
+        }
     }
+
+    // 6. Crear la asignación
+    AsignacionTarea::create([
+        'user_id' => $pasanteId,
+        'tarea_id' => $tarea->id,
+        'estado' => 'pendiente',
+        'detalle' => '',
+        'fecha' => $fechaAsignacion,
+    ]);
+
+    // 7. Retornar respuesta
+    return response()->json([
+        'message' => 'Tarea creada y asignada correctamente',
+        'data' => [
+            'tarea' => $tarea,
+            'pasante_id' => $pasanteId
+        ]
+    ], 201);
+}
+
 
 public function tareasConAsignaciones()
     {
@@ -178,6 +178,14 @@ public function tareasConAsignaciones()
         return response()->json($resultado);
     }
 
+    public function listarEmpresas()
+{
+    $empresas = \App\Models\Company::select('id', 'name')->get();
+
+    return response()->json($empresas);
+}
+
+
     /**F
      * Actualiza el estado y detalle de una asignación concreta.
      * Esta ruta debe estar en web.php (no api.php) para poder respetar
@@ -186,7 +194,7 @@ public function tareasConAsignaciones()
     public function actualizarAsignacion(Request $request, $id)
     {
         $data = $request->validate([
-            'estado'  => 'required|string|in:pendiente,en_revision,publicada',
+            'estado'  => 'nullable|string|in:pendiente,en_revision,publicada',
             'detalle' => 'nullable|string',
         ]);
 
@@ -196,14 +204,34 @@ public function tareasConAsignaciones()
         return response()->json(['message' => 'Asignación actualizada con éxito.']);
     }
 
-public function intercambiarUsuario(Request $request, $id)
+public function reasignarUsuario(Request $request, $id)
 {
-    $asignacion = AsignacionTarea::findOrFail($id);
-    $asignacion->user_id = $request->input('user_id');
-    $asignacion->estado = 'pendiente'; // reinicia estado si deseas
-    $asignacion->save();
+    $request->validate([
+        'user_id' => 'required|exists:users,id',
+    ]);
 
-    return response()->json(['message' => 'Pasante actualizado.']);
+    $asignacionAnterior = AsignacionTarea::findOrFail($id);
+
+    // Copiar los datos de la asignación actual
+    $tareaId = $asignacionAnterior->tarea_id;
+    $fecha   = $asignacionAnterior->fecha;
+
+    // Eliminar asignación anterior
+    $asignacionAnterior->delete();
+
+    // Crear nueva asignación
+    $nuevaAsignacion = AsignacionTarea::create([
+        'user_id'  => $request->input('user_id'),
+        'tarea_id' => $tareaId,
+        'estado'   => 'pendiente',
+        'detalle'  => '',
+        'fecha'    => $fecha,
+    ]);
+
+    return response()->json([
+        'message' => 'Pasante reasignado correctamente.',
+        'nueva_asignacion' => $nuevaAsignacion,
+    ]);
 }
 
 
@@ -252,33 +280,56 @@ public function intercambiarUsuario(Request $request, $id)
 
 
 
-    public function update(Request $request, Tarea $tarea, $id)
+
+ public function update(Request $request, $id)
 {
-    // Validaciones para actualizar la tarea
+    $tarea = Tarea::findOrFail($id);
+
     $data = $request->validate([
-        'titulo' => 'required|string|max:255',
-        'prioridad' => 'nullable|string|max:255',
+        'titulo'      => 'required|string|max:255',
+        'prioridad'   => 'nullable|string|max:255',
         'descripcion' => 'nullable|string',
-        'fecha' => 'nullable|date',
-        'tipo_id' => 'nullable|exists:tipos,id',
-        'company_id' => 'nullable|exists:companies,id',
+        'fecha'       => 'nullable|date',
+        'tipo_id'     => 'nullable|exists:tipos,id',
+        'company_id'  => 'nullable|exists:companies,id', // usamos solo para obtener el nombre
     ]);
 
-    // Si se envía user_id, actualizamos la asignación relacionada
-    if ($request->filled('user_id')) {
-        $asignacion = $tarea->asignaciones()->where('id', $id)->first();
-
-        if ($asignacion) {
-            $asignacion->user_id = $request->user_id;
-            $asignacion->save();
+    // Obtener el nombre de la empresa desde el ID (si viene)
+    $nombreEmpresa = null;
+    if (!empty($data['company_id'])) {
+        $empresa = Company::find($data['company_id']);
+        if ($empresa) {
+            $nombreEmpresa = $empresa->name;
         }
     }
 
-    // Se actualiza la tarea como antes
-    $tarea->update($data);
+    // Actualizar la tarea con el nombre de la empresa
+    $tarea->update([
+        'titulo'      => $data['titulo'],
+        'prioridad'   => $data['prioridad'],
+        'descripcion' => $data['descripcion'],
+        'fecha'       => $data['fecha'],
+        'tipo_id'     => $data['tipo_id'],
+        'empresa'     => $nombreEmpresa,
+    ]);
 
-    return response()->json(['message' => 'Tarea y asignación actualizadas']);
+    return response()->json(['message' => 'Tarea actualizada con éxito']);
 }
+
+public function actualizarDescripcion(Request $request, $id)
+{
+    $request->validate([
+        'descripcion' => 'required|string',
+    ]);
+
+    $tarea = Tarea::findOrFail($id);
+    $tarea->descripcion = $request->input('descripcion');
+    $tarea->save();
+
+    return response()->json(['message' => 'Descripción actualizada con éxito']);
+}
+
+
 
 
     public function destroy(Tarea $tarea)

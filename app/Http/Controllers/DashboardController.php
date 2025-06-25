@@ -30,6 +30,10 @@ class DashboardController extends Controller
             $user->hasRole('pasante') => Inertia::render('Dashboard/Pasante', [
                 'user' => $user,
             ]),
+            // Nuevo: vista para empresa
+    $user->hasRole('empresa') => Inertia::render('Dashboard/Empresa', [
+        'user' => $user,
+    ]),
             default => abort(403, 'Acceso no autorizado'),
         };
     }

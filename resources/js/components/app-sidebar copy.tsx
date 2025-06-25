@@ -29,14 +29,17 @@ import type { NavItem } from '@/types';
 
 // 5. Iconos
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import BusinessIcon from '@mui/icons-material/Business';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CategoryIcon from '@mui/icons-material/Category';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import DateRangeIcon from '@mui/icons-material/DateRange';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import FormatIndentIncreaseIcon from '@mui/icons-material/FormatIndentIncrease';
 import GroupIcon from '@mui/icons-material/Group';
 import PeopleIcon from '@mui/icons-material/Groups';
 import ListAltIcon from '@mui/icons-material/ListAlt';
@@ -45,20 +48,6 @@ import PersonIcon from '@mui/icons-material/Person';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import RateReviewIcon from '@mui/icons-material/RateReview';
 import WorkIcon from '@mui/icons-material/Work';
-
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'; // Para "Pagos del ANUALES"
-import LinkIcon from '@mui/icons-material/Link'; // Para "+ Link de Compañias"
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn'; // Para "Pagos del MES"
-import StoreIcon from '@mui/icons-material/Store'; // Para "Companies"
-
-import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Para "Semana Influencer"
-import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest'; // Para "Personal"
-import TableChartIcon from '@mui/icons-material/TableChart'; // Para "Semana"
-
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; // Para "Asignar Tareas"
-import PermIdentityIcon from '@mui/icons-material/PermIdentity'; // Para "Mi perfil"
-import TodayIcon from '@mui/icons-material/Today';
-
 // 6. Props que trae Inertia
 type PageProps = {
     auth: {
@@ -164,7 +153,6 @@ export function AppSidebar() {
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
-    const isEmpresa = roles.includes('empresa');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);
@@ -176,49 +164,54 @@ export function AppSidebar() {
     if (isAdmin) {
         menuSections.push(
             {
-                title: 'Gestion de Personal',
+                title: 'Personal',
                 icon: PeopleIcon,
                 items: [
                     { title: 'Usuarios', href: '/users', icon: PersonIcon },
                     { title: 'Roles', href: '/roles', icon: AdminPanelSettingsIcon },
-                    { title: 'Gestion de tipos', href: '/tipos', icon: SettingsSuggestIcon }, // CAMBIADO
+                    { title: 'Personal', href: '/tipos', icon: FormatIndentIncreaseIcon },
+                    { title: 'Semana', href: '/semana', icon: FormatIndentIncreaseIcon },
+                    { title: 'Semana Influencer', href: '/semanainfluencer', icon: FormatIndentIncreaseIcon },
                 ],
                 isCollapsible: true,
             },
             {
-                title: 'Gestion de Empresas',
+                title: 'EmpresasActivas',
                 icon: BusinessIcon,
                 items: [
-                    { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
-                    { title: 'Categorias', href: '/categories', icon: CategoryIcon },
-                    { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
-                    { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
-                    { title: 'Pagos del ANUALES', href: '/reportes/pagos-por-anio', icon: CalendarMonthIcon },
+                    { title: 'Categorías', href: '/categories', icon: CategoryIcon },
+                    { title: 'Companies', href: '/companies', icon: BusinessIcon },
+                    { title: '+ Link de Compañias', href: '/company-links', icon: BusinessIcon },
+                    { title: 'Pagos del MES', href: '/pagos-del-mes', icon: BusinessIcon },
+                    { title: 'Pagos del ANUALES', href: '/reportes/pagos-por-anio', icon: BusinessIcon },
                     { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                     { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
+
                 ],
                 isCollapsible: true,
             },
             {
-                title: 'Gestion de Influencers',
+                title: 'Influencer',
                 icon: EmojiPeopleIcon,
                 items: [
-                    { title: 'Semana Influencer', href: '/semanainfluencer', icon: AccessTimeIcon },
-                    { title: 'Administrar Influencers', href: '/infuencersdatos', icon: EmojiPeopleIcon },
                     { title: 'Influencers', href: '/influencers', icon: GroupIcon },
-                    { title: 'Historial de Semanas', href: '/weeks', icon: CalendarViewWeekIcon },
+                    { title: 'Cantidad de Videos', href: '/infuencersdatos', icon: EmojiPeopleIcon },
+                    { title: 'Semanas', href: '/weeks', icon: CalendarViewWeekIcon },
                     { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
                 ],
                 isCollapsible: true,
             },
             {
-                title: 'Gestion de Pasantes',
+                title: 'Pasante',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Asignar Tareas', href: '/tareas', icon: AssignmentTurnedInIcon },
-                    { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: TodayIcon }, // CAMBIADO
-                    { title: 'Tareas en revicion', href: '/tareas/revicion', icon: PendingActionsIcon },
-                    { title: 'Semana Tareas', href: '/semana', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Asignar Tareas', href: '/tareas', icon: DateRangeIcon },
+                    { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: DateRangeIcon },
+                    { title: 'Tareas en revicion', href: '/tareas/revicion', icon: DateRangeIcon },
+                    { title: 'Historial de Tareas', href: '/mis-asignaciones/fechas', icon: DateRangeIcon },
+                    { title: 'Mis Tareas', href: '/pasante', icon: FormatIndentIncreaseIcon },
+                    { title: 'Administrar Tareas', href: '/asignaciones/fechas', icon: AssignmentIcon },
+                    { title: 'Tareas de La Semana', href: '/vertareas', icon: DateRangeIcon },
                 ],
                 isCollapsible: true,
             },
@@ -231,7 +224,7 @@ export function AppSidebar() {
                 items: [
                     { title: 'Influencers', href: '/influencers', icon: GroupIcon },
                     { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
-                    { title: 'Mi perfil', href: '/tiposinfluencers', icon: PermIdentityIcon },
+                    { title: 'Mi perfil', href: '/tiposinfluencers', icon: EventNoteIcon },
                 ],
                 isCollapsible: false,
             });
@@ -241,21 +234,12 @@ export function AppSidebar() {
                 title: 'Pasante',
                 icon: WorkIcon,
                 items: [
+                    { title: 'Historial de Tareas', href: '/mis-asignaciones/fechas', icon: DateRangeIcon },
+                    { title: 'Mis Tareas', href: '/pasante', icon: FormatIndentIncreaseIcon },
                     { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
                     { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
-                ],
-                isCollapsible: false,
-            });
-        }
-        if (isEmpresa) {
-            menuSections.push({
-                title: 'Empresa',
-                icon: BusinessIcon,
-                items: [
-                    { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
-                    { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
                 ],
                 isCollapsible: false,
             });
