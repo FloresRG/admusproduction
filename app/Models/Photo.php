@@ -17,8 +17,8 @@ class Photo extends Model
     }
 
     // Función para obtener URL completa
-    public function getUrlAttribute()
-    {
-        return asset('storage/' . $this->path);
-    }
+ public function getUrlAttribute()
+{
+    return asset($this->path); // ✅ ya no uses 'storage/', solo el path tal cual esté guardado
+}
 }

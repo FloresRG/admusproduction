@@ -133,7 +133,7 @@ class DatoInfluencersController extends Controller
             // Mover archivo al destino
             $photo->move($destination, $filename);
 
-            $path = 'influencers/' . $filename;
+            $path = 'influencer/' . $filename;
 
             // Guardar en base de datos
             $photoRecord = Photo::create([

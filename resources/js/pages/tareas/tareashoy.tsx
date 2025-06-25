@@ -4,7 +4,6 @@ import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import {
     Add,
-    Assignment,
     Business as BusinessIcon,
     CalendarToday as CalendarTodayIcon,
     Cancel,
@@ -13,8 +12,6 @@ import {
     Edit,
     ExpandLess,
     ExpandMore,
-    Person,
-    Refresh as RefreshIcon,
     Save,
     Search,
     SwapHoriz,
@@ -551,6 +548,28 @@ export default function Tareas() {
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
                                 Gestiona y edita tus tareas del día de manera eficiente
                             </Typography>
+                            {/* Controles principales */}
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <Box sx={{ flexGrow: 1 }} />
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                    <Button
+                                        variant="contained"
+                                        onClick={startNewTask}
+                                        startIcon={<Add />}
+                                        sx={{
+                                            borderRadius: 2,
+                                            background: 'linear-gradient(45deg, #1976d2 0%, #0d47a1 100%)',
+                                            '&:hover': {
+                                                background: 'linear-gradient(45deg, #1565c0 0%, #0a3880 100%)',
+                                            },
+                                            px: 3,
+                                            py: 1,
+                                        }}
+                                    >
+                                        Nueva Tarea Para Hoy
+                                    </Button>
+                                </Box>
+                            </Box>
                         </Box>
                     </Fade>
                 </Container>
@@ -586,34 +605,6 @@ export default function Tareas() {
                     }}
                 >
                     <Stack spacing={3}>
-                        {/* Controles principales */}
-                        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                            <Box sx={{ flexGrow: 1 }} />
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Tooltip title="Actualizar">
-                                    <IconButton onClick={fetchData} sx={{ bgcolor: 'white', '&:hover': { bgcolor: 'grey.100' } }}>
-                                        <RefreshIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Button
-                                    variant="contained"
-                                    onClick={startNewTask}
-                                    startIcon={<Add />}
-                                    sx={{
-                                        borderRadius: 2,
-                                        background: 'linear-gradient(45deg, #1976d2 0%, #0d47a1 100%)',
-                                        '&:hover': {
-                                            background: 'linear-gradient(45deg, #1565c0 0%, #0a3880 100%)',
-                                        },
-                                        px: 3,
-                                        py: 1,
-                                    }}
-                                >
-                                    Nueva Tarea Para Hoy
-                                </Button>
-                            </Box>
-                        </Box>
-
                         {/* Filtros */}
                         <Grid container spacing={2}>
                             <Grid item xs={12} md={4}>
@@ -640,6 +631,7 @@ export default function Tareas() {
                                     value={filterUser || null}
                                     onChange={(_, newValue) => setFilterUser(newValue || '')}
                                     clearOnEscape
+                                    sx={{ minWidth: 300 }}
                                     renderInput={(params) => (
                                         <TextField {...params} label="👤 Filtrar por Usuario" placeholder="Filtrar por usuario" fullWidth />
                                     )}
@@ -653,37 +645,13 @@ export default function Tareas() {
                                     value={filterPriority || null}
                                     onChange={(_, newValue) => setFilterPriority(newValue || '')}
                                     clearOnEscape
+                                    sx={{ minWidth: 300 }}
                                     renderInput={(params) => (
                                         <TextField {...params} label="⚡ Filtrar por Prioridad" placeholder="Filtrar por prioridad" fullWidth />
                                     )}
                                 />
                             </Grid>
                         </Grid>
-
-                        {/* Estadísticas */}
-                        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                            <Chip
-                                icon={<Assignment />}
-                                label={`${filteredTareas.length} tareas de hoy`}
-                                color="primary"
-                                variant="outlined"
-                                sx={{ fontWeight: 'bold' }}
-                            />
-                            <Chip
-                                icon={<Person />}
-                                label={`${usuariosUnicos.length} usuarios`}
-                                color="primary"
-                                variant="outlined"
-                                sx={{ fontWeight: 'bold' }}
-                            />
-                            <Chip
-                                icon={<BusinessIcon />}
-                                label={`${new Set(tareas.map((t) => t.company?.name).filter(Boolean)).size} empresas`}
-                                color="primary"
-                                variant="outlined"
-                                sx={{ fontWeight: 'bold' }}
-                            />
-                        </Box>
                     </Stack>
                 </Paper>
 
@@ -742,6 +710,7 @@ export default function Tareas() {
                                             onChange={(_, newValue) =>
                                                 setNewTaskData({ ...newTaskData, tipo_id: newValue ? String(newValue.id) : '' })
                                             }
+                                            sx={{ minWidth: 280 }} // 👈 Aumenta el ancho mínimo
                                             renderInput={(params) => <TextField {...params} label="🏷️ Tipo de tarea" fullWidth />}
                                         />
                                     </Grid>
@@ -782,6 +751,7 @@ export default function Tareas() {
                                                 getOptionLabel={(option) => `${option.name} (${option.email})`}
                                                 value={usuarios.find((p) => String(p.id) === selectedPasanteId) || null}
                                                 onChange={(_, newValue) => setSelectedPasanteId(newValue ? String(newValue.id) : '')}
+                                                sx={{ minWidth: 300 }} // 👈 ancho mínimo mejorado
                                                 renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Pasante" fullWidth />}
                                             />
                                         </Grid>
@@ -818,6 +788,7 @@ export default function Tareas() {
                                                         company_id: newValue ? String(newValue.id) : '', // ✅ Solo el ID
                                                     })
                                                 }
+                                                sx={{ minWidth: 300 }} // 👈 ancho mínimo mejorado
                                                 renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
                                             />
                                         </Grid>
@@ -1130,7 +1101,7 @@ export default function Tareas() {
 
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                                     {/* Botones de acción */}
-                                                                    <Tooltip title="Editar tarea">
+                                                                    <Tooltip title="npm runr tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1290,17 +1261,17 @@ export default function Tareas() {
                                                                                             <FormControlLabel
                                                                                                 value="pendiente"
                                                                                                 control={<Radio size="small" />}
-                                                                                                label="🟡 Pendiente"
+                                                                                                label="Pendiente"
                                                                                             />
                                                                                             <FormControlLabel
                                                                                                 value="en_revision"
                                                                                                 control={<Radio size="small" />}
-                                                                                                label="🔵 En revisión"
+                                                                                                label="En revisión"
                                                                                             />
                                                                                             <FormControlLabel
                                                                                                 value="publicada"
                                                                                                 control={<Radio size="small" />}
-                                                                                                label="🟢 Publicada"
+                                                                                                label="Publicada"
                                                                                             />
                                                                                         </RadioGroup>
                                                                                     </FormControl>
@@ -1313,7 +1284,7 @@ export default function Tareas() {
                                                                                         color="text.secondary"
                                                                                         sx={{ mb: 1, fontWeight: 'bold' }}
                                                                                     >
-                                                                                        📝 Detalle del progreso:
+                                                                                        📝 Detalle del progreso del Pasante: {asignado.user_name}
                                                                                     </Typography>
                                                                                     <TextField
                                                                                         fullWidth
