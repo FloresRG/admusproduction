@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\AsignacionTarea;
 use App\Models\Tarea;
@@ -232,6 +233,48 @@ public function reasignarUsuario(Request $request, $id)
         'message' => 'Pasante reasignado correctamente.',
         'nueva_asignacion' => $nuevaAsignacion,
     ]);
+}
+
+
+public function storePersonal(Request $request)
+{
+    
+    $data = $request->validate([
+        'titulo' => 'required|string|max:255',
+        'prioridad' => 'nullable|string|max:255',
+        'descripcion' => 'nullable|string',
+        'fecha' => 'nullable|date',
+        'tipo_id' => 'nullable|exists:tipos,id',
+        'company_id' => 'nullable|exists:companies,id',
+    ]);
+
+    $nombreEmpresa = null;
+    if (!empty($data['company_id'])) {
+        $empresa = Company::find($data['company_id']);
+        if ($empresa) {
+            $nombreEmpresa = $empresa->name;
+        }
+    }
+
+    $tarea = Tarea::create([
+        'titulo' => $data['titulo'],
+        'prioridad' => $data['prioridad'],
+        'descripcion' => $data['descripcion'],
+        'fecha' => $data['fecha'],
+        'tipo_id' => $data['tipo_id'],
+        'empresa' => $nombreEmpresa,
+    ]);
+
+    AsignacionTarea::create([
+        'tarea_id' => $tarea->id,
+        'user_id' => Auth::id(), // Se asigna a sí mismo
+        'estado' => 'pendiente',
+        'detalle' => '',
+        'fecha' => $data['fecha'] ?? now()->toDateString(),
+    ]);
+
+   
+    return back()->with('success', 'Tarea personal creada y asignada exitosamente');
 }
 
 
