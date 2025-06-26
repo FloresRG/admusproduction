@@ -125,7 +125,7 @@ class DatoInfluencersController extends Controller
             $filename = time() . '_' . uniqid() . '.' . $photo->getClientOriginalExtension();
 
             // Directorio absoluto en public_html/influencers
-            $destination = $_SERVER['DOCUMENT_ROOT'] . '/influencers';
+            $destination = $_SERVER['DOCUMENT_ROOT'] . '/influencer';
 
             if (!file_exists($destination)) {
                 mkdir($destination, 0755, true);
