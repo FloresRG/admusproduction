@@ -219,6 +219,7 @@ export function AppSidebar() {
                     { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: TodayIcon }, // CAMBIADO
                     { title: 'Tareas en revicion', href: '/tareas/revicion', icon: PendingActionsIcon },
                     { title: 'Semana Tareas', href: '/semana', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
                 ],
                 isCollapsible: true,
             },
@@ -231,7 +232,7 @@ export function AppSidebar() {
                 items: [
                     { title: 'Influencers', href: '/influencers', icon: GroupIcon },
                     { title: 'Ver Calendario', href: '/bookings', icon: EventNoteIcon },
-                    { title: 'Mi perfil', href: '/tiposinfluencers', icon: PermIdentityIcon },
+                    { title: 'Mi perfil2', href: '/perfil-influencer', icon: PermIdentityIcon },
                 ],
                 isCollapsible: false,
             });
