@@ -3,6 +3,7 @@ import { type BreadcrumbItem } from '@/types';
 import { BuildingOfficeIcon, ChartBarIcon, EyeIcon, HeartIcon, PlayCircleIcon, SparklesIcon } from '@heroicons/react/24/solid';
 import Chart from 'chart.js/auto';
 import { FC, useEffect, useRef } from 'react';
+import { router } from '@inertiajs/react'; 
 
 // Interfaces
 interface User {
@@ -119,6 +120,8 @@ const GlobalAnimationStyles: FC = () => {
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
 // Componente TikTokCard actualizado
+
+
 const TikTokCard: FC<TikTokVideoProps> = ({ title, description, views, likes, videoUrl, fecha }) => {
     // Extrae el ID del video de la URL de TikTok
     const getTikTokEmbedUrl = (url: string) => {
@@ -159,11 +162,22 @@ const TikTokCard: FC<TikTokVideoProps> = ({ title, description, views, likes, vi
                             {likes.toLocaleString()} likes
                         </span>
                     </div>
+                    <div className="mt-4 flex justify-center">
+                        <a
+                            href={videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-full bg-blue-600 px-4 py-2 text-white font-semibold shadow hover:bg-blue-700 transition"
+                        >
+                            Ver video
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
+
 
 // Componente para el Gráfico de Rendimiento
 interface PerformanceChartProps {
@@ -399,11 +413,24 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                 <div className="mb-12">
                     <h2 className="mb-6 text-2xl font-bold text-gray-800">Videos de TikTok ({tiktokVideos.length})</h2>
                     {tiktokVideos.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
-                            {tiktokVideos.map((video) => (
-                                <TikTokCard key={video.id} {...video} />
-                            ))}
-                        </div>
+                        <>
+                            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
+                                {tiktokVideos.slice(0, 3).map((video) => (
+                                    <TikTokCard key={video.id} {...video} />
+                                ))}
+                            </div>
+                            {tiktokVideos.length > 3 && (
+                                <div className="mt-8 flex justify-center">
+                                    <button
+                                        className="rounded-full bg-indigo-600 px-6 py-2 text-white font-semibold shadow hover:bg-indigo-700 transition"
+                                        type="button"
+                                        onClick={() => router.get(route('videos.index'))}
+                                    >
+                                        Ver más
+                                    </button>
+                                </div>
+                            )}
+                        </>
                     ) : (
                         <div className="flex h-64 items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
                             <div className="text-center">

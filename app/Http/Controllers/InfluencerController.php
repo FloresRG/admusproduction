@@ -6,109 +6,48 @@ use App\Models\User;
 use App\Models\Photo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+
 class InfluencerController extends Controller
 {
 
-    /**
-     * Obtener perfil del influencer con sus datos relacionados
-     */
-    public function profile()
+    public function index()
     {
-        $user = Auth::user();
-        return response()->json([
-            'status' => 'success',
-            'data' => [
-                'user' => $user,
-                'datos' => $user->dato,
-                'tipos' => $user->tipos,
-                'photos' => $user->photos,
-                'availabilities' => $user->availabilities
-            ]
-        ]);
-    }
-
-    /**
-     * Actualizar fotos del influencer
-     */
-    public function updatePhotos(Request $request)
-    {
-        $request->validate([
-            'photos' => 'required|array',
-            'photos.*' => 'exists:photos,id'
-        ]);
-
-        $user = Auth::user();
-        $user->photos()->sync($request->photos);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Photos updated successfully',
-            'data' => $user->photos
-        ]);
-    }
-
-    /**
-     * Obtener disponibilidad del influencer
-     */
-    public function getAvailability()
-    {
-        $user = Auth::user();
-        return response()->json([
-            'status' => 'success',
-            'data' => $user->availabilities
-        ]);
-    }
-
-    /**
-     * Actualizar disponibilidad del influencer
-     */
-    public function updateAvailability(Request $request)
-    {
-        $request->validate([
-            'availabilities' => 'required|array',
-            'availabilities.*.date' => 'required|date',
-            'availabilities.*.time_start' => 'required|date_format:H:i',
-            'availabilities.*.time_end' => 'required|date_format:H:i|after:availabilities.*.time_start'
-        ]);
-
         $user = Auth::user();
         
-        // Eliminar disponibilidades anteriores
-        $user->availabilities()->delete();
+        // Obtener las fotos del usuario con la relación many-to-many
+        $userPhotos = $user->photos()->get();
         
-        // Crear nuevas disponibilidades
-        foreach ($request->availabilities as $availability) {
-            $user->availabilities()->create($availability);
-        }
+        // Preparar los datos del perfil
+        $profileData = [
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar' => $userPhotos->count() > 0 ? $userPhotos->first()->url : 'https://randomuser.me/api/portraits/men/32.jpg' // foto por defecto
+            ],
+            'datos' => [
+                'biografia' => $user->biografia ?? 'Creador de contenido digital',
+                'telefono' => $user->telefono ?? '',
+                'ciudad' => $user->ciudad ?? '',
+                'redesSociales' => [
+                    'instagram' => $user->instagram ?? '',
+                    'youtube' => $user->youtube ?? '',
+                    'tiktok' => $user->tiktok ?? ''
+                ]
+            ],
+            'tipos' => $user->tipos ?? [], // Asumiendo que tienes una relación con tipos de influencer
+            'photos' => $userPhotos->map(function ($photo) {
+                return [
+                    'id' => $photo->id,
+                    'url' => $photo->url,
+                    'nombre' => $photo->nombre
+                ];
+            }),
+            'availabilities' => $user->availabilities ?? [] // Si tienes disponibilidades
+        ];
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Availability updated successfully',
-            'data' => $user->availabilities
-        ]);
-    }
-
-    /**
-     * Obtener reservas del influencer
-     */
-    public function getBookings()
-    {
-        $user = Auth::user();
-        return response()->json([
-            'status' => 'success',
-            'data' => $user->bookings
-        ]);
-    }
-
-    /**
-     * Obtener tareas asignadas al influencer
-     */
-    public function getAssignments()
-    {
-        $user = Auth::user();
-        return response()->json([
-            'status' => 'success',
-            'data' => $user->asignaciones
+        return Inertia::render('influencers/Perfil', [
+            'profileData' => $profileData
         ]);
     }
 }
