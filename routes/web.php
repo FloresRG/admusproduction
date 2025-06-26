@@ -399,5 +399,10 @@ Route::post('/comprobante', [PagosController::class, 'storeComprobante']);Route:
 Route::get('/reportes/pagos-por-anio', [\App\Http\Controllers\CompanyLinkComprobanteController::class, 'reporteAnual'])
     ->name('company-links.reporte-anual');
 
+    ///tareas para si mismos
+    Route::post('/tareas-personales', [TareaController::class, 'storePersonal'])->name('tareas-personales');
+Route::get('/tareas-personales', function () {
+    return Inertia::render('tareas/mistareas'); // Tu componente Vue o React aquí
+})->name('tareas-personales');
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

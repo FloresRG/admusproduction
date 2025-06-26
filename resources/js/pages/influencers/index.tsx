@@ -1,7 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import Brightness2Icon from '@mui/icons-material/Brightness2';
-import BusinessIcon from '@mui/icons-material/Business';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 import { Alert, Box, Button, Card, CardContent, Chip, Fade, Grid, Snackbar, Stack, Typography, useTheme } from '@mui/material';
 import axios from 'axios';
@@ -161,26 +160,6 @@ const InfluencerAvailabilityCrud = () => {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
-                <Button
-                    onClick={handleAsignarEmpresa}
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    startIcon={<BusinessIcon />}
-                    sx={{
-                        fontWeight: 'bold',
-                        borderRadius: 3,
-                        boxShadow: 3,
-                        textTransform: 'none',
-                        px: 4,
-                        py: 1.5,
-                    }}
-                >
-                    Asignarme Empresas
-                </Button>
-            </Box>
-
             <Box
                 sx={{
                     borderRadius: 4,
