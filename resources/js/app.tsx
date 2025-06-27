@@ -9,11 +9,12 @@ import { initializeTheme } from './hooks/use-appearance';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-// ✅ 1. Leer el token CSRF del <meta> tag y configurar Axios
-const csrfToken = document.head.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+// Configurar Axios
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-if (csrfToken) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
     axios.defaults.withCredentials = true;
 } else {
     console.warn('⚠️ CSRF token no encontrado en el documento HTML.');
