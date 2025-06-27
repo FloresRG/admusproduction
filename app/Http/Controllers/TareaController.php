@@ -277,6 +277,30 @@ public function storePersonal(Request $request)
     return back()->with('success', 'Tarea personal creada y asignada exitosamente');
 }
 
+public function estadisticasUsuario()
+{
+    $user = Auth::user();
+
+    // Agrupar las tareas asignadas al usuario logueado por estado
+    $estadisticas = AsignacionTarea::where('user_id', $user->id)
+        ->select('estado', DB::raw('count(*) as total'))
+        ->groupBy('estado')
+        ->pluck('total', 'estado'); // esto devuelve ['pendiente' => 3, 'en_revision' => 2, ...]
+
+    // Aseguramos que todos los estados estén presentes
+    $resultado = [
+        'pendiente'    => $estadisticas->get('pendiente', 0),
+        'en_revision'  => $estadisticas->get('en_revision', 0),
+        'publicada'    => $estadisticas->get('publicada', 0),
+    ];
+
+    return Inertia::render('Dashboard/Pasante', [
+        'estadisticas' => $resultado,
+        'user' => $user,
+    ]);
+}
+
+
 
 
 
