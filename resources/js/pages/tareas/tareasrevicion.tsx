@@ -14,7 +14,6 @@ import {
     ExpandLess,
     ExpandMore,
     Person,
-    Refresh as RefreshIcon,
     Save,
     Search,
 } from '@mui/icons-material';
@@ -29,7 +28,6 @@ import {
     Chip,
     Collapse,
     Container,
-    Fab,
     Fade,
     FormControl,
     FormControlLabel,
@@ -633,29 +631,7 @@ export default function Tareas() {
                         {/* Controles principales */}
                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
                             <Box sx={{ flexGrow: 1 }} />
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                                <Tooltip title="Actualizar">
-                                    <IconButton onClick={fetchData} sx={{ bgcolor: 'white', '&:hover': { bgcolor: 'grey.100' } }}>
-                                        <RefreshIcon />
-                                    </IconButton>
-                                </Tooltip>
-                                <Button
-                                    variant="contained"
-                                    onClick={() => startNewTask()}
-                                    startIcon={<Add />}
-                                    sx={{
-                                        borderRadius: 2,
-                                        background: 'linear-gradient(45deg, #1976d2 0%, #0d47a1 100%)',
-                                        '&:hover': {
-                                            background: 'linear-gradient(45deg, #1565c0 0%, #0a3880 100%)',
-                                        },
-                                        px: 3,
-                                        py: 1,
-                                    }}
-                                >
-                                    Nueva Tarea Para Hoy
-                                </Button>
-                            </Box>
+                            <Box sx={{ display: 'flex', gap: 1 }}></Box>
                         </Box>
 
                         {/* Filtros */}
@@ -1625,29 +1601,6 @@ export default function Tareas() {
                         )}
                     </Box>
                 </Fade>
-
-                {/* Botón flotante para agregar tarea */}
-                {!showNewTaskForm && !editingTask && (
-                    <Fab
-                        color="primary"
-                        aria-label="Nueva tarea para hoy"
-                        onClick={() => startNewTask()}
-                        sx={{
-                            position: 'fixed',
-                            bottom: 24,
-                            right: 24,
-                            background: 'linear-gradient(45deg, #4caf50 0%, #2e7d32 100%)',
-                            '&:hover': {
-                                background: 'linear-gradient(45deg, #388e3c 0%, #1b5e20 100%)',
-                                transform: 'scale(1.1)',
-                            },
-                            transition: 'all 0.3s ease',
-                            zIndex: 1000,
-                        }}
-                    >
-                        <Add />
-                    </Fab>
-                )}
             </Container>
         </AppLayout>
     );

@@ -55,7 +55,6 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Para "Semana Inf
 import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest'; // Para "Personal"
 import TableChartIcon from '@mui/icons-material/TableChart'; // Para "Semana"
 
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn'; // Para "Asignar Tareas"
 import PermIdentityIcon from '@mui/icons-material/PermIdentity'; // Para "Mi perfil"
 import TodayIcon from '@mui/icons-material/Today';
 
@@ -215,9 +214,7 @@ export function AppSidebar() {
                 title: 'Gestion de Pasantes',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Asignar Tareas', href: '/tareas', icon: AssignmentTurnedInIcon },
                     { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: TodayIcon }, // CAMBIADO
-                    { title: 'Mis Tareas', href: '/tareas-personales', icon: TodayIcon }, 
                     { title: 'Tareas en revicion', href: '/tareas/revicion', icon: PendingActionsIcon },
                     { title: 'Semana Tareas', href: '/semana', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
@@ -244,7 +241,7 @@ export function AppSidebar() {
                 icon: WorkIcon,
                 items: [
                     { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
-                    { title: 'Mis Tareas', href: '/tareas-personales', icon: TodayIcon }, 
+                    { title: 'Mis Tareas', href: '/tareas-personales', icon: TodayIcon },
                     { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },

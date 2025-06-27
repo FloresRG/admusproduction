@@ -374,6 +374,14 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
 Route::delete('/asignacion/{id}', [TareaController::class, 'eliminarAsignacion']);
 // Route::patch('/asignaciones/{id}', [TareaController::class, 'update']);
+// API
+Route::get('/tareas-semana', [\App\Http\Controllers\TareaController::class, 'tareasSemana']);
+
+// VISTA
+Route::get('/tareas/semanatareas', function () {
+    return Inertia::render('tareas/semanatareas');
+});
+
 
 /////////empresas G
 
@@ -404,5 +412,10 @@ Route::get('/reportes/pagos-por-anio', [\App\Http\Controllers\CompanyLinkComprob
 Route::get('/tareas-personales', function () {
     return Inertia::render('tareas/mistareas'); // Tu componente Vue o React aquí
 })->name('tareas-personales');
+
+Route::get('/estadisticas-mes-actual', [TareaController::class, 'estadisticasMesActual']);
+Route::get('/estadisticas-completas', [TareaController::class, 'estadisticasCompletas']);
+
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

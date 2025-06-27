@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Spatie\Permission\Contracts\Role;
 
 class TareaController extends Controller
 {
@@ -300,10 +301,124 @@ public function estadisticasUsuario()
     ]);
 }
 
+public function estadisticasMesActual()
+{
+    $inicioMes = now()->startOfMonth()->toDateString();
+    $finMes    = now()->endOfMonth()->toDateString();
+
+    $asignaciones = \App\Models\AsignacionTarea::whereBetween('fecha', [$inicioMes, $finMes])
+        ->select('estado', DB::raw('count(*) as total'))
+        ->groupBy('estado')
+        ->pluck('total', 'estado');
+
+    $resultado = [
+        'pendiente'    => $asignaciones->get('pendiente', 0),
+        'en_revision'  => $asignaciones->get('en_revision', 0),
+        'publicada'    => $asignaciones->get('publicada', 0),
+        'total'        => $asignaciones->sum(),
+        'mes'          => now()->format('F Y'),
+    ];
+
+    return response()->json($resultado);
+}
 
 
+public function estadisticasCompletas()
+{
+    // Tareas
+    $inicioMes = now()->startOfMonth()->toDateString();
+    $finMes    = now()->endOfMonth()->toDateString();
 
+    $asignaciones = \App\Models\AsignacionTarea::whereBetween('fecha', [$inicioMes, $finMes])
+        ->select('estado', DB::raw('count(*) as total'))
+        ->groupBy('estado')
+        ->pluck('total', 'estado');
 
+    $totalTareasCreadas = \App\Models\Tarea::whereBetween('fecha', [$inicioMes, $finMes])->count();
+
+    $estadisticasTareas = [
+        'pendiente'    => $asignaciones->get('pendiente', 0),
+        'en_revision'  => $asignaciones->get('en_revision', 0),
+        'publicada'    => $asignaciones->get('publicada', 0),
+        'total'        => $asignaciones->sum(),
+        'total_tareas_creadas' => $totalTareasCreadas,
+        'mes'          => now()->format('F Y'),
+    ];
+
+    // Roles y usuarios
+    $totalUsuarios = \App\Models\User::count();
+
+    $totalRoles = \Spatie\Permission\Models\Role::count();
+
+    $rolesConUsuarios = \Spatie\Permission\Models\Role::withCount('users')
+        ->select('id', 'name')
+        ->get()
+        ->map(function($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+                'users_count' => $role->users_count,
+            ];
+        });
+
+    $estadisticasUsuarios = [
+        'total_usuarios' => $totalUsuarios,
+        'total_roles'    => $totalRoles,
+        'roles'          => $rolesConUsuarios,
+    ];
+
+    return response()->json([
+        'tareas' => $estadisticasTareas,
+        'usuarios' => $estadisticasUsuarios,
+    ]);
+}
+public function tareasSemana(Request $request)
+{
+    $fechaBase = $request->query('fecha') ?? now()->toDateString();
+
+    $inicioSemana = Carbon::parse($fechaBase)->startOfWeek(Carbon::MONDAY);
+    $finSemana    = Carbon::parse($fechaBase)->endOfWeek(Carbon::SUNDAY);
+
+    $tareas = Tarea::with(['tipo', 'company'])
+        ->whereBetween('fecha', [$inicioSemana->toDateString(), $finSemana->toDateString()])
+        ->orderBy('fecha')
+        ->get();
+
+    $agrupadas = $tareas->groupBy('fecha')->map(function ($tareasDelDia, $fecha) {
+        return $tareasDelDia->map(function ($tarea) {
+            return [
+                'id'          => $tarea->id,
+                'titulo'      => $tarea->titulo,
+                'descripcion' => $tarea->descripcion,
+                'prioridad'   => $tarea->prioridad,
+                'fecha'       => $tarea->fecha,
+                'tipo'        => $tarea->tipo ? [
+                    'id'          => $tarea->tipo->id,
+                    'nombre_tipo' => $tarea->tipo->nombre_tipo,
+                ] : null,
+                'company'     => $tarea->company ? [
+                    'id'   => $tarea->company->id,
+                    'name' => $tarea->company->name,
+                ] : null,
+            ];
+        });
+    });
+
+    // Completar días faltantes
+    $diasSemana = [];
+    $fechaActual = $inicioSemana->copy();
+    while ($fechaActual->lte($finSemana)) {
+        $fechaStr = $fechaActual->toDateString();
+        $diasSemana[$fechaStr] = $agrupadas->get($fechaStr, collect());
+        $fechaActual->addDay();
+    }
+
+    return response()->json([
+        'inicio' => $inicioSemana->toDateString(),
+        'fin'    => $finSemana->toDateString(),
+        'dias'   => $diasSemana,
+    ]);
+}
 
 
 
