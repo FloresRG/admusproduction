@@ -71,11 +71,16 @@ type EmpresaConDisponibilidad = {
 
 const Semanainfluencer = () => {
     const theme = useTheme();
-    const { datosPorEmpresa, diasSemana, influencers } = usePage<{
+    const {
+        datosPorEmpresa: datosPorEmpresaProp,
+        diasSemana,
+        influencers,
+    } = usePage<{
         datosPorEmpresa: EmpresaConDisponibilidad[];
         diasSemana: DiaSemana[];
         influencers: Influencer[];
     }>().props;
+    const [datosPorEmpresa, setDatosPorEmpresa] = useState(datosPorEmpresaProp);
 
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedTurno, setSelectedTurno] = useState<{
@@ -88,6 +93,8 @@ const Semanainfluencer = () => {
     const [selectedInfluencerExtra, setSelectedInfluencerExtra] = useState<number | ''>('');
     const [loading, setLoading] = useState(false);
 
+    const [mensaje, setMensaje] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const empresaColors = [
         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
@@ -139,7 +146,24 @@ const Semanainfluencer = () => {
                 turno,
                 influencer_id: influencerId,
             });
-            window.location.reload();
+
+            // Actualiza el estado local para reflejar el cambio sin recargar
+            setDatosPorEmpresa((prev) =>
+                prev.map((empresa) =>
+                    empresa.empresa.id === empresaId
+                        ? {
+                              ...empresa,
+                              influencersAsignados: {
+                                  ...empresa.influencersAsignados,
+                                  [dia]: {
+                                      ...empresa.influencersAsignados[dia],
+                                      [turno]: empresa.influencersAsignados[dia][turno].filter((inf: any) => inf.id !== influencerId),
+                                  },
+                              },
+                          }
+                        : empresa,
+                ),
+            );
         } catch (error) {
             console.error('Error al quitar influencer:', error);
             alert('Hubo un error al quitar el influencer');
@@ -216,6 +240,27 @@ const Semanainfluencer = () => {
         }, 0);
     };
 
+    const handleAsignarEmpresas = async () => {
+        setLoading(true);
+        setMensaje(null);
+        setError(null);
+
+        try {
+            const response = await axios.post('/asignar-empresas-masivamente');
+            setMensaje(response.data.message);
+            console.log('Detalle de asignaciones:', response.data.detalle);
+            window.location.reload();
+        } catch (error: any) {
+            if (error.response?.data?.message) {
+                setError(error.response.data.message);
+            } else {
+                setError('Ocurrió un error inesperado al asignar empresas.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <AppLayout>
             <Box
@@ -272,7 +317,8 @@ const Semanainfluencer = () => {
                         </Stack>
                     </Stack>
 
-                    <Box mt={3}>
+                    <Box mt={3} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
+                        {/* Botón Generar PDF */}
                         <Button
                             variant="contained"
                             startIcon={<PictureAsPdf />}
@@ -295,6 +341,44 @@ const Semanainfluencer = () => {
                         >
                             Generar Reporte PDF
                         </Button>
+
+                        {/* Botón Asignar Empresas Masivamente con mensajes */}
+                        <Box>
+                            <Button
+                                variant="contained"
+                                onClick={handleAsignarEmpresas}
+                                disabled={loading}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 'bold',
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(135deg, #28a745 0%, #218838 100%)',
+                                    boxShadow: `0 8px 32px ${alpha('#218838', 0.3)}`,
+                                    px: 4,
+                                    py: 1.5,
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #1e7e34 0%, #1c7430 100%)',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: `0 12px 40px ${alpha('#218838', 0.4)}`,
+                                    },
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                            >
+                                {loading ? 'Asignando...' : 'Asignar Empresas Masivamente'}
+                            </Button>
+
+                            {/* Mensajes debajo */}
+                            {mensaje && (
+                                <Typography mt={1} color="success.main" fontWeight="medium">
+                                    {mensaje}
+                                </Typography>
+                            )}
+                            {error && (
+                                <Typography mt={1} color="error.main" fontWeight="medium">
+                                    {error}
+                                </Typography>
+                            )}
+                        </Box>
                     </Box>
                 </Box>
 

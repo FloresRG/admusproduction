@@ -256,6 +256,7 @@ export function AppSidebar() {
                 items: [
                     { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                     { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
+                    { title: 'Realizar Pagos', href: '/pagos', icon: BusinessIcon },
                 ],
                 isCollapsible: false,
             });

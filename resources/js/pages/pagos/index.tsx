@@ -1,39 +1,39 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import AppLayout from '@/layouts/app-layout';
-import {
-    Container,
-    Typography,
-    Box,
-    Button,
-    Modal,
-    TextField,
-    MenuItem,
-    CircularProgress,
-    Alert,
-    Grid,
-    Paper,
-    Card,
-    CardContent,
-    useMediaQuery,
-    useTheme,
-    InputAdornment,
-} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DescriptionIcon from '@mui/icons-material/Description';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import PeopleIcon from '@mui/icons-material/People';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import BusinessIcon from '@mui/icons-material/Business';
-import LinkIcon from '@mui/icons-material/Link';
-import NotesIcon from '@mui/icons-material/Notes';
-import TitleIcon from '@mui/icons-material/Title';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import DescriptionIcon from '@mui/icons-material/Description';
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
+import LinkIcon from '@mui/icons-material/Link';
+import NotesIcon from '@mui/icons-material/Notes';
+import PeopleIcon from '@mui/icons-material/People';
 import SearchIcon from '@mui/icons-material/Search';
+import TitleIcon from '@mui/icons-material/Title';
+import {
+    Alert,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    CircularProgress,
+    Container,
+    Grid,
+    InputAdornment,
+    MenuItem,
+    Modal,
+    Paper,
+    TextField,
+    Typography,
+    useMediaQuery,
+    useTheme,
+} from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import axios from 'axios';
+import { useEffect, useMemo, useState } from 'react';
 
 const breadcrumbs = [
     { label: 'Dashboard', url: '/' },
@@ -67,10 +67,7 @@ export default function Pagos() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const months = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const tipos = ['Boleta', 'Factura', 'Recibo'];
 
     // Función para obtener el mes actual en inglés (capitalize)
@@ -87,7 +84,7 @@ export default function Pagos() {
     useEffect(() => {
         // Solo establece valores si el modal no está abierto o si las compañías se han cargado
         if (!openModal && companies.length > 0) {
-            setNewComprobante(prev => ({
+            setNewComprobante((prev) => ({
                 ...prev,
                 company_id: companies[0].id, // Primera compañía de la API
                 mes: getCurrentMonthName(), // Mes actual
@@ -96,7 +93,7 @@ export default function Pagos() {
             }));
         } else if (!openModal && companies.length === 0) {
             // Si las compañías aún no cargan, al menos establece el mes y tipo
-            setNewComprobante(prev => ({
+            setNewComprobante((prev) => ({
                 ...prev,
                 mes: getCurrentMonthName(),
                 tipo: tipos[0] || '',
@@ -108,16 +105,13 @@ export default function Pagos() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [comprobantesResponse, companiesResponse] = await Promise.all([
-                axios.get('/comprobantes'),
-                axios.get('/api/companies')
-            ]);
+            const [comprobantesResponse, companiesResponse] = await Promise.all([axios.get('/comprobantes'), axios.get('/api/companies')]);
             setComprobantes(comprobantesResponse.data);
             setCompanies(companiesResponse.data);
             setError(null);
         } catch (err) {
-            console.error("Error fetching data:", err);
-            setError("Error al cargar los datos. Por favor, inténtalo de nuevo.");
+            console.error('Error fetching data:', err);
+            setError('Error al cargar los datos. Por favor, inténtalo de nuevo.');
         } finally {
             setLoading(false);
         }
@@ -142,16 +136,16 @@ export default function Pagos() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setNewComprobante(prev => ({ ...prev, [name]: value }));
+        setNewComprobante((prev) => ({ ...prev, [name]: value }));
         if (formErrors[name]) {
-            setFormErrors(prev => ({ ...prev, [name]: null }));
+            setFormErrors((prev) => ({ ...prev, [name]: null }));
         }
     };
 
     const handleFileChange = (e) => {
-        setNewComprobante(prev => ({ ...prev, comprobante: e.target.files[0] }));
+        setNewComprobante((prev) => ({ ...prev, comprobante: e.target.files[0] }));
         if (formErrors.comprobante) {
-            setFormErrors(prev => ({ ...prev, comprobante: null }));
+            setFormErrors((prev) => ({ ...prev, comprobante: null }));
         }
     };
 
@@ -182,13 +176,13 @@ export default function Pagos() {
             fetchData();
             handleCloseModal();
         } catch (err) {
-            console.error("Error submitting comprobante:", err);
+            console.error('Error submitting comprobante:', err);
             if (err.response && err.response.data && err.response.data.errors) {
                 setFormErrors(err.response.data.errors);
             } else if (err.response && err.response.data && err.response.data.message) {
                 setError(err.response.data.message);
             } else {
-                setError("Error al crear el comprobante. Por favor, revisa los campos e inténtalo de nuevo.");
+                setError('Error al crear el comprobante. Por favor, revisa los campos e inténtalo de nuevo.');
             }
         } finally {
             setSubmitting(false);
@@ -203,9 +197,9 @@ export default function Pagos() {
 
     // --- Lógica para Cards ---
     const totalComprobantes = comprobantes.length;
-    const totalCompanies = new Set(comprobantes.flatMap(c => c.company_associations.map(a => a.company_id))).size;
-    const uniqueComprobanteTypes = new Set(comprobantes.map(c => c.tipo)).size;
-    const recentComprobantesCount = comprobantes.filter(c => {
+    const totalCompanies = new Set(comprobantes.flatMap((c) => c.company_associations.map((a) => a.company_id))).size;
+    const uniqueComprobanteTypes = new Set(comprobantes.map((c) => c.tipo)).size;
+    const recentComprobantesCount = comprobantes.filter((c) => {
         const createdAt = new Date(c.created_at);
         const oneMonthAgo = new Date();
         oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
@@ -241,7 +235,7 @@ export default function Pagos() {
             width: 250,
             renderCell: (params) => {
                 const associatedCompanies = params.row.company_associations
-                    .map(assoc => assoc.company?.name || 'Desconocido')
+                    .map((assoc) => assoc.company?.name || 'Desconocido')
                     .filter((value, index, self) => self.indexOf(value) === index)
                     .join(', ');
                 return <Typography variant="body2">{associatedCompanies || 'N/A'}</Typography>;
@@ -253,7 +247,7 @@ export default function Pagos() {
             width: 180,
             renderCell: (params) => {
                 const associatedMonths = params.row.company_associations
-                    .map(assoc => assoc.mes)
+                    .map((assoc) => assoc.mes)
                     .filter((value, index, self) => self.indexOf(value) === index)
                     .join(', ');
                 return <Typography variant="body2">{associatedMonths || 'N/A'}</Typography>;
@@ -265,37 +259,33 @@ export default function Pagos() {
         let currentFiltered = comprobantes;
 
         if (searchTerm) {
-            currentFiltered = currentFiltered.filter(comprobante =>
-                Object.values(comprobante).some(value =>
-                    String(value).toLowerCase().includes(searchTerm.toLowerCase())
-                ) ||
-                comprobante.company_associations.some(assoc =>
-                    String(assoc.company?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    String(assoc.mes || '').toLowerCase().includes(searchTerm.toLowerCase())
-                )
+            currentFiltered = currentFiltered.filter(
+                (comprobante) =>
+                    Object.values(comprobante).some((value) => String(value).toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    comprobante.company_associations.some(
+                        (assoc) =>
+                            String(assoc.company?.name || '')
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase()) ||
+                            String(assoc.mes || '')
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase()),
+                    ),
             );
         }
 
         if (selectedMonth) {
-            currentFiltered = currentFiltered.filter(comprobante =>
-                comprobante.company_associations.some(assoc =>
-                    assoc.mes === selectedMonth
-                )
-            );
+            currentFiltered = currentFiltered.filter((comprobante) => comprobante.company_associations.some((assoc) => assoc.mes === selectedMonth));
         }
 
         if (selectedCompany) {
-            currentFiltered = currentFiltered.filter(comprobante =>
-                comprobante.company_associations.some(assoc =>
-                    assoc.company_id === selectedCompany
-                )
+            currentFiltered = currentFiltered.filter((comprobante) =>
+                comprobante.company_associations.some((assoc) => assoc.company_id === selectedCompany),
             );
         }
 
         if (selectedType) {
-            currentFiltered = currentFiltered.filter(comprobante =>
-                comprobante.tipo === selectedType
-            );
+            currentFiltered = currentFiltered.filter((comprobante) => comprobante.tipo === selectedType);
         }
 
         return currentFiltered;
@@ -311,13 +301,18 @@ export default function Pagos() {
                 {/* --- Cards de Métricas --- */}
                 <Grid container spacing={2} sx={{ mb: 4 }}>
                     <Grid item xs={12} sm={6} md={3}>
-                        <Card elevation={3} sx={{
-                            display: 'flex', alignItems: 'center', p: 2,
-                            bgcolor: theme.palette.info.light,
-                            borderRadius: '12px',
-                            transition: 'transform 0.3s ease-in-out',
-                            '&:hover': { transform: 'translateY(-5px)' }
-                        }}>
+                        <Card
+                            elevation={3}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                p: 2,
+                                bgcolor: theme.palette.info.light,
+                                borderRadius: '12px',
+                                transition: 'transform 0.3s ease-in-out',
+                                '&:hover': { transform: 'translateY(-5px)' },
+                            }}
+                        >
                             <FolderOpenIcon sx={{ fontSize: 40, mr: 2, color: theme.palette.info.dark }} />
                             <CardContent sx={{ flexGrow: 1, p: 0, '&:last-child': { pb: 0 } }}>
                                 <Typography variant="h6" component="div" sx={{ color: theme.palette.info.dark }}>
@@ -330,13 +325,18 @@ export default function Pagos() {
                         </Card>
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                        <Card elevation={3} sx={{
-                            display: 'flex', alignItems: 'center', p: 2,
-                            bgcolor: theme.palette.success.light,
-                            borderRadius: '12px',
-                            transition: 'transform 0.3s ease-in-out',
-                            '&:hover': { transform: 'translateY(-5px)' }
-                        }}>
+                        <Card
+                            elevation={3}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                p: 2,
+                                bgcolor: theme.palette.success.light,
+                                borderRadius: '12px',
+                                transition: 'transform 0.3s ease-in-out',
+                                '&:hover': { transform: 'translateY(-5px)' },
+                            }}
+                        >
                             <PeopleIcon sx={{ fontSize: 40, mr: 2, color: theme.palette.success.dark }} />
                             <CardContent sx={{ flexGrow: 1, p: 0, '&:last-child': { pb: 0 } }}>
                                 <Typography variant="h6" component="div" sx={{ color: theme.palette.success.dark }}>
@@ -349,13 +349,18 @@ export default function Pagos() {
                         </Card>
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                        <Card elevation={3} sx={{
-                            display: 'flex', alignItems: 'center', p: 2,
-                            bgcolor: theme.palette.warning.light,
-                            borderRadius: '12px',
-                            transition: 'transform 0.3s ease-in-out',
-                            '&:hover': { transform: 'translateY(-5px)' }
-                        }}>
+                        <Card
+                            elevation={3}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                p: 2,
+                                bgcolor: theme.palette.warning.light,
+                                borderRadius: '12px',
+                                transition: 'transform 0.3s ease-in-out',
+                                '&:hover': { transform: 'translateY(-5px)' },
+                            }}
+                        >
                             <AttachMoneyIcon sx={{ fontSize: 40, mr: 2, color: theme.palette.warning.dark }} />
                             <CardContent sx={{ flexGrow: 1, p: 0, '&:last-child': { pb: 0 } }}>
                                 <Typography variant="h6" component="div" sx={{ color: theme.palette.warning.dark }}>
@@ -368,13 +373,18 @@ export default function Pagos() {
                         </Card>
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                        <Card elevation={3} sx={{
-                            display: 'flex', alignItems: 'center', p: 2,
-                            bgcolor: theme.palette.primary.light,
-                            borderRadius: '12px',
-                            transition: 'transform 0.3s ease-in-out',
-                            '&:hover': { transform: 'translateY(-5px)' }
-                        }}>
+                        <Card
+                            elevation={3}
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                p: 2,
+                                bgcolor: theme.palette.primary.light,
+                                borderRadius: '12px',
+                                transition: 'transform 0.3s ease-in-out',
+                                '&:hover': { transform: 'translateY(-5px)' },
+                            }}
+                        >
                             <CheckCircleOutlineIcon sx={{ fontSize: 40, mr: 2, color: theme.palette.primary.dark }} />
                             <CardContent sx={{ flexGrow: 1, p: 0, '&:last-child': { pb: 0 } }}>
                                 <Typography variant="h6" component="div" sx={{ color: theme.palette.primary.dark }}>
@@ -393,13 +403,16 @@ export default function Pagos() {
                     startIcon={<AddIcon />}
                     onClick={handleOpenModal}
                     sx={{
-                        mb: 3, py: 1.2, px: 3, borderRadius: '8px',
+                        mb: 3,
+                        py: 1.2,
+                        px: 3,
+                        borderRadius: '8px',
                         boxShadow: theme.shadows[3],
                         transition: 'background-color 0.3s ease, transform 0.2s ease',
                         '&:hover': {
                             backgroundColor: theme.palette.primary.dark,
-                            transform: 'scale(1.02)'
-                        }
+                            transform: 'scale(1.02)',
+                        },
                     }}
                 >
                     Subir Nuevo Comprobante
@@ -526,7 +539,9 @@ export default function Pagos() {
                     {loading ? (
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 300, flexDirection: 'column' }}>
                             <CircularProgress size={60} sx={{ mb: 2 }} />
-                            <Typography variant="h6" sx={{ color: 'text.secondary' }}>Cargando comprobantes...</Typography>
+                            <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                                Cargando comprobantes...
+                            </Typography>
                         </Box>
                     ) : (
                         <Box sx={{ height: 600, width: '100%' }}>
@@ -558,7 +573,7 @@ export default function Pagos() {
                                         transition: 'background-color 0.2s ease',
                                         '&:hover': {
                                             backgroundColor: theme.palette.action.selected,
-                                        }
+                                        },
                                     },
                                     border: 'none',
                                     borderRadius: '8px',
@@ -567,10 +582,7 @@ export default function Pagos() {
                                 localeText={{
                                     MuiDataGrid: {
                                         noRowsLabel: 'No hay comprobantes para mostrar',
-                                        footerRowSelected: (count) =>
-                                            count !== 1
-                                                ? `${count} filas seleccionadas`
-                                                : `${count} fila seleccionada`,
+                                        footerRowSelected: (count) => (count !== 1 ? `${count} filas seleccionadas` : `${count} fila seleccionada`),
                                     },
                                 }}
                             />
@@ -579,27 +591,29 @@ export default function Pagos() {
                 </Paper>
 
                 {/* Modal para Subir Nuevo Comprobante */}
-                <Modal
-                    open={openModal}
-                    onClose={handleCloseModal}
-                    aria-labelledby="modal-title"
-                    aria-describedby="modal-description"
-                >
-                    <Box sx={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        width: { xs: '95%', sm: 600, md: 700 },
-                        bgcolor: 'background.paper',
-                        border: '1px solid #ddd',
-                        borderRadius: '12px',
-                        boxShadow: 24,
-                        p: { xs: 3, sm: 5 },
-                        maxHeight: '90vh',
-                        overflowY: 'auto'
-                    }}>
-                        <Typography id="modal-title" variant="h5" component="h2" sx={{ mb: 3, fontWeight: 'bold', color: theme.palette.primary.dark, textAlign: 'center' }}>
+                <Modal open={openModal} onClose={handleCloseModal} aria-labelledby="modal-title" aria-describedby="modal-description">
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            width: { xs: '95%', sm: 600, md: 700 },
+                            bgcolor: 'background.paper',
+                            border: '1px solid #ddd',
+                            borderRadius: '12px',
+                            boxShadow: 24,
+                            p: { xs: 3, sm: 5 },
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                        }}
+                    >
+                        <Typography
+                            id="modal-title"
+                            variant="h5"
+                            component="h2"
+                            sx={{ mb: 3, fontWeight: 'bold', color: theme.palette.primary.dark, textAlign: 'center' }}
+                        >
                             Subir Nuevo <span style={{ color: theme.palette.secondary.main }}>Comprobante</span>
                         </Typography>
                         <form onSubmit={handleSubmit}>
@@ -623,16 +637,14 @@ export default function Pagos() {
                                             borderRadius: '8px',
                                         }}
                                     >
-                                        {newComprobante.comprobante ? newComprobante.comprobante.name : "Seleccionar Archivo (PDF, JPG, PNG)"}
-                                        <input
-                                            type="file"
-                                            hidden
-                                            name="comprobante"
-                                            onChange={handleFileChange}
-                                            required
-                                        />
+                                        {newComprobante.comprobante ? newComprobante.comprobante.name : 'Seleccionar Archivo (PDF, JPG, PNG)'}
+                                        <input type="file" hidden name="comprobante" onChange={handleFileChange} required />
                                     </Button>
-                                    {formErrors.comprobante && <Typography color="error" variant="caption">{formErrors.comprobante[0]}</Typography>}
+                                    {formErrors.comprobante && (
+                                        <Typography color="error" variant="caption">
+                                            {formErrors.comprobante[0]}
+                                        </Typography>
+                                    )}
                                 </Grid>
                                 <Grid item xs={12} sm={6}>
                                     <TextField
@@ -695,7 +707,7 @@ export default function Pagos() {
                                         {/* Renderizar solo la opción de la compañía seleccionada por defecto */}
                                         {newComprobante.company_id && (
                                             <MenuItem key={newComprobante.company_id} value={newComprobante.company_id}>
-                                                {companies.find(c => c.id === newComprobante.company_id)?.name || 'Cargando...'}
+                                                {companies.find((c) => c.id === newComprobante.company_id)?.name || 'Cargando...'}
                                             </MenuItem>
                                         )}
                                     </TextField>
@@ -784,12 +796,15 @@ export default function Pagos() {
                                         <Button
                                             onClick={handleCloseModal}
                                             sx={{
-                                                mr: 2, px: 3, py: 1.2, borderRadius: '8px',
+                                                mr: 2,
+                                                px: 3,
+                                                py: 1.2,
+                                                borderRadius: '8px',
                                                 transition: 'background-color 0.3s ease, transform 0.2s ease',
                                                 '&:hover': {
                                                     backgroundColor: theme.palette.grey[200],
-                                                    transform: 'scale(1.02)'
-                                                }
+                                                    transform: 'scale(1.02)',
+                                                },
                                             }}
                                             disabled={submitting}
                                         >
@@ -800,13 +815,15 @@ export default function Pagos() {
                                             variant="contained"
                                             disabled={submitting}
                                             sx={{
-                                                px: 3, py: 1.2, borderRadius: '8px',
+                                                px: 3,
+                                                py: 1.2,
+                                                borderRadius: '8px',
                                                 boxShadow: theme.shadows[4],
                                                 transition: 'background-color 0.3s ease, transform 0.2s ease',
                                                 '&:hover': {
                                                     backgroundColor: theme.palette.primary.dark,
-                                                    transform: 'scale(1.02)'
-                                                }
+                                                    transform: 'scale(1.02)',
+                                                },
                                             }}
                                         >
                                             {submitting ? <CircularProgress size={24} color="inherit" /> : 'Subir Comprobante'}

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AvailabilityDay;
 use App\Models\Booking;
 use App\Models\Company;
+use App\Models\Dato;
+use App\Models\InfluencerAvailability;
 use App\Models\Tarea;
 use App\Models\User;
 use App\Models\Week;
@@ -65,7 +68,7 @@ class SemanaController extends Controller
             }),
         ]);
     }
-    
+
     public function indexinfluencer(Request $request)
     {
         $weekId = $request->query('week_id');
@@ -355,7 +358,7 @@ class SemanaController extends Controller
         $pdf->Image(public_path('logo.jpeg'), 260, 10, 25);
         $pdf->SetFont('Arial', 'B', 16);
         $pdf->SetXY(0, 15);
-        $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTION'), 0, 1, 'C');
+        $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
 
         $pdf->Ln(8);
         $pdf->SetFont('Arial', 'B', 18);
@@ -374,25 +377,36 @@ class SemanaController extends Controller
         $anchoEmpresa = 60;
         $diasCount = count($diasSemana);
         $cellWidth = ($totalWidth - ($margen * 2) - $anchoEmpresa) / $diasCount;
+        $alturaFila = 25;
 
-        // Encabezado de tabla
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetFillColor(30, 144, 255);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetDrawColor(30, 144, 255);
+        // Función interna para imprimir encabezado de tabla
+        $imprimirEncabezado = function () use ($pdf, $anchoEmpresa, $diasSemana, $diasTraducidos, $cellWidth) {
+            $pdf->SetFont('Arial', 'B', 11);
+            $pdf->SetFillColor(30, 144, 255);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->SetDrawColor(30, 144, 255);
 
-        $pdf->Cell($anchoEmpresa, 10, utf8_decode('Empresa'), 0, 0, 'C', true);
-        foreach ($diasSemana as $dia) {
-            $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 0, 0, 'C', true);
-        }
-        $pdf->Ln();
+            $pdf->Cell($anchoEmpresa, 10, utf8_decode('Empresa'), 0, 0, 'C', true);
+            foreach ($diasSemana as $dia) {
+                $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 0, 0, 'C', true);
+            }
+            $pdf->Ln();
+        };
+
+        // Imprimir encabezado por primera vez
+        $imprimirEncabezado();
 
         // Contenido
         $pdf->SetFont('Arial', '', 9);
         $pdf->SetTextColor(0, 0, 0);
-        $alturaFila = 25;
 
         foreach ($datosPorEmpresa as $empresaData) {
+            // Estimar altura y verificar espacio disponible
+            if ($pdf->GetY() + $alturaFila > 190) {
+                $pdf->AddPage();
+                $imprimirEncabezado();
+            }
+
             $xStart = $pdf->GetX();
             $yStart = $pdf->GetY();
 
@@ -434,5 +448,144 @@ class SemanaController extends Controller
         return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
+    }
+
+
+    public function asignarEmpresasMasivamente()
+    {
+        $nextMonday = now()->startOfWeek();
+
+        // Crear semana si no existe
+        $week = Week::firstOrCreate(
+            ['start_date' => $nextMonday->format('Y-m-d')],
+            [
+                'name' => $nextMonday->format('Y-m-d'),
+                'end_date' => $nextMonday->copy()->addDays(6)->format('Y-m-d'),
+            ]
+        );
+
+        // Obtener todos los usuarios con rol 'influencer'
+        $influencers = User::whereHas('roles', function ($q) {
+            $q->where('name', 'influencer');
+        })->get();
+
+        $asignaciones = [];
+
+        foreach ($influencers as $influencer) {
+            $userId = $influencer->id;
+
+            // Verificar si ya tiene bookings esa semana
+            $tieneBookings = Booking::where('user_id', $userId)
+                ->where('week_id', $week->id)
+                ->exists();
+
+            if ($tieneBookings) {
+                continue; // Saltamos usuarios con bookings ya creados
+            }
+
+            $disponibilidad = InfluencerAvailability::where('user_id', $userId)->get();
+            if ($disponibilidad->isEmpty()) {
+                continue; // No tiene disponibilidad registrada
+            }
+
+            $cantidadPermitida = Dato::where('id_user', $userId)->value('cantidad') ?? 1;
+
+            // Buscar empresas compatibles con la disponibilidad del influencer
+            $empresasCompatibles = Company::whereHas('availabilityDays', function ($query) use ($disponibilidad) {
+                foreach ($disponibilidad as $disp) {
+                    $query->orWhere(function ($subquery) use ($disp) {
+                        $subquery->where('day_of_week', $disp->day_of_week)
+                            ->where('turno', $disp->turno);
+                    });
+                }
+            })->with('availabilityDays')->get();
+
+            $empresasAsignables = [];
+
+            foreach ($empresasCompatibles as $empresa) {
+                foreach ($empresa->availabilityDays as $empresaDisp) {
+                    foreach ($disponibilidad as $userDisp) {
+                        if (
+                            $empresaDisp->day_of_week === $userDisp->day_of_week &&
+                            $empresaDisp->turno === $userDisp->turno
+                        ) {
+                            $empresasAsignables[] = [
+                                'empresa' => $empresa,
+                                'turno' => $empresaDisp->turno,
+                                'day_of_week' => $empresaDisp->day_of_week,
+                            ];
+                        }
+                    }
+                }
+            }
+
+            shuffle($empresasAsignables);
+            $seleccionadas = array_slice($empresasAsignables, 0, $cantidadPermitida);
+
+            $bookings = [];
+
+            foreach ($seleccionadas as $item) {
+                $existingCount = Booking::where('company_id', $item['empresa']->id)
+                    ->where('day_of_week', $item['day_of_week'])
+                    ->where('turno', $item['turno'])
+                    ->where('week_id', $week->id)
+                    ->count();
+
+                $cantidadMaxima = AvailabilityDay::where('company_id', $item['empresa']->id)
+                    ->where('day_of_week', $item['day_of_week'])
+                    ->where('turno', $item['turno'])
+                    ->value('cantidad') ?? 1;
+
+                if ($existingCount >= $cantidadMaxima) {
+                    continue;
+                }
+
+                $startOfWeek = $week->start_date;
+                $dias = [
+                    'monday' => 0,
+                    'tuesday' => 1,
+                    'wednesday' => 2,
+                    'thursday' => 3,
+                    'friday' => 4,
+                    'saturday' => 5,
+                    'sunday' => 6,
+                ];
+                $diaOffset = $dias[strtolower($item['day_of_week'])] ?? 0;
+                $fecha = Carbon::parse($startOfWeek)->addDays($diaOffset);
+                $startTime = $item['turno'] === 'mañana' ? '09:00:00' : '14:00:00';
+                $endTime = $item['turno'] === 'mañana' ? '13:00:00' : '18:00:00';
+
+                $booking = Booking::create([
+                    'company_id' => $item['empresa']->id,
+                    'user_id' => $userId,
+                    'status' => 'activo',
+                    'turno' => $item['turno'],
+                    'day_of_week' => $item['day_of_week'],
+                    'week_id' => $week->id,
+                    'start_time' => $fecha->format("Y-m-d") . " " . $startTime,
+                    'end_time' => $fecha->format("Y-m-d") . " " . $endTime,
+                ]);
+
+                $bookings[] = $booking;
+            }
+
+            if (!empty($bookings)) {
+                $asignaciones[] = [
+                    'user_id' => $userId,
+                    'nombre_usuario' => $influencer->name,
+                    'empresas' => collect($bookings)->pluck('company_id')->unique(),
+                ];
+            }
+        }
+
+        if (empty($asignaciones)) {
+            return response()->json(['message' => 'Ya tienes realizaste las asignaciones.'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Asignaciones completadas exitosamente.',
+            'total_usuarios_asignados' => count($asignaciones),
+            'detalle' => $asignaciones,
+        ]);
     }
 }

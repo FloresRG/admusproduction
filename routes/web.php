@@ -286,6 +286,10 @@ Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
 Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
 Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
 Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfDisponibilidad'])->name('disponibilidad.semanal.pdf');
+Route::post('/asignar-empresas-masivamente', [SemanaController::class, 'asignarEmpresasMasivamente'])
+    ->middleware('auth')
+    ->name('asignar.empresas.masivo');
+
 
 Route::post('/infuencersdatos/{user}/photos', [DatoInfluencersController::class, 'uploadPhotos'])->name('influencers.photos.upload');
 Route::delete('/infuencersdatos/{user}/photos/{photo}', [DatoInfluencersController::class, 'deletePhoto'])->name('influencers.photos.delete');
