@@ -2,22 +2,20 @@
 
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { AlertCircle, Building2, Calendar, CheckCircle, Edit3, ExternalLink, FileText, LinkIcon, Plus, Save, Trash2, VideoIcon } from 'lucide-react';
+import { AlertCircle, Building2, Calendar, CheckCircle, Edit3, ExternalLink, FileText, LinkIcon, Plus, Save, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
 export default function Index({ empresas, registros }) {
     const [empresaNombre, setEmpresaNombre] = useState('');
-    const today = new Date();
-    const defaultMes = meses[today.getMonth()];
-    const defaultFecha = today.toISOString().split('T')[0]; // formato YYYY-MM-DD
     const { data, setData, post, reset } = useForm({
         company_id: '',
         link: '',
         detalle: '',
-        mes: defaultMes,
-        fecha: defaultFecha,
+        comprobante_id: '',
+        mes: '',
+        fecha: '',
     });
 
     const [notificaciones, setNotificaciones] = useState<string | null>(null);
@@ -183,14 +181,15 @@ export default function Index({ empresas, registros }) {
                             </div>
                         </div>
                     </div>
-                    <div className="rounded-xl border border-green-100 bg-white p-6 shadow-sm">
+
+                    <div className="rounded-xl border border-purple-100 bg-white p-6 shadow-sm">
                         <div className="flex items-center gap-3">
-                            <div className="rounded-lg bg-green-100 p-3">
-                                <VideoIcon className="h-6 w-6 text-green-600" />
+                            <div className="rounded-lg bg-purple-100 p-3">
+                                <FileText className="h-6 w-6 text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-sm text-gray-600">Total videos</p>
-                                <p className="text-2xl font-bold text-gray-900">{allRegistros.length}</p>
+                                <p className="text-sm text-gray-600">Con Comprobante</p>
+                                <p className="text-2xl font-bold text-gray-900">{allRegistros.filter((r) => r.comprobante?.id).length}</p>
                             </div>
                         </div>
                     </div>
@@ -282,7 +281,22 @@ export default function Index({ empresas, registros }) {
                                     value={data.link}
                                     onChange={(e) => setData('link', e.target.value)}
                                     required
-                                    placeholder="https://www.tiktok.com"
+                                    placeholder="https://ejemplo.com"
+                                />
+                            </div>
+
+                            {/* ID Comprobante */}
+                            <div className="space-y-2">
+                                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                                    <FileText className="h-4 w-4 text-blue-600" />
+                                    ID Comprobante
+                                </label>
+                                <input
+                                    type="text"
+                                    className="w-full rounded-lg border border-gray-300 p-3 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                    value={data.comprobante_id || ''}
+                                    onChange={(e) => setData('comprobante_id', e.target.value)}
+                                    placeholder="Opcional"
                                 />
                             </div>
 
@@ -348,7 +362,12 @@ export default function Index({ empresas, registros }) {
                                         </div>
                                     </th>
                                     <th className="px-4 py-4 text-left font-semibold">Fecha</th>
-
+                                    <th className="px-4 py-4 text-left font-semibold">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="h-4 w-4" />
+                                            Comprobante
+                                        </div>
+                                    </th>
                                     <th className="px-4 py-4 text-center font-semibold">Acciones</th>
                                 </tr>
                             </thead>
@@ -424,6 +443,16 @@ export default function Index({ empresas, registros }) {
                                                 value={inlineData[r.id]?.fecha || ''}
                                                 onChange={(e) => handleInlineChange(r.id, 'fecha', e.target.value)}
                                                 onBlur={() => handleInlineSave(r.id)}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <input
+                                                type="text"
+                                                className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                                value={inlineData[r.id]?.comprobante_id || ''}
+                                                onChange={(e) => handleInlineChange(r.id, 'comprobante_id', e.target.value)}
+                                                onBlur={() => handleInlineSave(r.id)}
+                                                placeholder="ID..."
                                             />
                                         </td>
                                         <td className="px-4 py-3 text-center">

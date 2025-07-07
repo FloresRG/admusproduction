@@ -37,18 +37,27 @@ export default function Reporte() {
         const params = new URLSearchParams({
             fecha_inicio: fechaInicio,
             fecha_fin: fechaFin,
-            mes: mes,
         }).toString();
 
         window.open(`/reportetareas/pdf?${params}`, '_blank');
     };
+    const generarPdfmes = () => {
+        const params = new URLSearchParams({
+            fecha_inicio: fechaInicio,
+            fecha_fin: fechaFin,
+        }).toString();
 
+        window.open(`/reportetareas/pdfmes?${params}`, '_blank');
+    };
     return (
         <AppLayout>
             <div className="p-6">
                 <h1 className="mb-4 text-xl font-bold">Tareas Asignadas</h1>
                 <button onClick={generarPdf} className="rounded bg-red-600 px-4 py-2 text-white">
                     Generar PDF
+                </button>
+                <button onClick={generarPdfmes} className="rounded bg-blue-600 px-4 py-2 text-white">
+                    Generar PDF MES
                 </button>
 
                 {/* Filtros */}

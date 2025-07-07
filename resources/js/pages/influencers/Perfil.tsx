@@ -43,6 +43,8 @@ interface Availability {
     date: string;
     time_start: string;
     time_end: string;
+    day_of_week: string;
+    turno: string;
     status: string;
 }
 
@@ -107,6 +109,19 @@ export default function InfluencerProfile({ profileData: initialProfileData }: P
         ],
     };
 
+    const getBackgroundImage = () => {
+        return profileData.user.avatar || 'https://images.unsplash.com/photo-1614786269829-d24616faf56d';
+    };
+    const diasSemana: Record<string, string> = {
+        monday: 'Lunes',
+        tuesday: 'Martes',
+        wednesday: 'Miércoles',
+        thursday: 'Jueves',
+        friday: 'Viernes',
+        saturday: 'Sábado',
+        sunday: 'Domingo',
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Perfil de Influencer" />
@@ -124,11 +139,7 @@ export default function InfluencerProfile({ profileData: initialProfileData }: P
                         height: 400,
                         width: '100%',
                         position: 'relative',
-                        background: `linear-gradient(45deg, 
-                            rgba(0,0,0,0.4), 
-                            rgba(0,0,0,0.6)
-                        ), url(${backgroundImages[0]}) no-repeat center left/50% cover,
-                        url(${backgroundImages[1]}) no-repeat center right/50% cover`,
+                        background: `linear-gradient(45deg, rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url(${getBackgroundImage()}) no-repeat center center / cover`,
                         '&::before': {
                             content: '""',
                             position: 'absolute',
@@ -273,12 +284,6 @@ export default function InfluencerProfile({ profileData: initialProfileData }: P
                             {/* Galería */}
                             {profileData.photos.length > 0 && (
                                 <Paper elevation={3} sx={{ p: 3, borderRadius: 2, mb: 3 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                                        <Typography variant="h5">Portafolio ({profileData.photos.length} fotos)</Typography>
-                                        <Button startIcon={<PhotoCamera />} variant="contained" color="primary">
-                                            Añadir Contenido
-                                        </Button>
-                                    </Box>
                                     <Box
                                         sx={{
                                             '.slick-slide': { px: 1 },
@@ -334,38 +339,63 @@ export default function InfluencerProfile({ profileData: initialProfileData }: P
 
                             {/* Disponibilidad */}
                             {profileData.availabilities && profileData.availabilities.length > 0 && (
-                                <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-                                        <Typography variant="h5">Disponibilidad</Typography>
-                                        <Button startIcon={<CalendarMonthIcon />} variant="contained" color="primary">
+                                <Paper
+                                    elevation={6}
+                                    sx={{
+                                        p: 4,
+                                        borderRadius: 3,
+                                        background: 'linear-gradient(135deg, #f0f4ff, #e0f7fa)',
+                                        mb: 5,
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+                                        <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                                            Disponibilidad
+                                        </Typography>
+                                        <Button
+                                            startIcon={<CalendarMonthIcon />}
+                                            variant="contained"
+                                            color="primary"
+                                            sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                                        >
                                             Gestionar Horarios
                                         </Button>
                                     </Box>
-                                    <Grid container spacing={2}>
+
+                                    <Grid container spacing={3}>
                                         {profileData.availabilities.map((slot) => (
                                             <Grid item xs={12} md={4} key={slot.id}>
                                                 <Paper
-                                                    variant="outlined"
+                                                    elevation={3}
                                                     sx={{
-                                                        p: 2,
-                                                        bgcolor: slot.status === 'disponible' ? 'success.light' : 'warning.light',
-                                                        height: '100%',
+                                                        p: 3,
+                                                        borderRadius: 3,
+                                                        background:
+                                                            slot.status === 'disponible'
+                                                                ? 'linear-gradient(135deg, #e0f7fa, #b2ebf2)'
+                                                                : 'linear-gradient(135deg, #fff3e0, #ffe0b2)',
+                                                        color: 'text.primary',
+                                                        transition: 'transform 0.3s',
+                                                        '&:hover': {
+                                                            transform: 'scale(1.02)',
+                                                        },
                                                     }}
                                                 >
-                                                    <Typography variant="h6" gutterBottom>
-                                                        {new Date(slot.date).toLocaleDateString('es-ES', {
-                                                            weekday: 'long',
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                        })}
+                                                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                                        {diasSemana[slot.day_of_week] ?? slot.day_of_week}
                                                     </Typography>
-                                                    <Typography>
-                                                        {slot.time_start} - {slot.time_end}
+                                                    <Typography variant="body1" sx={{ mb: 0.5 }}>
+                                                        <strong>Turno:</strong> {slot.turno}
                                                     </Typography>
+                                                    <Typography variant="body2">
+                                                        <strong>Horario:</strong> {slot.time_start} – {slot.time_end}
+                                                    </Typography>
+
                                                     <Chip
                                                         label={slot.status}
                                                         color={slot.status === 'disponible' ? 'success' : 'warning'}
-                                                        sx={{ mt: 1 }}
+                                                        variant="filled"
+                                                        sx={{ mt: 2 }}
                                                     />
                                                 </Paper>
                                             </Grid>

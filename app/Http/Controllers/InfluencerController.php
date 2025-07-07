@@ -14,10 +14,10 @@ class InfluencerController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Obtener las fotos del usuario con la relación many-to-many
         $userPhotos = $user->photos()->get();
-        
+
         // Preparar los datos del perfil
         $profileData = [
             'user' => [
@@ -43,7 +43,17 @@ class InfluencerController extends Controller
                     'nombre' => $photo->nombre
                 ];
             }),
-            'availabilities' => $user->availabilities ?? [] // Si tienes disponibilidades
+            'availabilities' => $user->availabilities->map(function ($availability) {
+                return [
+                    'id' => $availability->id,
+                    'day_of_week' => $availability->day_of_week,
+                    'time_start' => $availability->start_time,
+                    'time_end' => $availability->end_time,
+                    'turno' => $availability->turno,
+                    'status' => 'disponible' // Puedes ajustar si tienes lógica de estados
+                ];
+            }),
+
         ];
 
         return Inertia::render('influencers/Perfil', [

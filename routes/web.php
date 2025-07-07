@@ -230,7 +230,7 @@ Route::get('/empresas', [TareaController::class, 'listarEmpresas']);
 
 Route::get('/tareas-con-asignaciones',   [TareaController::class, 'tareasConAsignaciones']);
 Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacion'])
-     ->name('asignaciones.actualizar');
+    ->name('asignaciones.actualizar');
 
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
@@ -331,9 +331,10 @@ Route::get('/users/{user}/photos/upload', [PhotoController::class, 'create'])->n
 Route::post('/users/{user}/photos', [PhotoController::class, 'store'])->name('photos.store');
 
 Route::get('/perfil-influencer', [InfluencerController::class, 'index'])
-        ->name('influencer.profile');
+    ->name('influencer.profile');
 Route::get('/reportetareas', [AsignacionTareaController::class, 'reportetareas'])->name('asignaciones.reportetareas');
 Route::get('/reportetareas/pdf', [AsignacionTareaController::class, 'generarPdfReporteTareas'])->name('reportetareas.pdf');
+Route::get('/reportetareas/pdfmes', [AsignacionTareaController::class, 'generarPdfReporteTareasmes'])->name('reportetareas.pdfmes');
 
 
 Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');
@@ -367,11 +368,11 @@ Route::get('/influencersts', [InfluencerDatosController::class, 'index'])
 Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
     ->name('influencers.show');
 
-     Route::get('/tareas/hoy', function () {
+Route::get('/tareas/hoy', function () {
     return Inertia::render('tareas/tareashoy');
 })->name('tareas.index');
 
- Route::get('/tareas/revicion', function () {
+Route::get('/tareas/revicion', function () {
     return Inertia::render('tareas/tareasrevicion');
 })->name('tareas.index');
 
@@ -397,22 +398,28 @@ Route::get('/pagos', function () {
     return Inertia::render('pagos/index');
 });
 
+
+//nuevocomporbante
+Route::get('/pagos', [PagosController::class, 'index'])->name('pagos.index');
+Route::post('/pagos', [PagosController::class, 'store'])->name('pagos.store');
+Route::put('/pagos/{id}', [PagosController::class, 'update'])->name('pagos.update');
+
+
 Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanies']);
 
 ///pagos empresas
 Route::get('/pagos-del-mes', [CompanyLinkComprobanteController::class, 'pagosDelMes'])->name('company-links.pagos-del-mes');
 Route::get('/api/companies', [PagosController::class, 'getCompanies']);
-Route::post('/comprobante', [PagosController::class, 'storeComprobante']);Route::middleware(['auth'])->group(function () {
-    // Ruta para mostrar todos los videos
-    Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');
-    Route::get('/videosmes', [VideosController::class, 'indexmes'])->name('videos.indexmes');
-});
+Route::post('/comprobante', [PagosController::class, 'storeComprobante']);
+// Ruta para mostrar todos los videos
+Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');
+Route::get('/videosmes', [VideosController::class, 'indexmes'])->name('videos.indexmes');
 
 Route::get('/reportes/pagos-por-anio', [\App\Http\Controllers\CompanyLinkComprobanteController::class, 'reporteAnual'])
     ->name('company-links.reporte-anual');
 
-    ///tareas para si mismos
-    Route::post('/tareas-personales', [TareaController::class, 'storePersonal'])->name('tareas-personales');
+///tareas para si mismos
+Route::post('/tareas-personales', [TareaController::class, 'storePersonal'])->name('tareas-personales');
 Route::get('/tareas-personales', function () {
     return Inertia::render('tareas/mistareas'); // Tu componente Vue o React aquí
 })->name('tareas-personales');

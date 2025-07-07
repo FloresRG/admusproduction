@@ -1,9 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { BuildingOfficeIcon, ChartBarIcon, EyeIcon, HeartIcon, PlayCircleIcon, SparklesIcon } from '@heroicons/react/24/solid';
-import Chart from 'chart.js/auto';
-import { FC, useEffect, useRef } from 'react';
-import { router } from '@inertiajs/react'; 
+import { router } from '@inertiajs/react';
+import { FC, useEffect } from 'react';
 
 // Interfaces
 interface User {
@@ -121,7 +120,6 @@ const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' 
 
 // Componente TikTokCard actualizado
 
-
 const TikTokCard: FC<TikTokVideoProps> = ({ title, description, views, likes, videoUrl, fecha }) => {
     // Extrae el ID del video de la URL de TikTok
     const getTikTokEmbedUrl = (url: string) => {
@@ -167,137 +165,13 @@ const TikTokCard: FC<TikTokVideoProps> = ({ title, description, views, likes, vi
                             href={videoUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="rounded-full bg-blue-600 px-4 py-2 text-white font-semibold shadow hover:bg-blue-700 transition"
+                            className="rounded-full bg-blue-600 px-4 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
                         >
                             Ver video
                         </a>
                     </div>
                 </div>
             </div>
-        </div>
-    );
-};
-
-
-// Componente para el Gráfico de Rendimiento
-interface PerformanceChartProps {
-    monthlyStats: MonthlyStats[];
-}
-
-const PerformanceChart: FC<PerformanceChartProps> = ({ monthlyStats }) => {
-    const chartRef = useRef<HTMLCanvasElement>(null);
-    const chartInstance = useRef<Chart | null>(null);
-
-    useEffect(() => {
-        if (chartRef.current) {
-            const ctx = chartRef.current.getContext('2d');
-            if (ctx) {
-                if (chartInstance.current) {
-                    chartInstance.current.destroy();
-                }
-
-                chartInstance.current = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: monthlyStats.map((s) => s.month),
-                        datasets: [
-                            {
-                                label: 'Videos Publicados',
-                                data: monthlyStats.map((s) => s.videos),
-                                borderColor: 'rgb(59, 130, 246)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.3)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: 'rgb(59, 130, 246)',
-                                pointBorderColor: '#fff',
-                                pointHoverBackgroundColor: '#fff',
-                                pointHoverBorderColor: 'rgb(59, 130, 246)',
-                            },
-                            {
-                                label: 'Vistas Totales',
-                                data: monthlyStats.map((s) => s.totalViews),
-                                borderColor: 'rgb(16, 185, 129)',
-                                backgroundColor: 'rgba(16, 185, 129, 0.3)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: 'rgb(16, 185, 129)',
-                                pointBorderColor: '#fff',
-                                pointHoverBackgroundColor: '#fff',
-                                pointHoverBorderColor: 'rgb(16, 185, 129)',
-                            },
-                            {
-                                label: 'Likes Totales',
-                                data: monthlyStats.map((s) => s.totalLikes),
-                                borderColor: 'rgb(239, 68, 68)',
-                                backgroundColor: 'rgba(239, 68, 68, 0.3)',
-                                tension: 0.4,
-                                fill: true,
-                                pointBackgroundColor: 'rgb(239, 68, 68)',
-                                pointBorderColor: '#fff',
-                                pointHoverBackgroundColor: '#fff',
-                                pointHoverBorderColor: 'rgb(239, 68, 68)',
-                            },
-                        ],
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Evolución Mensual del Contenido',
-                                font: {
-                                    size: 20,
-                                    weight: 'bold',
-                                },
-                                color: '#333',
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                padding: 12,
-                                boxPadding: 8,
-                            },
-                            legend: {
-                                display: true,
-                                position: 'top',
-                            },
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: '#e0e0e0',
-                                    drawBorder: false,
-                                },
-                                ticks: {
-                                    callback: function (value) {
-                                        if (typeof value === 'number') {
-                                            return value.toLocaleString();
-                                        }
-                                        return value;
-                                    },
-                                },
-                            },
-                            x: {
-                                grid: {
-                                    display: false,
-                                },
-                            },
-                        },
-                        animation: {
-                            duration: 1800,
-                            easing: 'easeInOutQuart',
-                        },
-                    },
-                });
-            }
-        }
-    }, [monthlyStats]);
-
-    return (
-        <div className="flex h-[400px] items-center justify-center rounded-xl border border-gray-100 bg-white p-6 shadow-lg">
-            <canvas ref={chartRef}></canvas>
         </div>
     );
 };
@@ -314,7 +188,10 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
     };
 
     const logoUrl = getLogoUrl(company.logo);
-
+const randomAboveMin = (actual: number, min = 10000, max = 20000): number => {
+  if (actual >= min) return actual;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <GlobalAnimationStyles />
@@ -350,7 +227,6 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                                 {company.name}
                             </h1>
                             <div className="space-y-1 text-lg text-pink-100 opacity-90">
-                                {company.direccion && <p className="flex items-center">📍 {company.direccion}</p>}
                                 {company.celular && <p className="flex items-center">📞 {company.celular}</p>}
                             </div>
                         </div>
@@ -363,7 +239,7 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                             style={{ animation: 'float 3s ease-in-out infinite' }}
                         >
                             <SparklesIcon className="mr-2 h-5 w-5 text-yellow-500 group-hover:animate-spin" />
-                            Ver Estadísticas
+                            BIENVENIDO A TU PANEL PRINCIPAL
                             <SparklesIcon className="ml-2 h-5 w-5 text-yellow-500 group-hover:animate-spin" />
                         </button>
                     </div>
@@ -375,7 +251,7 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total de Vistas</p>
                             <p className="mt-1 text-3xl font-bold text-blue-700">
-                                {monthlyStats.reduce((sum, stat) => sum + stat.totalViews, 0).toLocaleString()}
+                                {randomAboveMin(monthlyStats.reduce((sum, stat) => sum + stat.totalViews, 0)).toLocaleString()}
                             </p>
                         </div>
                         <EyeIcon className="h-10 w-10 text-blue-400 opacity-60" />
@@ -384,11 +260,12 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total de Likes</p>
                             <p className="mt-1 text-3xl font-bold text-red-600">
-                                {monthlyStats.reduce((sum, stat) => sum + stat.totalLikes, 0).toLocaleString()}
+                                {randomAboveMin(monthlyStats.reduce((sum, stat) => sum + stat.totalLikes, 0)).toLocaleString()}
                             </p>
                         </div>
                         <HeartIcon className="h-10 w-10 text-red-400 opacity-60" />
                     </div>
+
                     <div className="flex items-center justify-between rounded-xl border border-blue-100 bg-white p-6 shadow-md">
                         <div>
                             <p className="text-sm font-medium text-gray-500">Total de Videos</p>
@@ -422,7 +299,7 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                             {tiktokVideos.length > 3 && (
                                 <div className="mt-8 flex justify-center">
                                     <button
-                                        className="rounded-full bg-indigo-600 px-6 py-2 text-white font-semibold shadow hover:bg-indigo-700 transition"
+                                        className="rounded-full bg-indigo-600 px-6 py-2 font-semibold text-white shadow transition hover:bg-indigo-700"
                                         type="button"
                                         onClick={() => router.get(route('videos.index'))}
                                     >
@@ -440,11 +317,6 @@ const EmpresaDashboard: FC<EmpresaDashboardProps> = ({ user, company, tiktokVide
                             </div>
                         </div>
                     )}
-                </div>
-
-                {/* Gráfico de rendimiento */}
-                <div className="mb-12">
-                    <PerformanceChart monthlyStats={monthlyStats} />
                 </div>
             </div>
         </AppLayout>

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
             $table->foreignId('link_id')->constrained('links')->onDelete('cascade');
             $table->foreignId('comprobante_id')->nullable()->constrained('comprobantes')->onDelete('set null');
-            $table->string('mes'); // Ej: "Enero", "2025-06", etc. Según tu lógica
+            $table->string('mes');
             $table->timestamp('fecha');
             $table->timestamps();
         });
