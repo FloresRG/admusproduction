@@ -932,11 +932,11 @@ export default function Tareas() {
                                             <Autocomplete
                                                 options={empresas}
                                                 getOptionLabel={(option) => option.name}
-                                                value={empresas.find((e) => e.id === Number(newTaskData.company_id)) || null}
+                                                value={empresas.find((e) => e.id === Number(editFormData.company_id)) || null}
                                                 onChange={(_, newValue) =>
-                                                    setNewTaskData({
-                                                        ...newTaskData,
-                                                        company_id: newValue ? String(newValue.id) : '', // ✅ Solo el ID
+                                                    setEditFormData({
+                                                        ...editFormData,
+                                                        company_id: newValue ? String(newValue.id) : '',
                                                     })
                                                 }
                                                 renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
