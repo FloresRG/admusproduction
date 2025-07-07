@@ -189,7 +189,6 @@ class VideosController extends Controller
         $query = CompanyLinkComprobante::with([
             'company:id,name,logo',
             'link:id,link,detalle',
-            'comprobante:id,nombre'
         ]);
 
         // Solo videos (links válidos)
@@ -285,7 +284,6 @@ class VideosController extends Controller
         $query = CompanyLinkComprobante::with([
             'company:id,name,logo',
             'link:id,link,detalle',
-            'comprobante:id,nombre'
         ]);
 
         // Solo videos (links válidos)

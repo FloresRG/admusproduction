@@ -15,21 +15,14 @@ interface LinkData {
     detalle?: string;
 }
 
-interface Comprobante {
-    id: number;
-    nombre: string;
-}
-
 interface Video {
     id: number;
     company_id: number;
     link_id: number;
-    comprobante_id: number;
     mes: string;
     fecha: string;
     company: Company;
     link: LinkData;
-    comprobante: Comprobante;
 }
 
 interface VideosPageProps extends PageProps {
