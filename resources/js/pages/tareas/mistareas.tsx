@@ -81,9 +81,9 @@ interface TipoTarea {
     nombre: string;
 }
 
-interface Empresa {
+interface Company {
     id: number;
-    name: string;
+    nombre: string;
 }
 
 interface Usuario {
@@ -177,7 +177,7 @@ export default function MisTareas() {
 
             setTareas(tareasRes.data);
             setTipos(tiposRes.data);
-            setEmpresas(empresasRes.data);
+            setEmpresas(empresasRes.data); // ✅ solo .data porque es un array plano
             setUsuarios(usuariosRes.data.data);
         } catch (err) {
             console.error('Error al cargar datos:', err);
@@ -315,14 +315,6 @@ export default function MisTareas() {
         });
         setExpandedUsers(initialExpandedState);
     }, [tareasPorUsuario]);
-
-    // Empresas
-    useEffect(() => {
-        axios
-            .get('/empresas')
-            .then((res) => setEmpresas(res.data))
-            .catch((err) => console.error('Error al cargar empresas:', err));
-    }, []);
 
     // Funciones de manejo
     const toggleUserExpanded = (userName: string) => {
@@ -634,21 +626,6 @@ export default function MisTareas() {
                                 />
                             </Grid>
 
-                            {/* Remover este Grid item completo del filtro por usuario */}
-                            {/* <Grid item xs={12} md={4}>
-                <Autocomplete
-                  options={usuariosUnicos}
-                  getOptionLabel={(option) => option}
-                  value={filterUser || null}
-                  onChange={(_, newValue) => setFilterUser(newValue || '')}
-                  clearOnEscape
-                  sx={{ minWidth: 300 }}
-                  renderInput={(params) => (
-                    <TextField {...params} label="👤 Filtrar por Usuario" placeholder="Filtrar por usuario" fullWidth />
-                  )}
-                />
-              </Grid> */}
-
                             <Grid item xs={12} md={4}>
                                 <Autocomplete
                                     options={['alta', 'media', 'baja']}
@@ -776,7 +753,7 @@ export default function MisTareas() {
                                             <Grid item xs={12} md={6}>
                                                 <Autocomplete
                                                     options={empresas}
-                                                    getOptionLabel={(option) => option.name}
+                                                    getOptionLabel={(option) => option.nombre}
                                                     value={empresas.find((e) => e.id === Number(form.company_id)) || null}
                                                     onChange={(_, newValue) => setData('company_id', newValue ? String(newValue.id) : '')}
                                                     sx={{ minWidth: 300 }}
@@ -886,16 +863,16 @@ export default function MisTareas() {
                                     </Grid>
                                     <Grid item xs={12} md={6}>
                                         <Autocomplete
-                                            options={tipos}
+                                            options={empresas}
                                             getOptionLabel={(option) => option.nombre}
-                                            value={tipos.find((t) => t.id === Number(editFormData.tipo_id)) || null}
+                                            value={empresas.find((e) => e.id === Number(editFormData.company_id)) || null}
                                             onChange={(_, newValue) =>
                                                 setEditFormData({
                                                     ...editFormData,
-                                                    tipo_id: newValue ? String(newValue.id) : '',
+                                                    company_id: newValue ? String(newValue.id) : '',
                                                 })
                                             }
-                                            renderInput={(params) => <TextField {...params} label="🏷️ Tipo de tarea" fullWidth />}
+                                            renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
                                         />
                                     </Grid>
                                     <Grid item xs={12} md={6}>
@@ -988,9 +965,6 @@ export default function MisTareas() {
                                 <Typography variant="h5" color="text.secondary" sx={{ mb: 2 }}>
                                     📝 No tienes tareas para hoy
                                 </Typography>
-                                <Button variant="contained" startIcon={<Add />} onClick={startNewTask}>
-                                    Crear mi primera tarea
-                                </Button>
                             </Paper>
                         ) : (
                             Object.entries(tareasPorUsuario).map(([userName, tareas], userIndex) => (

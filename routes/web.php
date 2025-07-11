@@ -409,7 +409,7 @@ Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanie
 
 ///pagos empresas
 Route::get('/pagos-del-mes', [CompanyLinkComprobanteController::class, 'pagosDelMes'])->name('company-links.pagos-del-mes');
-Route::get('/api/companies', [PagosController::class, 'getCompanies']);
+Route::get('/api/companies2', [PagosController::class, 'getCompanies']);
 Route::post('/comprobante', [PagosController::class, 'storeComprobante']);
 // Ruta para mostrar todos los videos
 Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');
