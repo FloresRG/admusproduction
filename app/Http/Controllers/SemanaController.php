@@ -306,13 +306,13 @@ class SemanaController extends Controller
 
         return back()->with('success', 'Influencer removido exitosamente.');
     }
-
     /* public function generarPdfDisponibilidad()
     {
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY)->toDateString();
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY)->toDateString();
+        $now = Carbon::now();
 
-        $week = Week::where('start_date', $startOfWeek)->where('end_date', $endOfWeek)->first();
+        $week = Week::whereDate('start_date', '<=', $now)
+            ->whereDate('end_date', '>=', $now)
+            ->first();
 
         if (!$week) {
             return response()->json(['error' => 'No se encontró la semana actual.'], 404);
@@ -329,7 +329,7 @@ class SemanaController extends Controller
             return response()->json(['error' => 'No hay asignaciones esta semana.'], 404);
         }
 
-        $diasSemana = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+        $dias = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         $diasTraducidos = [
             'monday' => 'Lunes',
             'tuesday' => 'Martes',
@@ -339,110 +339,96 @@ class SemanaController extends Controller
             'saturday' => 'Sábado',
         ];
 
-        $datosPorEmpresa = [];
+        $calendario = [];
         foreach ($bookings as $booking) {
-            $empresaId = $booking->company->id;
+            $empresaNombre = $booking->company->name;
             $dia = strtolower($booking->day_of_week);
-            $turno = strtolower($booking->turno);
+            $influencer = $booking->user->name . ' (' . ucfirst($booking->turno) . ')';
 
-            $datosPorEmpresa[$empresaId]['empresa'] = $booking->company;
-            $datosPorEmpresa[$empresaId]['disponibilidad'][$dia][$turno][] = $booking->user->name;
+            $calendario[$empresaNombre][$dia][] = $influencer;
         }
 
         $pdf = new \FPDF('L', 'mm', 'A4');
-        $pdf->AddPage();
-        $pdf->SetMargins(10, 10, 10);
 
-        // Logo y encabezado
-        $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
-        $pdf->Image(public_path('logo.jpeg'), 260, 10, 25);
-        $pdf->SetFont('Arial', 'B', 16);
-        $pdf->SetXY(0, 15);
-        $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
+        $cellWidth = 38;
+        $empresaWidth = 50;
+        $lineHeight = 6.5;
 
-        $pdf->Ln(8);
-        $pdf->SetFont('Arial', 'B', 18);
-        $pdf->SetFillColor(0, 102, 204);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
+        // Función para encabezado
+        $agregarEncabezado = function () use ($pdf, $dias, $diasTraducidos, $week, $empresaWidth, $cellWidth) {
+            $pdf->AddPage();
+            $pdf->SetMargins(10, 10, 10);
+            $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
+            $pdf->Image(public_path('logo.jpeg'), 255, 10, 25);
+            $pdf->SetFont('Arial', 'B', 16);
+            $pdf->SetXY(0, 15);
+            $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
 
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
-        $pdf->Ln(4);
-
-        // Cálculo de anchos
-        $totalWidth = 297;
-        $margen = 10;
-        $anchoEmpresa = 60;
-        $diasCount = count($diasSemana);
-        $cellWidth = ($totalWidth - ($margen * 2) - $anchoEmpresa) / $diasCount;
-        $alturaFila = 25;
-
-        // Función interna para imprimir encabezado de tabla
-        $imprimirEncabezado = function () use ($pdf, $anchoEmpresa, $diasSemana, $diasTraducidos, $cellWidth) {
-            $pdf->SetFont('Arial', 'B', 11);
-            $pdf->SetFillColor(30, 144, 255);
+            $pdf->Ln(8);
+            $pdf->SetFont('Arial', 'B', 18);
+            $pdf->SetFillColor(0, 102, 204);
             $pdf->SetTextColor(255, 255, 255);
-            $pdf->SetDrawColor(30, 144, 255);
+            $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
 
-            $pdf->Cell($anchoEmpresa, 10, utf8_decode('Empresa'), 0, 0, 'C', true);
-            foreach ($diasSemana as $dia) {
-                $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 0, 0, 'C', true);
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+            $pdf->Ln(4);
+
+            // Encabezado de tabla
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->SetFillColor(220, 220, 220);
+            $pdf->Cell($empresaWidth, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
+            foreach ($dias as $dia) {
+                $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 1, 0, 'C', true);
             }
             $pdf->Ln();
         };
 
-        // Imprimir encabezado por primera vez
-        $imprimirEncabezado();
+        $agregarEncabezado();
 
-        // Contenido
+        $empresaCount = 0;
         $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(0, 0, 0);
 
-        foreach ($datosPorEmpresa as $empresaData) {
-            // Estimar altura y verificar espacio disponible
-            if ($pdf->GetY() + $alturaFila > 190) {
-                $pdf->AddPage();
-                $imprimirEncabezado();
+        foreach ($calendario as $empresaNombre => $diasData) {
+            if ($empresaCount === 8) {
+                $agregarEncabezado();
+                $empresaCount = 0;
             }
 
-            $xStart = $pdf->GetX();
+            // Calcular altura máxima de fila
+            $maxLines = 2;
+            foreach ($dias as $dia) {
+                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
+                $lines = substr_count($text, "\n") + 1;
+                $maxLines = max($maxLines, $lines);
+            }
+            $rowHeight = $lineHeight * $maxLines;
+
             $yStart = $pdf->GetY();
+            $xStart = $pdf->GetX();
 
             // Empresa
-            $pdf->MultiCell($anchoEmpresa, 5, utf8_decode($empresaData['empresa']->name), 0, 'L');
-            $yEnd = $pdf->GetY();
-            $pdf->SetXY($xStart + $anchoEmpresa, $yStart);
+            $pdf->Rect($xStart, $yStart, $empresaWidth, $rowHeight);
+            $pdf->MultiCell($empresaWidth, $lineHeight, utf8_decode($empresaNombre), 0, 'L');
+            $pdf->SetXY($xStart + $empresaWidth, $yStart);
 
-            foreach ($diasSemana as $dia) {
-                $contenido = '';
-                foreach (['mañana', 'tarde'] as $turno) {
-                    if (!empty($empresaData['disponibilidad'][$dia][$turno])) {
-                        $icono = $turno === 'mañana' ? '☀️' : '🌙';
-                        $contenido .= "$icono " . ucfirst($turno) . ":\n";
-                        foreach ($empresaData['disponibilidad'][$dia][$turno] as $nombre) {
-                            $contenido .= "• $nombre\n";
-                        }
-                        $contenido .= "\n";
-                    }
-                }
-
-                if (empty(trim($contenido))) {
-                    $contenido = "-";
-                }
-
+            // Días
+            foreach ($dias as $dia) {
+                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
                 $x = $pdf->GetX();
                 $y = $pdf->GetY();
-                $pdf->MultiCell($cellWidth, 5, utf8_decode($contenido), 0, 'L');
+
+                // Dibuja borde externo de la celda
+                $pdf->Rect($x, $y, $cellWidth, $rowHeight);
+
+                // Escribe el texto sin bordes internos
+                $pdf->MultiCell($cellWidth, $lineHeight, utf8_decode($text), 0, 'C');
                 $pdf->SetXY($x + $cellWidth, $y);
             }
 
-            // Línea divisora
-            $pdf->Ln($alturaFila);
-            $pdf->SetDrawColor(180, 180, 180);
-            $pdf->Line($margen, $pdf->GetY(), $totalWidth - $margen, $pdf->GetY());
-            $pdf->Ln(2);
+            $pdf->SetY($yStart + $rowHeight);
+            $empresaCount++;
         }
 
         return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
@@ -453,7 +439,6 @@ class SemanaController extends Controller
     {
         $now = Carbon::now();
 
-        // Buscar la semana actual
         $week = Week::whereDate('start_date', '<=', $now)
             ->whereDate('end_date', '>=', $now)
             ->first();
@@ -462,7 +447,6 @@ class SemanaController extends Controller
             return response()->json(['error' => 'No se encontró la semana actual.'], 404);
         }
 
-        // Obtener bookings
         $bookings = Booking::with(['company', 'user'])
             ->where('week_id', $week->id)
             ->orderBy('company_id')
@@ -474,7 +458,7 @@ class SemanaController extends Controller
             return response()->json(['error' => 'No hay asignaciones esta semana.'], 404);
         }
 
-        // Días en español
+        $dias = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
         $diasTraducidos = [
             'monday' => 'Lunes',
             'tuesday' => 'Martes',
@@ -482,74 +466,165 @@ class SemanaController extends Controller
             'thursday' => 'Jueves',
             'friday' => 'Viernes',
             'saturday' => 'Sábado',
-            'sunday' => 'Domingo',
         ];
 
-        // Agrupar por empresa
-        $agrupadoPorEmpresa = $bookings->groupBy('company_id');
+        $calendario = [];
+        foreach ($bookings as $booking) {
+            $empresaNombre = $booking->company->name;
+            $dia = strtolower($booking->day_of_week);
+            // Solo mostrar la primera palabra (primer nombre) del usuario
+            $primerNombre = explode(' ', $booking->user->name)[0];
+            $influencer = $primerNombre . ' (' . ucfirst($booking->turno) . ')';
 
-        $pdf = new \FPDF('P', 'mm', 'A4');
-        $pdf->AddPage();
-        $pdf->SetMargins(10, 10, 10);
+            $calendario[$empresaNombre][$dia][] = $influencer;
+        }
 
-        // Encabezado con logos y título
-        $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
-        $pdf->Image(public_path('logo.jpeg'), 175, 10, 25);
-        $pdf->SetFont('Arial', 'B', 16);
-        $pdf->SetXY(0, 15);
-        $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
+        $pdf = new \FPDF('L', 'mm', 'A4');
 
-        $pdf->Ln(8);
-        $pdf->SetFont('Arial', 'B', 18);
-        $pdf->SetFillColor(0, 102, 204);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
+        $cellWidth = 38;
+        $empresaWidth = 50;
+        $lineHeight = 6.5;
 
-        $pdf->SetFont('Arial', '', 12);
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
-        $pdf->Ln(4);
+        // Función para encabezado
+        $agregarEncabezado = function () use ($pdf, $dias, $diasTraducidos, $week, $empresaWidth, $cellWidth) {
+            $pdf->AddPage();
+            $pdf->SetMargins(10, 10, 10);
+            $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
+            $pdf->Image(public_path('logo.jpeg'), 255, 10, 25);
+            $pdf->SetFont('Arial', 'B', 16);
+            $pdf->SetXY(0, 15);
+            $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
 
-        foreach ($agrupadoPorEmpresa as $empresaBookings) {
-            $empresa = $empresaBookings->first()->company;
+            $pdf->Ln(8);
+            $pdf->SetFont('Arial', 'B', 18);
+            // Gradiente azul más moderno
+            $pdf->SetFillColor(25, 118, 210);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
 
-            // Título de la empresa
-            $pdf->SetFont('Arial', 'B', 12);
-            $pdf->SetTextColor(0, 0, 102);
-            $pdf->Cell(0, 10, utf8_decode("Empresa: " . $empresa->name), 0, 1, 'L');
+            $pdf->SetFont('Arial', '', 12);
             $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+            $pdf->Ln(4);
 
-            // Cabecera de tabla
+            // Encabezado de tabla con colores más modernos
             $pdf->SetFont('Arial', 'B', 10);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->Cell(60, 8, utf8_decode('Día'), 1, 0, 'C', true);
-            $pdf->Cell(40, 8, utf8_decode('Turno'), 1, 0, 'C', true);
-            $pdf->Cell(80, 8, utf8_decode('Influencer'), 1, 1, 'C', true);
+            // Color azul oscuro para el encabezado
+            $pdf->SetFillColor(33, 150, 243);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->Cell($empresaWidth, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
+            foreach ($dias as $dia) {
+                $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 1, 0, 'C', true);
+            }
+            $pdf->Ln();
+        };
 
-            // Filas de datos
-            $pdf->SetFont('Arial', '', 10);
-            foreach ($empresaBookings as $booking) {
-                $dia = strtolower($booking->day_of_week);
-                $diaTraducido = $diasTraducidos[$dia] ?? ucfirst($dia);
-                $turno = ucfirst($booking->turno);
-                $usuario = $booking->user->name;
+        $agregarEncabezado();
 
-                $pdf->Cell(60, 7, utf8_decode($diaTraducido), 1);
-                $pdf->Cell(40, 7, utf8_decode($turno), 1);
-                $pdf->Cell(80, 7, utf8_decode($usuario), 1);
-                $pdf->Ln();
+        $empresaCount = 0;
+        $pdf->SetFont('Arial', '', 9);
+
+        foreach ($calendario as $empresaNombre => $diasData) {
+            if ($empresaCount === 8) {
+                $agregarEncabezado();
+                $empresaCount = 0;
             }
 
-            $pdf->Ln(5); // Espacio entre empresas
+            // Calcular altura máxima de fila
+            $maxLines = 2;
+            foreach ($dias as $dia) {
+                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
+                $lines = substr_count($text, "\n") + 1;
+                $maxLines = max($maxLines, $lines);
+            }
+            $rowHeight = $lineHeight * $maxLines;
+
+            $yStart = $pdf->GetY();
+            $xStart = $pdf->GetX();
+
+            // Empresa con estilo mejorado
+            // Fondo alternado para las filas
+            $fillColor = ($empresaCount % 2 === 0) ? [245, 245, 245] : [255, 255, 255];
+            $pdf->SetFillColor($fillColor[0], $fillColor[1], $fillColor[2]);
+            $pdf->Rect($xStart, $yStart, $empresaWidth, $rowHeight, 'F');
+            $pdf->Rect($xStart, $yStart, $empresaWidth, $rowHeight);
+
+            // Texto de empresa en negrita y centrado
+            $pdf->SetFont('Arial', 'B', 9);
+            $pdf->SetTextColor(37, 37, 37);
+            $pdf->SetXY($xStart, $yStart + ($rowHeight - 6.5) / 2);
+            $pdf->Cell($empresaWidth, 6.5, utf8_decode($empresaNombre), 0, 0, 'C');
+            $pdf->SetXY($xStart + $empresaWidth, $yStart);
+
+            // Días con colores alternados
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(0, 0, 0);
+            foreach ($dias as $dia) {
+                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
+
+                // Aplica el mismo color de fondo alternado
+                $pdf->SetFillColor($fillColor[0], $fillColor[1], $fillColor[2]);
+                $pdf->Rect($x, $y, $cellWidth, $rowHeight, 'F');
+
+                // Dibuja borde externo de la celda
+                $pdf->SetDrawColor(180, 180, 180);
+                $pdf->Rect($x, $y, $cellWidth, $rowHeight);
+
+                // Escribe el texto sin bordes internos
+                $pdf->MultiCell($cellWidth, $lineHeight, utf8_decode($text), 0, 'C');
+                $pdf->SetXY($x + $cellWidth, $y);
+            }
+
+            $pdf->SetY($yStart + $rowHeight);
+            $empresaCount++;
         }
 
         return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
     }
-    
 
+    public function agregarDisponibilidadEmpresa(Request $request)
+    {
+        $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
+            'day_of_week' => 'required|string',
+            'turno' => 'required|string',
+        ]);
 
+        // Puedes ajustar los valores por defecto de hora y cantidad según tu lógica
+        $startTime = $validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00';
+        $endTime = $validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00';
+
+        $availability = \App\Models\AvailabilityDay::create([
+            'company_id' => $validated['company_id'],
+            'day_of_week' => strtolower($validated['day_of_week']),
+            'turno' => strtolower($validated['turno']),
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'cantidad' => 1, // o el valor que desees por defecto
+        ]);
+
+        return response()->json(['success' => true, 'availability' => $availability]);
+    }
+
+    public function quitarDisponibilidadEmpresa(Request $request)
+    {
+        $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
+            'day_of_week' => 'required|string',
+            'turno' => 'required|string',
+        ]);
+
+        $deleted = \App\Models\AvailabilityDay::where('company_id', $validated['company_id'])
+            ->where('day_of_week', strtolower($validated['day_of_week']))
+            ->where('turno', strtolower($validated['turno']))
+            ->delete();
+
+        return response()->json(['success' => $deleted > 0]);
+    }
 
     public function asignarEmpresasMasivamente()
     {

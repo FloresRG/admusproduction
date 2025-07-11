@@ -60,6 +60,9 @@ type Company = {
 };
 type Props = {
     companies: Company[];
+    influencersByDay: {
+        [day: string]: { empresa: string; influencer: string }[];
+    };
 };
 
 function formatDay(day: string) {
@@ -75,7 +78,7 @@ function formatDay(day: string) {
     return dayMap[day] || day;
 }
 
-const CompaniesIndex = ({ companies }: Props) => {
+const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
     const [modalOpen, setModalOpen] = useState(false);
     const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
     const [notification, setNotification] = useState<string | null>(null);
@@ -161,7 +164,7 @@ const CompaniesIndex = ({ companies }: Props) => {
 
     return (
         <AppLayout>
-            <Head title="Compañías" />
+            <Head title="Empresas" />
             <Snackbar
                 open={!!notification}
                 autoHideDuration={4000}
@@ -173,25 +176,110 @@ const CompaniesIndex = ({ companies }: Props) => {
                 </Alert>
             </Snackbar>
             {/* Conteo de empresas por día */}
-            <Grid container spacing={2} sx={{ mb: 3, mx: { xs: 0, md: 4 } }}>
+
+            <Grid container spacing={2} sx={{ mb: 3, mx: { xs: 0, md: 4 } }} justifyContent="center">
                 {Object.entries(dayCounts).map(([day, count]) => (
-                    <Grid item xs={12} sm={6} md={2.4} key={day}>
-                        <Card sx={{ background: theme.palette.grey[100], borderRadius: 2, boxShadow: 2 }}>
-                            <CardContent>
-                                <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                    <Grid item xs={12} sm={6} md={3} lg={2} key={day} sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <Card
+                            sx={{
+                                width: 220, // ancho fijo
+                                height: 320, // alto fijo
+                                borderRadius: 3,
+                                boxShadow: 4,
+                                background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.secondary.light} 100%)`,
+                                border: `1.5px solid ${theme.palette.divider}`,
+                                transition: 'transform 0.15s, box-shadow 0.15s',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                p: 2,
+                                '&:hover': {
+                                    transform: 'translateY(-4px) scale(1.03)',
+                                    boxShadow: 8,
+                                },
+                            }}
+                        >
+                            <Box>
+                                <Typography
+                                    variant="subtitle1"
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        mb: 1,
+                                        color: theme.palette.primary.dark,
+                                        letterSpacing: 1,
+                                        fontSize: '1rem',
+                                        textAlign: 'center',
+                                    }}
+                                >
                                     {formatDay(day)}
                                 </Typography>
-                                <Typography variant="h6" color="primary" sx={{ fontWeight: 700 }}>
+
+                                <Typography
+                                    variant="h4"
+                                    color="primary"
+                                    sx={{
+                                        fontWeight: 900,
+                                        mb: 0.5,
+                                        fontSize: '2rem',
+                                        lineHeight: 1,
+                                        textShadow: '0 2px 8px rgba(37,117,252,0.10)',
+                                        textAlign: 'center',
+                                    }}
+                                >
                                     {count}
                                 </Typography>
-                                <Typography variant="body2" color="text.secondary">
+
+                                <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{
+                                        mb: 1,
+                                        fontWeight: 600,
+                                        letterSpacing: 0.5,
+                                        fontSize: '0.85rem',
+                                        textAlign: 'center',
+                                    }}
+                                >
                                     {count === 1 ? 'empresa' : 'empresas'}
                                 </Typography>
-                            </CardContent>
+                            </Box>
+
+                            <Box sx={{ width: '100%' }}>
+                                {Array.isArray(influencersByDay?.[day]) && influencersByDay[day].length > 0 ? (
+                                    influencersByDay[day].map((item, idx) => (
+                                        <Typography
+                                            key={idx}
+                                            variant="caption"
+                                            sx={{
+                                                display: 'block',
+                                                background: '#fff',
+                                                color: theme.palette.primary.main,
+                                                borderRadius: 1,
+                                                px: 1,
+                                                mb: 0.5,
+                                                fontSize: '0.75rem',
+                                                fontWeight: 600,
+                                                boxShadow: '0 1px 4px rgba(37,117,252,0.07)',
+                                                textAlign: 'center',
+                                                wordBreak: 'break-word',
+                                            }}
+                                        >
+                                            <b>{item.influencer.split(' ')[0]}</b> en{' '}
+                                            <span style={{ color: theme.palette.secondary.main }}>{item.empresa}</span>
+                                        </Typography>
+                                    ))
+                                ) : (
+                                    // Mantener espacio aunque no haya influencers
+                                    <Typography variant="caption" sx={{ visibility: 'hidden', height: 30 }}>
+                                        Placeholder
+                                    </Typography>
+                                )}
+                            </Box>
                         </Card>
                     </Grid>
                 ))}
             </Grid>
+
             <Box sx={{ py: 6, mx: { xs: 0, md: 4 } }}>
                 <Box
                     sx={{
@@ -211,7 +299,7 @@ const CompaniesIndex = ({ companies }: Props) => {
                         sx={{ fontWeight: 'bold' }}
                         startIcon={<BusinessIcon />}
                     >
-                        Crear nueva compañía
+                        Crear nueva Empresa
                     </Button>
                     <TextField
                         placeholder="Buscar por nombre o categoría..."
@@ -253,7 +341,7 @@ const CompaniesIndex = ({ companies }: Props) => {
                                     }}
                                 >
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <BusinessIcon fontSize="small" /> Nombre
+                                        <BusinessIcon fontSize="small" /> Nombre de la empresa
                                     </Box>
                                 </TableCell>
                                 <TableCell

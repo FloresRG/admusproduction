@@ -289,7 +289,8 @@ Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfD
 Route::post('/asignar-empresas-masivamente', [SemanaController::class, 'asignarEmpresasMasivamente'])
     ->middleware('auth')
     ->name('asignar.empresas.masivo');
-
+Route::post('/agregar-disponibilidad-empresa', [SemanaController::class, 'agregarDisponibilidadEmpresa']);
+Route::post('/quitar-disponibilidad-empresa', [SemanaController::class, 'quitarDisponibilidadEmpresa']);
 
 Route::post('/infuencersdatos/{user}/photos', [DatoInfluencersController::class, 'uploadPhotos'])->name('influencers.photos.upload');
 Route::delete('/infuencersdatos/{user}/photos/{photo}', [DatoInfluencersController::class, 'deletePhoto'])->name('influencers.photos.delete');
