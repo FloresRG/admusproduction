@@ -85,7 +85,8 @@ class TareaController extends Controller
         'descripcion' => $data['descripcion'],
         'fecha' => $data['fecha'],
         'tipo_id' => $data['tipo_id'],
-        'empresa' => $nombreEmpresa, // ← se guarda el nombre aquí
+        'empresa' => null,
+        'company_id' => $data['company_id'] ?? null,
     ]);
 
     // 4. Determinar fecha de asignación
@@ -159,10 +160,11 @@ public function tareasConAsignaciones()
                     'id'          => $tarea->tipo->id,
                     'nombre_tipo' => $tarea->tipo->nombre_tipo,
                 ] : null,
-                'company'     => $tarea->company ? [
-                    'id'   => $tarea->company->id,
-                    'name' => $tarea->company->name,
-                ] : null,
+                'company_id' => $tarea->company_id, // ✅ agrega esto
+    'company' => $tarea->company ? [
+        'id' => $tarea->company->id,
+        'name' => $tarea->company->name,
+    ] : null,
                 // Aquí renombramos a "asignados" y devolvemos exactamente
                 // los campos que tu React espera
                 'asignados'   => $tarea->asignaciones->map(function ($asignacion) {
@@ -258,13 +260,15 @@ public function storePersonal(Request $request)
     }
 
     $tarea = Tarea::create([
-        'titulo' => $data['titulo'],
-        'prioridad' => $data['prioridad'],
-        'descripcion' => $data['descripcion'],
-        'fecha' => $data['fecha'],
-        'tipo_id' => $data['tipo_id'],
-        'empresa' => $nombreEmpresa,
-    ]);
+    'titulo'      => $data['titulo'],
+    'prioridad'   => $data['prioridad'],
+    'descripcion' => $data['descripcion'],
+    'fecha'       => $data['fecha'],
+    'tipo_id'     => $data['tipo_id'],
+    'empresa'     => null,
+    'company_id'  => $data['company_id'] ?? null,
+]);
+
 
     AsignacionTarea::create([
         'tarea_id' => $tarea->id,
@@ -486,14 +490,15 @@ public function tareasSemana(Request $request)
     }
 
     // Actualizar la tarea con el nombre de la empresa
-    $tarea->update([
-        'titulo'      => $data['titulo'],
-        'prioridad'   => $data['prioridad'],
-        'descripcion' => $data['descripcion'],
-        'fecha'       => $data['fecha'],
-        'tipo_id'     => $data['tipo_id'],
-        'empresa'     => $nombreEmpresa,
-    ]);
+     $tarea->update([
+            'titulo'      => $data['titulo'],
+            'prioridad'   => $data['prioridad'],
+            'descripcion' => $data['descripcion'],
+            'fecha'       => $data['fecha'],
+            'tipo_id'     => $data['tipo_id'],
+            'company_id'  => $data['company_id'], // ✅ Actualizar company_id directamente
+            // ❌ Removemos la línea: 'empresa' => $nombreEmpresa,
+        ]);
 
     return response()->json(['message' => 'Tarea actualizada con éxito']);
 }
