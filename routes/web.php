@@ -289,7 +289,8 @@ Route::get('/disponibilidad-semanal-pdf', [SemanaController::class, 'generarPdfD
 Route::post('/asignar-empresas-masivamente', [SemanaController::class, 'asignarEmpresasMasivamente'])
     ->middleware('auth')
     ->name('asignar.empresas.masivo');
-
+Route::post('/agregar-disponibilidad-empresa', [SemanaController::class, 'agregarDisponibilidadEmpresa']);
+Route::post('/quitar-disponibilidad-empresa', [SemanaController::class, 'quitarDisponibilidadEmpresa']);
 
 Route::post('/infuencersdatos/{user}/photos', [DatoInfluencersController::class, 'uploadPhotos'])->name('influencers.photos.upload');
 Route::delete('/infuencersdatos/{user}/photos/{photo}', [DatoInfluencersController::class, 'deletePhoto'])->name('influencers.photos.delete');
@@ -409,7 +410,7 @@ Route::get('/comprobantes', [PagosController::class, 'getComprobantesConCompanie
 
 ///pagos empresas
 Route::get('/pagos-del-mes', [CompanyLinkComprobanteController::class, 'pagosDelMes'])->name('company-links.pagos-del-mes');
-Route::get('/api/companies', [PagosController::class, 'getCompanies']);
+Route::get('/api/companies2', [PagosController::class, 'getCompanies']);
 Route::post('/comprobante', [PagosController::class, 'storeComprobante']);
 // Ruta para mostrar todos los videos
 Route::get('/videos', [VideosController::class, 'index'])->name('videos.index');

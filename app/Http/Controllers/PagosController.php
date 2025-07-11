@@ -12,7 +12,7 @@ use Carbon\Carbon;
 
 class PagosController extends Controller
 {
-    
+
     public function index()
     {
         $user = Auth::user();
@@ -31,7 +31,7 @@ class PagosController extends Controller
             }
         } else {
             // Otros roles (admin, etc.) ven todo
-            $comprobantes = Comprobante::with(['companyAssociations.company'])->orderBy('created_at', 'desc') ->get();
+            $comprobantes = Comprobante::with(['companyAssociations.company'])->orderBy('created_at', 'desc')->get();
         }
 
         return Inertia::render('pagos/index', [

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AvailabilityDay;
+use App\Models\Booking;
 use App\Models\Company;
 use App\Models\CompanyCategory;
 use App\Models\User;
@@ -18,17 +19,39 @@ use Illuminate\Support\Str;
 class CompanyController extends Controller
 {
     // Listar compañías con sus categorías y días de disponibilidad
+
     public function index()
     {
         $companies = Company::with(['category', 'availabilityDays'])
-            ->orderBy('created_at', 'desc') // 👈 Aquí está el ordenamiento
+            ->orderBy('created_at', 'desc')
             ->get();
+
+        // Semana actual (lunes a domingo)
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        // Bookings de la semana actual con usuario e empresa
+        $bookings = Booking::with(['company', 'user'])
+            ->whereBetween('start_time', [$startOfWeek, $endOfWeek])
+            ->get()
+            ->groupBy('day_of_week');
+
+        // Estructura: [day_of_week => [ [empresa, influencer] ]]
+        $influencersByDay = [];
+        foreach ($bookings as $day => $dayBookings) {
+            foreach ($dayBookings as $booking) {
+                $influencersByDay[$day][] = [
+                    'empresa' => $booking->company->name,
+                    'influencer' => $booking->user->name,
+                ];
+            }
+        }
 
         return Inertia::render('companies/Index', [
             'companies' => $companies,
+            'influencersByDay' => $influencersByDay,
         ]);
     }
-
 
     // Mostrar formulario para crear una nueva compañía
     public function create()

@@ -160,7 +160,7 @@ export default function Tareas() {
             setTareas(tareasRes.data);
             setTipos(tiposRes.data);
             setEmpresas(empresasRes.data);
-            setPasantes(pasantesRes.data.data); // Nota el .data.data debido a la estructura de la respuesta
+            setPasantes(pasantesRes.data); // Nota el .data.data debido a la estructura de la respuesta
         } catch (err) {
             console.error('Error al cargar datos:', err);
             setError('Hubo un error al cargar los datos. Por favor, intenta de nuevo.');
