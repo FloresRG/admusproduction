@@ -1,5 +1,4 @@
-// MapComponent.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -17,30 +16,43 @@ interface CompanyProps {
 }
 
 const MapComponent: React.FC<CompanyProps> = ({ company }) => {
-  // Convert string coordinates to LatLngExpression with validation
+  const [address, setAddress] = useState<string>('');
+
   const getCoordinates = (direccion: string): LatLngExpression => {
     try {
       const [lat, lng] = direccion.split(',').map(coord => {
         const num = parseFloat(coord.trim());
-        if (isNaN(num)) {
-          throw new Error('Invalid coordinate');
-        }
+        if (isNaN(num)) throw new Error('Invalid coordinate');
         return num;
       });
-      
-      // Validate latitude and longitude ranges
-      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
-        throw new Error('Coordinates out of range');
-      }
-      
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) throw new Error('Out of range');
       return [lat, lng];
     } catch (error) {
       console.warn('Invalid coordinates, using default:', error);
-      return [-16.491381, -68.144709]; // Default coordinates
+      return [-16.491381, -68.144709];
     }
   };
 
   const position = company?.direccion ? getCoordinates(company.direccion) : [-16.491381, -68.144709];
+
+  // Función para hacer reverse geocoding
+  const reverseGeocode = async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+      );
+      const data = await res.json();
+      setAddress(data.display_name || 'Dirección no encontrada');
+    } catch (error) {
+      setAddress('Dirección no encontrada');
+    }
+  };
+
+  useEffect(() => {
+    if (position) {
+      reverseGeocode(position[0] as number, position[1] as number);
+    }
+  }, [position]);
 
   return (
     <MapContainer center={position} zoom={13} style={{ width: '100%', height: '400px' }}>
@@ -53,11 +65,8 @@ const MapComponent: React.FC<CompanyProps> = ({ company }) => {
           <Popup>
             <div>
               <h3>{company.name}</h3>
-              <p><strong>Ubicación:</strong> {company.ubicacion}</p>
-              <p><strong>Descripción:</strong> {company.description}</p>
-              <p><strong>Duración del contrato:</strong> {company.contract_duration}</p>
-              <p><strong>Fecha inicio:</strong> {new Date(company.start_date).toLocaleDateString()}</p>
-              <p><strong>Fecha fin:</strong> {new Date(company.end_date).toLocaleDateString()}</p>
+              <p><strong>Coordenadas:</strong> {company.direccion}</p>
+              <p><strong>Dirección aproximada:</strong> {address}</p>
             </div>
           </Popup>
         </Marker>

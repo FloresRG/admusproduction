@@ -90,14 +90,18 @@ export default function Header() {
             <div className="container mx-auto flex items-center justify-between px-4 py-4">
                 {/* Logo */}
                 <div className="flex items-center">
-                    <svg width="50" height="50" viewBox="0 0 300 150" className="mr-2">
-                        <path d="M80 20 L150 20 L190 130 L120 130 Z" fill="#ff0000" />
-                        <text x="150" y="120" fontFamily="'Bebas Neue'" fontSize="60" fontWeight="bold" fill="white" textAnchor="middle">
-                            ADMUS
-                        </text>
-                    </svg>
-                    <span className="font-['Bebas_Neue'] text-xl font-bold text-white">ADMUS</span>
-                </div>
+    <svg width="50" height="50" viewBox="0 0 50 50" className="mr-2">
+        <image
+            href="/Gflores/logo.png"
+            x="0"
+            y="0"
+            width="50"
+            height="50"
+            preserveAspectRatio="xMidYMid meet"
+        />
+    </svg>
+</div>
+
 
                 {/* Menú Desktop */}
                 <nav className="hidden items-center space-x-8 md:flex">

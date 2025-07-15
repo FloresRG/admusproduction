@@ -1,66 +1,62 @@
-import { useState } from 'react';
+import { Box, Card, Grid } from '@mui/material';
 
-const videoList = [
-  {
-    id: 1,
-    title: 'Spot Publicitario',
-    youtubeId: 'oyir9gmMh-w',
-    thumbnail: 'https://img.youtube.com/vi/oyir9gmMh-w/hqdefault.jpg',
-  },
-  {
-    id: 2,
-    title: 'Video Corporativo',
-    youtubeId: 'TTfYcGKXb-U',
-    thumbnail: 'https://img.youtube.com/vi/TTfYcGKXb-U/hqdefault.jpg',
-  },
-  {
-    id: 3,
-    title: 'Agrupacion Claros',
-    youtubeId: 'cMyF_xjvK-k',
-    thumbnail: 'https://img.youtube.com/vi/cMyF_xjvK-k/hqdefault.jpg',
-  },
+const tikTokUrls = [
+    'https://www.tiktok.com/@scout2015/video/6718335390845095173',
+    'https://www.tiktok.com/@scout2015/video/6829267836783971589',
+    'https://www.tiktok.com/@scout2015/video/6718335390845095173',
 ];
 
+function getVideoId(url: string): string {
+    const parts = url.split('/');
+    return parts[parts.length - 1];
+}
+
 export default function NuestroTrabajo() {
-  const [currentVideo, setCurrentVideo] = useState(videoList[0]);
-
-  return (
-    <div className="container mx-auto px-4">
-      <h2 className="text-4xl font-bold text-red-500 mb-10 text-center">Mira nuestro trabajo</h2>
-
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Lista de miniaturas */}
-        <div className="w-full md:w-1/3 space-y-4">
-          {videoList.map((video) => (
-            <div
-              key={video.id}
-              onClick={() => setCurrentVideo(video)}
-              className={`cursor-pointer rounded-lg overflow-hidden border hover:border-red-500 transition-all ${
-                currentVideo.id === video.id ? 'border-red-600' : 'border-white/10'
-              }`}
-            >
-              <img src={video.thumbnail} alt={video.title} className="w-full h-32 object-cover" />
-              <div className="bg-black/70 text-white p-2 text-sm text-left">{video.title}</div>
+    return (
+        <div className="container mx-auto px-4">
+            <h2 className="mb-10 text-center text-4xl font-bold text-red-500">Mira nuestro trabajo</h2>
+            <h2 className=" text-2xl text-white-500 text-center">Videos mas virales de admus</h2>
+            <div className="flex flex-col gap-6 md:flex-row">
+                <Box
+                    sx={{
+                        minHeight: '100vh',
+                        width: '100%',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        p: 2,
+                    }}
+                >
+                    <Grid container spacing={2} justifyContent="center" alignItems="center" maxWidth="lg">
+                        {tikTokUrls.map((url, index) => (
+                            <Grid item xs={12} sm={6} md={3} key={index}>
+                                <Card
+                                    sx={{
+                                        borderRadius: 2,
+                                        overflow: 'hidden',
+                                        boxShadow: 3,
+                                        aspectRatio: '9 / 16',
+                                        backgroundColor: '#000',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <iframe
+                                        src={`https://www.tiktok.com/embed/v2/${getVideoId(url)}`}
+                                        width="100%"
+                                        height="100%"
+                                        allowFullScreen
+                                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                                        title={`TikTok video ${index + 1}`}
+                                        style={{ border: 'none' }}
+                                    ></iframe>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
             </div>
-          ))}
         </div>
-
-        {/* Reproductor de video */}
-        <div className="w-full md:w-2/3">
-          <div className="relative pb-[56.25%] h-0 overflow-hidden rounded-xl shadow-lg border border-white/10">
-            <iframe
-              key={currentVideo.youtubeId}
-              src={`https://www.youtube.com/embed/${currentVideo.youtubeId}`}
-              title={currentVideo.title}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="absolute top-0 left-0 w-full h-full rounded-xl"
-            />
-          </div>
-          <h3 className="mt-4 text-2xl font-semibold text-white">{currentVideo.title}</h3>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

@@ -10,7 +10,7 @@ import ComoTrabajamos from './home/como-trabajamos';
 import Contactanos from './home/contactanos';
 import Footer from './home/footer';
 import QuienesSomos from './home/quienes-somos';
-import ProduccionAudiovisual from './servicios/produccion-audiovisual';
+import NuestroTrabajo from './servicios/nuestro-trabajo';
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
@@ -99,38 +99,16 @@ export default function Welcome() {
                         <div className="w-full md:w-1/2 md:pr-8">
                             {/* Logo ADMUS con animación mejorada */}
                             <div className="mb-8 transform transition-all duration-500 hover:scale-110" style={styles.logoGlow}>
-                                <svg width="300" height="150" viewBox="0 0 300 150" className="mx-auto md:mx-0">
-                                    <defs>
-                                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                            <stop offset="0%" stopColor="#ff3333" />
-                                            <stop offset="100%" stopColor="#990000" />
-                                        </linearGradient>
-                                        <filter id="glow">
-                                            <feGaussianBlur stdDeviation="5" result="blur" />
-                                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                        </filter>
-                                    </defs>
-                                    <path d="M80 20 L150 20 L190 130 L120 130 Z" fill="url(#logoGradient)" filter="url(#glow)" />
-                                    <text
-                                        x="150"
-                                        y="120"
-                                        fontFamily="Arial"
-                                        fontSize="60"
-                                        fontWeight="bold"
-                                        fill="white"
-                                        textAnchor="middle"
-                                        filter="url(#glow)"
-                                    >
-                                        ADMUS
-                                    </text>
+                                <svg width="400" height="150" viewBox="0 0 400 150" className="drop-shadow-[0_0_10px_rgba(255,0,0,0.4)]">
+                                    <image href="/Gflores/logo1.png" x="0" y="0" width="400" height="150" preserveAspectRatio="xMidYMid slice" />
                                 </svg>
                             </div>
 
                             <h1
-                                className="mb-4 text-center text-5xl font-bold text-red-500 md:text-left md:text-6xl lg:text-7xl"
+                                className="mb-4 text-center text-2xl font-bold text-red-500 md:text-left md:text-3xl lg:text-5xl"
                                 style={styles.textShadow}
                             >
-                                ADMUS Production
+                                Producción Audiovisual
                             </h1>
 
                             <h2 className="mb-6 text-center text-3xl font-semibold text-white md:text-left md:text-4xl">
@@ -193,8 +171,8 @@ export default function Welcome() {
                         <section id="quienes-somos" className="bg-black/80 py-16 text-white">
                             <QuienesSomos />
                         </section>
-                        <section id="produccion-audivisual" className="bg-black/80 py-16 text-white">
-                            <ProduccionAudiovisual />
+                        <section id="nuestro-trabajo" className="bg-black/80 py-16 text-white">
+                            <NuestroTrabajo />
                         </section>
 
                         <section id="como-trabajamos" className="bg-black/90 py-16 text-white">

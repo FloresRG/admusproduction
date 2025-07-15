@@ -523,7 +523,7 @@ const Semanainfluencer = () => {
                                                     disponiblesManana.map((inf) => (
                                                         <Chip
                                                             key={`manana-${inf.id}`}
-                                                            label={inf.name}
+                                                            label={inf.name.split(' ')[0]} 
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',

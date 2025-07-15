@@ -286,7 +286,7 @@ export default function BookingsSummary() {
                                                                                 >
                                                                                     <Chip
                                                                                         icon={<AccessTimeIcon sx={{ fontSize: 13 }} />}
-                                                                                        label={`${turno.charAt(0).toUpperCase()+turno.slice(1)}`}
+                                                                                        label={`${turno.charAt(0).toUpperCase() + turno.slice(1)}`}
                                                                                         color={turnoColors[turno] || 'default'}
                                                                                         size="small"
                                                                                         sx={{
