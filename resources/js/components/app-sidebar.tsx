@@ -240,8 +240,8 @@ export function AppSidebar() {
                 title: 'Pasante',
                 icon: WorkIcon,
                 items: [
+                    { title: 'Mis Tareas de HOY', href: '/tareas-personales', icon: TodayIcon },
                     { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
-                    { title: 'Mis Tareas', href: '/tareas-personales', icon: TodayIcon },
                     { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
