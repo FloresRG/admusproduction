@@ -662,7 +662,7 @@ export default function Tareas() {
                                         py: 1,
                                     }}
                                 >
-                                    Nueva Tarea Para Hoy
+                                    Nueva Tarea Para HOY
                                 </Button>
                             </Box>
                         </Box>
