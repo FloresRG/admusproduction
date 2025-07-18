@@ -415,6 +415,7 @@ const Semanainfluencer = () => {
                         background: alpha(theme.palette.background.paper, 0.8),
                         backdropFilter: 'blur(10px)',
                         border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                        position: 'relative',
                     }}
                 >
                     <Table sx={{ borderCollapse: 'separate', borderSpacing: 0, fontSize: '0.80rem' }}>
@@ -432,7 +433,17 @@ const Semanainfluencer = () => {
                                     },
                                 }}
                             >
-                                <TableCell sx={{ width: 120, pl: 1 }}>
+                                <TableCell
+                                    sx={{
+                                        width: 120,
+                                        pl: 1,
+                                        position: 'sticky',
+                                        left: 0,
+                                        zIndex: 10,
+                                        background: 'linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)',
+                                        borderRight: '1px solid rgba(255,255,255,0.2)',
+                                    }}
+                                >
                                     <Stack direction="row" alignItems="center" gap={0.5}>
                                         <Avatar sx={{ bgcolor: alpha('#fff', 0.2), width: 24, height: 24 }}>
                                             <Business fontSize="small" />
@@ -480,7 +491,19 @@ const Semanainfluencer = () => {
                                     },
                                 }}
                             >
-                                <TableCell rowSpan={2} sx={{ fontWeight: 'bold', color: '#666', background: 'transparent', verticalAlign: 'middle' }}>
+                                <TableCell
+                                    rowSpan={2}
+                                    sx={{
+                                        fontWeight: 'bold',
+                                        color: '#666',
+                                        background: 'linear-gradient(90deg, #f5f7fa 0%, #c3cfe2 100%)',
+                                        verticalAlign: 'middle',
+                                        position: 'sticky',
+                                        left: 0,
+                                        zIndex: 10,
+                                        borderRight: '1px solid rgba(224,224,224,0.5)',
+                                    }}
+                                >
                                     Influencers disponibles
                                 </TableCell>
                                 {/* Columna Turno para la fila de influencers */}
@@ -523,7 +546,7 @@ const Semanainfluencer = () => {
                                                     disponiblesManana.map((inf) => (
                                                         <Chip
                                                             key={`manana-${inf.id}`}
-                                                            label={inf.name.split(' ')[0]} 
+                                                            label={inf.name.split(' ')[0]}
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',
@@ -597,7 +620,7 @@ const Semanainfluencer = () => {
                                                     disponiblesTarde.map((inf) => (
                                                         <Chip
                                                             key={`tarde-${inf.id}`}
-                                                             label={inf.name.split(' ')[0]} 
+                                                            label={inf.name.split(' ')[0]}
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',
@@ -643,6 +666,10 @@ const Semanainfluencer = () => {
                                                     verticalAlign: 'middle',
                                                     background: empresaColors[idx % empresaColors.length],
                                                     borderBottom: '1px solid #e0e0e0',
+                                                    position: 'sticky',
+                                                    left: 0,
+                                                    zIndex: 5,
+                                                    borderRight: '1px solid rgba(224,224,224,0.5)',
                                                 }}
                                             >
                                                 <Stack direction="row" alignItems="center" gap={1}>
