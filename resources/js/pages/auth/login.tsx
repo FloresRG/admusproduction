@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { Avatar } from '@mui/material';
 import { motion } from 'framer-motion';
 import { LoaderCircle } from 'lucide-react';
 import { FormEventHandler } from 'react';
@@ -35,6 +34,10 @@ export default function Login({ status, canResetPassword }: LoginProps) {
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
         post(route('login'), {
+            onSuccess: () => {
+                // ✅ Fuerza una recarga completa al redirigir al dashboard
+                window.location.reload();
+            },
             onFinish: () => reset('password'),
         });
     };
@@ -58,21 +61,16 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <motion.div
                         whileHover={{ scale: 1.1, rotate: 5 }} // Animación al pasar el ratón más sutil
                         whileTap={{ scale: 0.95 }} // Animación al hacer click
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }} // Transición tipo muelle para el avatar
+                        transition={{ type: 'spring', stiffness: 400, damping: 10 }} // Transición tipo muelle para el avatar
                         className="cursor-pointer"
-                    >
-                    </motion.div>
+                    ></motion.div>
                 </div>
 
                 {/* Formulario de inicio de sesión */}
                 <form className="space-y-6" onSubmit={submit} noValidate>
                     <div className="space-y-5">
                         {/* Campo de correo electrónico */}
-                        <motion.div
-                            initial={{ x: -20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.2, duration: 0.5 }}
-                        >
+                        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>
                             <Label htmlFor="email" className="mb-1 block font-semibold text-[#6B5B4C]">
                                 ingrese Correo Electrónico
                             </Label>
@@ -86,17 +84,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 value={data.email}
                                 onChange={(e) => setData('email', e.target.value)}
                                 placeholder="correo@ejemplo.com"
-                                className="w-full rounded-lg border border-[#C0C0C0] bg-white/70 p-3 text-[#6B5B4C] placeholder:text-[#A9A9A9] focus:ring-2 focus:ring-[#D2B48C] focus:outline-none transition-colors duration-200" // Colores actualizados y transición
+                                className="w-full rounded-lg border border-[#C0C0C0] bg-white/70 p-3 text-[#6B5B4C] transition-colors duration-200 placeholder:text-[#A9A9A9] focus:ring-2 focus:ring-[#D2B48C] focus:outline-none" // Colores actualizados y transición
                             />
                             <InputError message={errors.email} />
                         </motion.div>
 
                         {/* Campo de contraseña */}
-                        <motion.div
-                            initial={{ x: 20, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            transition={{ delay: 0.3, duration: 0.5 }}
-                        >
+                        <motion.div initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.5 }}>
                             <div className="mb-1 flex items-center justify-between">
                                 <Label htmlFor="password" className="font-semibold text-[#6B5B4C]">
                                     Contraseña
@@ -104,7 +98,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 {canResetPassword && (
                                     <a
                                         href={route('password.request')}
-                                        className="text-sm text-[#D2B48C] hover:underline focus:ring-1 focus:ring-[#D2B48C] focus:outline-none transition-colors duration-200" // Color de enlace actualizado
+                                        className="text-sm text-[#D2B48C] transition-colors duration-200 hover:underline focus:ring-1 focus:ring-[#D2B48C] focus:outline-none" // Color de enlace actualizado
                                         tabIndex={5}
                                     >
                                         ¿Olvidaste tu contraseña?
@@ -120,7 +114,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 value={data.password}
                                 onChange={(e) => setData('password', e.target.value)}
                                 placeholder="Contraseña"
-                                className="w-full rounded-lg border border-[#C0C0C0] bg-white/70 p-3 text-[#6B5B4C] placeholder:text-[#A9A9A9] focus:ring-2 focus:ring-[#D2B48C] focus:outline-none transition-colors duration-200" // Colores actualizados y transición
+                                className="w-full rounded-lg border border-[#C0C0C0] bg-white/70 p-3 text-[#6B5B4C] transition-colors duration-200 placeholder:text-[#A9A9A9] focus:ring-2 focus:ring-[#D2B48C] focus:outline-none" // Colores actualizados y transición
                             />
                             <InputError message={errors.password} />
                         </motion.div>
@@ -138,7 +132,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 checked={data.remember}
                                 onClick={() => setData('remember', !data.remember)}
                                 tabIndex={3}
-                                className="border-[#C0C0C0] text-[#D2B48C] focus:ring-2 focus:ring-[#D2B48C] transition-colors duration-200" // Colores de checkbox actualizados
+                                className="border-[#C0C0C0] text-[#D2B48C] transition-colors duration-200 focus:ring-2 focus:ring-[#D2B48C]" // Colores de checkbox actualizados
                             />
                             <Label htmlFor="remember" className="cursor-pointer text-[#6B5B4C] select-none">
                                 Recordarme
@@ -149,7 +143,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                         <motion.div
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.5, duration: 0.5, type: "spring", stiffness: 300 }}
+                            transition={{ delay: 0.5, duration: 0.5, type: 'spring', stiffness: 300 }}
                         >
                             <Button
                                 type="submit"

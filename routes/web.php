@@ -305,6 +305,9 @@ Route::get('/infuencersdatos/{user}/videos', [DatoInfluencersController::class, 
 Route::delete('/infuencersdatos/{user}/videos/{video}', [DatoInfluencersController::class, 'deleteVideo'])
     ->name('influencers.videos.delete');
 
+//rutas de cupones
+Route::put('/infuencersdatos/{user}/videos/{photo}/cupon', [InfluencerController::class, 'updateVideoCoupon']);
+Route::get('/videos-with-coupons', [InfluencerController::class, 'getVideosWithCoupons']);
 
 Route::get('/api/pasantes', [PasanteController::class, 'getPasantes'])->name('api.pasantes');
 Route::get('/pasante/mistareas', [PasanteController::class, 'mistareas'])->name('pasante.mistareas');

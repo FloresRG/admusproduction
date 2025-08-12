@@ -8,17 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Photo extends Model
 {
-    protected $fillable = ['path', 'nombre', 'tipo'];
-    //tipo:datos personales
-    //nombre:
+    protected $fillable = ['path', 'nombre', 'tipo', 'cupon'];
     public function users()
     {
         return $this->belongsToMany(User::class, 'photo_user');
     }
 
     // Función para obtener URL completa
- public function getUrlAttribute()
-{
-    return asset($this->path); // ✅ ya no uses 'storage/', solo el path tal cual esté guardado
-}
+    public function getUrlAttribute()
+    {
+        return asset($this->path); // ✅ ya no uses 'storage/', solo el path tal cual esté guardado
+    }
 }

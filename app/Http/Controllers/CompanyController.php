@@ -66,6 +66,32 @@ class CompanyController extends Controller
     // Almacenar una nueva compañía
     public function store(Request $request)
     {
+        $availability = $request->input('availability', []);
+
+        foreach ($availability as $key => $slot) {
+            // Si no se define 'turno', se usa 'mañana'
+            $turno = $slot['turno'] ?? 'mañana';
+
+            // Si no se definen tiempos, se colocan por defecto según el turno
+            if (!isset($slot['start_time']) || !isset($slot['end_time'])) {
+                if ($turno === 'mañana') {
+                    $availability[$key]['start_time'] = '09:30';
+                    $availability[$key]['end_time'] = '13:00';
+                } elseif ($turno === 'tarde') {
+                    $availability[$key]['start_time'] = '14:00';
+                    $availability[$key]['end_time'] = '18:00';
+                }
+            }
+
+            // Asegurar que 'turno' tenga valor si no se envió
+            if (!isset($slot['turno'])) {
+                $availability[$key]['turno'] = 'mañana';
+            }
+        }
+
+        // Reemplazamos los datos modificados antes de validar
+        $request->merge(['availability' => $availability]);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'company_category_id' => 'required|exists:company_categories,id',
