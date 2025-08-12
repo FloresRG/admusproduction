@@ -59,7 +59,6 @@ type Video = {
     url: string;
     nombre: string;
     tipo: string;
-    cupon?: string;
     influencer_data: {
         nombre: string;
         edad: number;
@@ -114,7 +113,6 @@ export default function InfluencersDatos() {
     const [editingField, setEditingField] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState<string | number>('');
     const [notification, setNotification] = useState<string | null>(null);
-    const [cupon, setCupon] = useState('');
 
     // Photo Modal State
     const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -305,7 +303,6 @@ export default function InfluencersDatos() {
         setSelectedVideoUserId(null);
         setVideoUrl('');
         setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
-        setCupon(''); // Limpiar cupón
         setUserItems([]);
         setExistingDataId(null);
         setContentType('video');
@@ -325,11 +322,9 @@ export default function InfluencersDatos() {
             if (datosItem) {
                 setExistingDataId(datosItem.id);
                 setInfluencerData(datosItem.influencer_data || { nombre: '', edad: 0, descripcion: '' });
-                setCupon(datosItem.cupon || ''); // Cargar cupón existente
             } else {
                 setExistingDataId(null);
                 setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
-                setCupon(''); // Limpiar cupón
             }
         } catch (error) {
             setNotification('Error al cargar el contenido');
@@ -396,7 +391,6 @@ export default function InfluencersDatos() {
                     },
                     body: JSON.stringify({
                         influencer_data: influencerData,
-                        cupon: cupon, // Incluir cupón
                     }),
                 });
             } else {
@@ -410,7 +404,6 @@ export default function InfluencersDatos() {
                     body: JSON.stringify({
                         content_type: 'datos',
                         influencer_data: influencerData,
-                        cupon: cupon, // Incluir cupón
                     }),
                 });
             }
@@ -421,7 +414,6 @@ export default function InfluencersDatos() {
             if (response.ok) {
                 setNotification(existingDataId ? 'Datos actualizados exitosamente' : 'Datos guardados exitosamente');
                 setInfluencerData({ nombre: '', edad: 0, descripcion: '' });
-                setCupon(''); // Limpiar cupón después del éxito
                 await loadUserVideos(selectedVideoUserId);
             } else {
                 setNotification(data.error || data.message || 'Error al guardar los datos');
@@ -1104,14 +1096,6 @@ export default function InfluencersDatos() {
                                                 value={influencerData.descripcion}
                                                 onChange={(e) => setInfluencerData((prev) => ({ ...prev, descripcion: e.target.value }))}
                                             />
-                                            <TextField
-                                                fullWidth
-                                                label="Cupón (Opcional)"
-                                                placeholder="Ingresa el código de cupón"
-                                                value={cupon}
-                                                onChange={(e) => setCupon(e.target.value)}
-                                                helperText="Este campo es opcional y estará disponible para usuarios influencer"
-                                            />
 
                                             <Button
                                                 variant="contained"
@@ -1206,11 +1190,6 @@ export default function InfluencersDatos() {
                                                             <Typography variant="body2" color="textSecondary">
                                                                 {item.influencer_data?.descripcion || 'Sin descripción'}
                                                             </Typography>
-                                                            {item.cupon && (
-                                                                <Typography variant="body2" color="primary" sx={{ mt: 1 }}>
-                                                                    <strong>Cupón:</strong> {item.cupon}
-                                                                </Typography>
-                                                            )}
                                                         </>
                                                     )}
 

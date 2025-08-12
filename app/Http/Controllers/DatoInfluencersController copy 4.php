@@ -215,7 +215,6 @@ class DatoInfluencersController extends Controller
                 'influencer_data.nombre' => 'required|string|max:255',
                 'influencer_data.edad' => 'required|integer|min:1|max:120',
                 'influencer_data.descripcion' => 'required|string|max:1000',
-                'cupon' => 'nullable|string|max:255', // Validación para cupón
             ]);
 
             try {
@@ -223,8 +222,7 @@ class DatoInfluencersController extends Controller
                 $dataRecord = Photo::create([
                     'path' => json_encode($request->influencer_data),
                     'nombre' => $request->influencer_data['nombre'] . ' - Datos',
-                    'tipo' => 'datos',
-                    'cupon' => $request->cupon, // Guardar cupón en campo separado
+                    'tipo' => 'datos', // Tipo datos
                 ]);
 
                 // Asociar los datos con el usuario
@@ -236,7 +234,6 @@ class DatoInfluencersController extends Controller
                         'id' => $dataRecord->id,
                         'nombre' => $dataRecord->nombre,
                         'tipo' => $dataRecord->tipo,
-                        'cupon' => $dataRecord->cupon,
                         'influencer_data' => $request->influencer_data,
                     ]
                 ]);
@@ -246,7 +243,7 @@ class DatoInfluencersController extends Controller
                 ], 500);
             }
         } else {
-            // Validación para video (sin cambios)
+            // Validación para video
             $request->validate([
                 'video_url' => 'required|url',
             ]);
@@ -254,9 +251,9 @@ class DatoInfluencersController extends Controller
             try {
                 // Crear registro para video
                 $videoRecord = Photo::create([
-                    'path' => $request->video_url,
+                    'path' => $request->video_url, // Solo la URL del video
                     'nombre' => 'Video - ' . date('Y-m-d H:i:s'),
-                    'tipo' => 'video',
+                    'tipo' => 'video', // Tipo video
                 ]);
 
                 // Asociar el video con el usuario
@@ -290,13 +287,14 @@ class DatoInfluencersController extends Controller
                     'id' => $item->id,
                     'nombre' => $item->nombre,
                     'tipo' => $item->tipo,
-                    'cupon' => $item->cupon, // Incluir cupón en la respuesta
                     'created_at' => $item->created_at,
                 ];
 
                 if ($item->tipo === 'video') {
+                    // Para videos, path contiene directamente la URL
                     $result['url'] = $item->path;
                 } else if ($item->tipo === 'datos') {
+                    // Para datos, path contiene JSON con los datos del influencer
                     $pathData = json_decode($item->path, true);
                     $result['influencer_data'] = $pathData;
                 }
@@ -304,9 +302,9 @@ class DatoInfluencersController extends Controller
                 return $result;
             });
 
-        return response()->json(['videos' => $items]);
+        return response()->json(['videos' => $items]); // Mantenemos el nombre 'videos' para compatibilidad
     }
-
+    
     public function updateInfluencerData(Request $request, User $user, Photo $photo)
     {
         // Solo permite actualizar si el tipo es 'datos'
@@ -319,12 +317,10 @@ class DatoInfluencersController extends Controller
             'influencer_data.nombre' => 'required|string|max:255',
             'influencer_data.edad' => 'required|integer|min:1|max:120',
             'influencer_data.descripcion' => 'required|string|max:1000',
-            'cupon' => 'nullable|string|max:255', // Validación para cupón
         ]);
 
         $photo->path = json_encode($request->influencer_data);
         $photo->nombre = $request->influencer_data['nombre'] . ' - Datos';
-        $photo->cupon = $request->cupon; // Actualizar cupón
         $photo->save();
 
         return response()->json([
@@ -333,7 +329,6 @@ class DatoInfluencersController extends Controller
                 'id' => $photo->id,
                 'nombre' => $photo->nombre,
                 'tipo' => $photo->tipo,
-                'cupon' => $photo->cupon,
                 'influencer_data' => $request->influencer_data,
             ]
         ]);
