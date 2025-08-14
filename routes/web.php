@@ -18,6 +18,7 @@ use App\Http\Controllers\DatoInfluencersController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
+use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
@@ -26,7 +27,7 @@ use App\Http\Controllers\TareaController;
 use App\Http\Controllers\TipoController;
 use App\Http\Controllers\VideosController;
 use App\Http\Controllers\WeekController;
-
+use App\Models\Company;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -431,6 +432,22 @@ Route::get('/tareas-personales', function () {
 
 Route::get('/estadisticas-mes-actual', [TareaController::class, 'estadisticasMesActual']);
 Route::get('/estadisticas-completas', [TareaController::class, 'estadisticasCompletas']);
+
+
+// routes/api.php
+Route::get('/companies', function () {
+    return Company::select('id', 'name', 'logo')
+                  ->whereNotNull('logo')
+                  ->limit(6)
+                  ->get()
+                  ->map(function ($company) {
+                      return [
+                          'id' => $company->id,
+                          'name' => $company->name,
+                          'logo' => asset('storage/' . $company->logo) // Ajusta la ruta según tu configuración
+                      ];
+                  });
+});
 
 
 require __DIR__ . '/settings.php';

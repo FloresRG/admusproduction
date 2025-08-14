@@ -7,20 +7,32 @@ use App\Models\CompanyLinkComprobante;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Http;
 
 class VideosController extends Controller
 {
+    function resolveTikTokUrl($url)
+    {
+        try {
+            $response = Http::withOptions(['allow_redirects' => false])->get($url);
+            // Reintenta si la primera vez no responde con 301/302
+            if (!$response->redirect()) {
+                $response = Http::get($url); // Permitir redirección
+            }
+
+            $location = $response->header('Location');
+            return $location ?? $url;
+        } catch (\Exception $e) {
+            return $url; // fallback
+        }
+    }
     public function index(Request $request)
     {
         $user = auth()->user();
 
-         if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
+        if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
             abort(403, 'Acceso no autorizado');
-        } 
-        // Verificar si el usuario está autenticado y tiene el rol 'empresa'
-        // if (!$user || !$user->hasRole('empresa')) {
-        //     abort(403, 'Acceso no autorizado');
-        // }
+        }
         $empresaNombre = null;
         if ($user->hasRole('empresa')) {
             $empresaNombre = $user->name;
@@ -37,14 +49,12 @@ class VideosController extends Controller
             'link:id,link,detalle',
         ]);
 
-        // Solo videos (links válidos)
+        // Solo videos de TikTok (incluye enlaces acortados vm.tiktok.com)
         $query->whereHas('link', function ($q) {
-            $q->where('link', 'like', '%youtube%')
-                ->orWhere('link', 'like', '%youtu.be%')
-                ->orWhere('link', 'like', '%vimeo%')
-                ->orWhere('link', 'like', '%dailymotion%')
-                ->orWhere('link', 'like', '%tiktok.com%')
-                ->orWhere('link', 'like', '%video%');
+            $q->where(function ($q2) {
+                $q2->where('link', 'like', '%tiktok.com%')
+                    ->orWhere('link', 'like', '%vm.tiktok.com%');
+            });
         });
 
         // Filtrar por empresa si es empresa
@@ -82,7 +92,14 @@ class VideosController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(12)
             ->appends($request->all());
-
+        // Resolver enlaces cortos de TikTok (vm.tiktok.com)
+        $videos->getCollection()->transform(function ($video) {
+            if (strpos($video->link->link, 'vm.tiktok.com') !== false) {
+                $resolved = $this->resolveTikTokUrl($video->link->link);
+                $video->link->link = $resolved;
+            }
+            return $video;
+        });
 
         $companies = $user->hasRole('admin')
             ? Company::select('id', 'name')->orderBy('name')->get()
@@ -113,9 +130,9 @@ class VideosController extends Controller
     {
         $user = auth()->user();
 
-         if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
+        if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
             abort(403, 'Acceso no autorizado');
-        } 
+        }
         // Verificar si el usuario está autenticado y tiene el rol 'empresa'
         // if (!$user || !$user->hasRole('empresa')) {
         //     abort(403, 'Acceso no autorizado');
@@ -132,14 +149,12 @@ class VideosController extends Controller
             'link:id,link,detalle',
         ]);
 
-        // Solo videos (links válidos)
+        // Solo videos de TikTok (incluye enlaces acortados vm.tiktok.com)
         $query->whereHas('link', function ($q) {
-            $q->where('link', 'like', '%youtube%')
-                ->orWhere('link', 'like', '%youtu.be%')
-                ->orWhere('link', 'like', '%vimeo%')
-                ->orWhere('link', 'like', '%dailymotion%')
-                ->orWhere('link', 'like', '%tiktok.com%')
-                ->orWhere('link', 'like', '%video%');
+            $q->where(function ($q2) {
+                $q2->where('link', 'like', '%tiktok.com%')
+                    ->orWhere('link', 'like', '%vm.tiktok.com%');
+            });
         });
 
         // Filtrar por empresa si es empresa
@@ -181,6 +196,14 @@ class VideosController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(12)
             ->appends($request->all());
+        // Resolver enlaces cortos de TikTok (vm.tiktok.com)
+        $videos->getCollection()->transform(function ($video) {
+            if (strpos($video->link->link, 'vm.tiktok.com') !== false) {
+                $resolved = $this->resolveTikTokUrl($video->link->link);
+                $video->link->link = $resolved;
+            }
+            return $video;
+        });
 
         $companies = $user->hasRole('admin')
             ? Company::select('id', 'name')->orderBy('name')->get()
@@ -205,5 +228,4 @@ class VideosController extends Controller
             ]
         ]);
     }
-
 }

@@ -1,19 +1,8 @@
 import React from 'react';
 import { Play, Users, Target, TrendingUp, Mail, Search, Edit, Globe, Eye, Lightbulb } from 'lucide-react';
+import Header from '../components/header';
 
-const Header = () => (
-  <header className="bg-black text-white py-4 px-6 shadow-lg">
-    <div className="container mx-auto flex justify-between items-center">
-      <div className="text-2xl font-bold" style={{color: '#FF2400'}}>admusProduccion</div>
-      <nav className="hidden md:flex space-x-6">
-        <a href="#" className="hover:text-red-400 transition-colors">Inicio</a>
-        <a href="#" className="hover:text-red-400 transition-colors">Servicios</a>
-        <a href="#" className="hover:text-red-400 transition-colors">Proyectos</a>
-        <a href="#" className="hover:text-red-400 transition-colors">Contacto</a>
-      </nav>
-    </div>
-  </header>
-);
+
 
 const HeroSection = () => (
   <section className="relative min-h-screen flex items-center justify-center" style={{backgroundColor: '#1A1A1A'}}>
