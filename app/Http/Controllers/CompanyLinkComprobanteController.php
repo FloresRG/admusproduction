@@ -58,21 +58,36 @@ class CompanyLinkComprobanteController extends Controller
         ]);
 
         return redirect()->back()->with('nuevoRegistro', $nuevoRegistro->load(['company', 'link', 'comprobante']));
-
     }
 
     public function update(Request $request, CompanyLinkComprobante $registro)
     {
         $data = $request->validate([
+            'company_id' => 'required|exists:companies,id',
             'mes' => 'required|string',
             'fecha' => 'required|date',
+            'link' => 'required|string|max:255',
+            'detalle' => 'nullable|string',
         ]);
 
-        $registro->update($data);
+        // Actualizar registro principal
+        $registro->update([
+            'company_id' => $data['company_id'],
+            'mes' => $data['mes'],
+            'fecha' => $data['fecha'],
+        ]);
 
-        // Respuesta para edición inline
+        // Actualizar el link relacionado
+        if ($registro->link) {
+            $registro->link->update([
+                'link' => $data['link'],
+                'detalle' => $data['detalle'],
+            ]);
+        }
+
         return response()->json(['message' => 'Guardado correctamente']);
     }
+
 
     public function destroy(CompanyLinkComprobante $registro)
     {

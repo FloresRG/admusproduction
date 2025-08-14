@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Users, Target, TrendingUp, Mail, Search, Edit, Globe, Eye, Lightbulb, ArrowRight, Sparkles, Award, CheckCircle, Star, MessageCircle } from 'lucide-react';
-import Header from '../components/header';
 
 // Animation variants for Framer Motion
 const fadeIn = {
@@ -43,8 +42,8 @@ const HeroSection = () => {
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Dynamic Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-red-900 to-slate-900">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-red-600/20 to-blue-600/20 animate-pulse"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-600/20 via-purple-600/20 to-blue-600/20 animate-pulse"></div>
       </div>
 
       {/* Animated Grid Background */}
@@ -69,7 +68,7 @@ const HeroSection = () => {
 
       {/* Floating Orbs */}
       <motion.div
-        className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-gradient-to-r from-red-500  opacity-30 blur-xl"
+        className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-gradient-to-r from-red-500 to-pink-500 opacity-30 blur-xl"
         animate={{ 
           scale: [1, 1.5, 1],
           x: [0, 100, 0],
@@ -78,7 +77,7 @@ const HeroSection = () => {
         transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
       />
       <motion.div
-        className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-gradient-to-r from-red-500 to-blue-500 opacity-25 blur-xl"
+        className="absolute bottom-1/4 right-1/4 w-48 h-48 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 opacity-25 blur-xl"
         animate={{ 
           scale: [1, 1.3, 1],
           x: [0, -80, 0],
@@ -106,7 +105,7 @@ const HeroSection = () => {
           >
             <div className="relative">
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-red-500 rounded-2xl blur-xl opacity-50"
+                className="absolute inset-0 bg-gradient-to-r from-red-500 to-purple-500 rounded-2xl blur-xl opacity-50"
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 3, repeat: Infinity }}
               />
@@ -420,7 +419,7 @@ const ServicesSection = () => {
   return (
     <section id="servicios" className="py-32 px-6 bg-gray-900 relative overflow-hidden">
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-900/20 " />
+        <div className="absolute inset-0 bg-gradient-to-r from-red-900/20 to-purple-900/20" />
         <div className="absolute inset-0" style={{
           backgroundImage: `radial-gradient(circle at 25% 25%, rgba(255, 0, 100, 0.1) 0%, transparent 50%),
                            radial-gradient(circle at 75% 75%, rgba(100, 0, 255, 0.1) 0%, transparent 50%)`
@@ -527,7 +526,7 @@ const WorkSection = () => {
       >
         <div className="text-center mb-20">
           <motion.div
-            className="inline-flex items-center space-x-2 bg-purple-100 text-red-600 px-6 py-3 rounded-full mb-8"
+            className="inline-flex items-center space-x-2 bg-purple-100 text-purple-600 px-6 py-3 rounded-full mb-8"
             variants={fadeIn}
           >
             <Eye className="w-5 h-5" />
@@ -535,12 +534,12 @@ const WorkSection = () => {
           </motion.div>
 
           <motion.h2
-            className="text-5xl lg:text-7xl font-black mb-8 bg-gradient-to-r from-gray-900 via-red-600 to-gray-900 bg-clip-text text-transparent"
+            className="text-5xl lg:text-7xl font-black mb-8 bg-gradient-to-r from-gray-900 via-purple-600 to-gray-900 bg-clip-text text-transparent"
             variants={fadeIn}
           >
             Proyectos que
             <br />
-            <span className="text-red-600">inspiran</span>
+            <span className="text-purple-600">inspiran</span>
           </motion.h2>
         </div>
 
@@ -572,11 +571,11 @@ const WorkSection = () => {
 
               <div className="p-8">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-semibold text-red-600 bg-red-100 px-3 py-1 rounded-full">
+                  <span className="text-sm font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
                     {project.category}
                   </span>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-red-600 transition-colors">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4 group-hover:text-purple-600 transition-colors">
                   {project.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed mb-6">
@@ -584,7 +583,7 @@ const WorkSection = () => {
                 </p>
                 
                 <motion.button
-                  className="flex items-center space-x-2 text-red-600 font-semibold group-hover:text-red-700 transition-colors"
+                  className="flex items-center space-x-2 text-purple-600 font-semibold group-hover:text-purple-700 transition-colors"
                   whileHover={{ x: 5 }}
                 >
                   <span>Ver proyecto</span>
@@ -597,7 +596,7 @@ const WorkSection = () => {
 
         <motion.div className="text-center" variants={fadeIn}>
           <motion.button
-            className="px-12 py-4 text-lg font-semibold rounded-full bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+            className="px-12 py-4 text-lg font-semibold rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white hover:from-purple-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-2xl"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -641,8 +640,8 @@ const CTASection = () => {
   return (
     <section id="contactanos" className="py-32 px-6 relative overflow-hidden">
       {/* Dynamic Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-red-900 to-slate-900">
-        <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-red-600/10 to-blue-600/10" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-600/10 via-purple-600/10 to-blue-600/10" />
       </div>
 
       {/* Animated Particles */}
@@ -694,7 +693,7 @@ const CTASection = () => {
           >
             ¡Eleva tu marca
             <br />
-            <span className="bg-gradient-to-r from-red-400 via-pink-500 to-red-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-red-400 via-pink-500 to-purple-500 bg-clip-text text-transparent">
               con nosotros!
             </span>
           </motion.h2>
@@ -777,7 +776,7 @@ const CTASection = () => {
                   whileHover={{ scale: 1.1, y: -5 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-red-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="relative w-24 h-24 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 group-hover:border-red-500/50 transition-all duration-300 overflow-hidden flex items-center justify-center">
                     <img 
                       src={company.logo} 
@@ -826,7 +825,7 @@ const CTASection = () => {
 
 const Footer = () => (
   <footer className="py-20 px-6 bg-black relative overflow-hidden">
-    <div className="absolute inset-0 bg-gradient-to-r from-red-900/10 to-red-900/10" />
+    <div className="absolute inset-0 bg-gradient-to-r from-red-900/10 to-purple-900/10" />
     
     <motion.div
       className="container mx-auto relative z-10"
