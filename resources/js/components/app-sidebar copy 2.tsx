@@ -109,7 +109,7 @@ function NavMain({ sections, currentPath }: { sections: MenuSection[]; currentPa
                             onClick={section.isCollapsible ? () => toggleSection(key) : undefined}
                             className={
                                 `flex cursor-pointer items-center justify-between rounded-md px-3 py-2 transition-colors duration-200 ` +
-                                `${section.isCollapsible ? 'hover:bg-red-500' : ''} ` +
+                                `${section.isCollapsible ? 'hover:bg-red-100' : ''} ` +
                                 `${isActiveSection ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' : 'bg-transparent text-white'}`
                             }
                         >

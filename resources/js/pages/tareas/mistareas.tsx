@@ -861,20 +861,7 @@ export default function MisTareas() {
                                             InputLabelProps={{ shrink: true }}
                                         />
                                     </Grid>
-                                    <Grid item xs={12} md={6}>
-                                        <Autocomplete
-                                            options={empresas}
-                                            getOptionLabel={(option) => option.nombre}
-                                            value={empresas.find((e) => e.id === Number(editFormData.company_id)) || null}
-                                            onChange={(_, newValue) =>
-                                                setEditFormData({
-                                                    ...editFormData,
-                                                    company_id: newValue ? String(newValue.id) : '',
-                                                })
-                                            }
-                                            renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
-                                        />
-                                    </Grid>
+
                                     <Grid item xs={12} md={6}>
                                         <FormControl component="fieldset" fullWidth>
                                             <FormLabel>⚡ Prioridad</FormLabel>
@@ -898,7 +885,7 @@ export default function MisTareas() {
                                                 onChange={(e) => {
                                                     setEditarEmpresa(e.target.value);
                                                     if (e.target.value === 'no') {
-                                                        setEditFormData({ ...editFormData, company_id: '' });
+                                                        setEditFormData((prev) => ({ ...prev, company_id: '' }));
                                                     }
                                                 }}
                                             >
@@ -907,22 +894,33 @@ export default function MisTareas() {
                                             </RadioGroup>
                                         </FormControl>
                                     </Grid>
+
                                     {editarEmpresa === 'si' && (
                                         <Grid item xs={12} md={6}>
                                             <Autocomplete
                                                 options={empresas}
-                                                getOptionLabel={(option) => option.name}
+                                                getOptionLabel={(option) => option.nombre} // usa 'nombre' o 'name' según tu data
                                                 value={empresas.find((e) => e.id === Number(editFormData.company_id)) || null}
-                                                onChange={(_, newValue) =>
-                                                    setEditFormData({
-                                                        ...editFormData,
+                                                onChange={(_, newValue) => {
+                                                    setEditFormData((prev) => ({
+                                                        ...prev,
                                                         company_id: newValue ? String(newValue.id) : '',
-                                                    })
-                                                }
-                                                renderInput={(params) => <TextField {...params} label="🏢 Seleccionar Empresa" fullWidth />}
+                                                    }));
+                                                }}
+                                                sx={{ minWidth: 300 }}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="🏢 Seleccionar Empresa"
+                                                        fullWidth
+                                                        error={!!errors.company_id}
+                                                        helperText={errors.company_id}
+                                                    />
+                                                )}
                                             />
                                         </Grid>
                                     )}
+
                                     <Grid item xs={12}>
                                         <TextField
                                             fullWidth

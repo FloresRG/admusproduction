@@ -14,7 +14,7 @@ export function NavUser() {
 
     return (
         <SidebarMenu>
-            <SidebarMenuItem className="bg-opacity-95 bg-gradient-to-b from-gray-700 via-gray-700 to-gray-700">
+            <SidebarMenuItem>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent group text-white/80">
