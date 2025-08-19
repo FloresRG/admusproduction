@@ -435,7 +435,7 @@ Route::get('/estadisticas-completas', [TareaController::class, 'estadisticasComp
 
 
 // routes/api.php
-Route::get('/companies', function () {
+Route::get('/companias', function () {
     return Company::select('id', 'name', 'logo')
                   ->whereNotNull('logo')
                   ->limit(6)

@@ -17,7 +17,6 @@ import {
     Box,
     Button,
     Card,
-    CardContent,
     Dialog,
     DialogActions,
     DialogContent,
@@ -110,6 +109,7 @@ const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
             wednesday: 0,
             thursday: 0,
             friday: 0,
+            saturday: 0,
         };
         companiesList.forEach((company) => {
             const days = company.availability_days || [];
@@ -176,105 +176,209 @@ const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
                 </Alert>
             </Snackbar>
             {/* Conteo de empresas por día */}
-
-            <Grid container spacing={2} sx={{ mb: 3, mx: { xs: 0, md: 4 } }} justifyContent="center">
+            <Grid container spacing={2} sx={{ mb: 3, mx: { xs: 1, sm: 2, md: 3, lg: 4, xl: 6 } }} justifyContent="center">
                 {Object.entries(dayCounts).map(([day, count]) => (
-                    <Grid item xs={12} sm={6} md={3} lg={2} key={day} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Grid
+                        item
+                        xs={6} // 2 tarjetas por fila en móvil
+                        sm={4} // 3 tarjetas por fila en tablet pequeño
+                        md={3} // 4 tarjetas por fila en tablet
+                        lg={2.4} // 5 tarjetas por fila en desktop
+                        xl={2} // 6 tarjetas por fila en pantallas grandes
+                        key={day}
+                        sx={{ display: 'flex', justifyContent: 'center' }}
+                    >
                         <Card
                             sx={{
-                                width: 220, // ancho fijo
-                                height: 320, // alto fijo
-                                borderRadius: 3,
-                                boxShadow: 4,
-                                background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.secondary.light} 100%)`,
-                                border: `1.5px solid ${theme.palette.divider}`,
-                                transition: 'transform 0.15s, box-shadow 0.15s',
+                                width: {
+                                    xs: 160, // Más estrecho en móvil
+                                    sm: 170, // Compacto en tablet pequeño
+                                    md: 190, // Medio en desktop
+                                    lg: 210, // Desktop grande
+                                    xl: 230, // Pantallas XL
+                                },
+                                height: 'auto', // Altura automática para adaptarse al contenido
+                                minHeight: {
+                                    xs: 280, // Más bajo en móvil
+                                    sm: 300, // Tablet pequeño
+                                    md: 320, // Desktop
+                                    lg: 340, // Desktop grande
+                                    xl: 360, // XL
+                                },
+                                maxWidth: {
+                                    xs: 160, // Límite máximo en móvil
+                                    sm: 170, // Tablet pequeño
+                                    md: 190, // Desktop
+                                    lg: 210, // Desktop grande
+                                    xl: 230, // XL
+                                },
+                                flexShrink: 0, // No se encoge
+                                flexGrow: 0, // No crece
+                                borderRadius: { xs: 3, md: 4 },
+                                // Degradado azul formal
+                                background: 'linear-gradient(135deg, #a18cd1 10%, #66a6ff 100%)',
+
+                                // Borde azul más oscuro
+                                border: '2px solid rgba(0,91,168,0.6)',
+
+                                boxShadow: {
+                                    xs: '0 4px 12px rgba(37,117,252,0.15), 0 2px 4px rgba(0,0,0,0.1)',
+                                    md: '0 8px 24px rgba(37,117,252,0.2), 0 4px 8px rgba(0,0,0,0.1)',
+                                },
                                 display: 'flex',
                                 flexDirection: 'column',
                                 alignItems: 'center',
-                                p: 2,
+                                p: { xs: 1, sm: 1.2, md: 1.5 },
+                                overflow: 'visible',
                                 '&:hover': {
-                                    transform: 'translateY(-4px) scale(1.03)',
-                                    boxShadow: 8,
+                                    transform: {
+                                        xs: 'translateY(-4px) scale(1.02)',
+                                        md: 'translateY(-6px) scale(1.03)',
+                                    },
+                                    boxShadow: {
+                                        xs: '0 12px 32px rgba(37,117,252,0.25), 0 6px 12px rgba(0,0,0,0.15)',
+                                        md: '0 16px 48px rgba(37,117,252,0.3), 0 8px 16px rgba(0,0,0,0.2)',
+                                    },
                                 },
                             }}
                         >
-                            <Box>
+                            {/* Encabezado de la tarjeta */}
+                            <Box sx={{ textAlign: 'center', mb: { xs: 1, md: 1.5 }, width: '100%' }}>
                                 <Typography
                                     variant="subtitle1"
                                     sx={{
                                         fontWeight: 'bold',
-                                        mb: 1,
-                                        color: theme.palette.primary.dark,
-                                        letterSpacing: 1,
-                                        fontSize: '1rem',
-                                        textAlign: 'center',
+                                        mb: { xs: 0.5, md: 1 },
+                                        color: 'white',
+                                        letterSpacing: 1.2,
+                                        fontSize: {
+                                            xs: '0.85rem',
+                                            sm: '0.9rem',
+                                            md: '1rem',
+                                        },
+                                        textShadow: '0 2px 8px rgba(0,0,0,0.3)',
                                     }}
                                 >
                                     {formatDay(day)}
                                 </Typography>
-
                                 <Typography
                                     variant="h4"
-                                    color="primary"
                                     sx={{
                                         fontWeight: 900,
-                                        mb: 0.5,
-                                        fontSize: '2rem',
-                                        lineHeight: 1,
-                                        textShadow: '0 2px 8px rgba(37,117,252,0.10)',
-                                        textAlign: 'center',
+                                        fontSize: {
+                                            xs: '1.5rem',
+                                            sm: '1.75rem',
+                                            md: '2rem',
+                                        },
+                                        color: 'white',
+                                        textShadow: '0 3px 12px rgba(0,0,0,0.4)',
                                     }}
                                 >
-                                    {count}
-                                </Typography>
-
-                                <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                    sx={{
-                                        mb: 1,
-                                        fontWeight: 600,
-                                        letterSpacing: 0.5,
-                                        fontSize: '0.85rem',
-                                        textAlign: 'center',
-                                    }}
-                                >
-                                    {count === 1 ? 'empresa' : 'empresas'}
+                                    {count}{' '}
+                                    <Box
+                                        component="span"
+                                        sx={{
+                                            fontSize: '0.85rem',
+                                            fontWeight: 600,
+                                            color: 'rgba(255,255,255,0.9)',
+                                        }}
+                                    >
+                                        {count === 1 ? 'Empresa' : 'Empresas'}
+                                    </Box>
                                 </Typography>
                             </Box>
 
-                            <Box sx={{ width: '100%' }}>
+                            {/* Lista de empresas - Versión mejorada */}
+                            <Box
+                                sx={{
+                                    width: '100%',
+                                    flex: 1,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: { xs: 0.5, sm: 0.6, md: 0.7 },
+                                    px: { xs: 0.5, sm: 0.7, md: 1 },
+                                    overflowY: 'auto',
+                                    maxHeight: { xs: 180, sm: 200, md: 220 },
+                                    '&::-webkit-scrollbar': {
+                                        width: '4px',
+                                    },
+                                    '&::-webkit-scrollbar-thumb': {
+                                        backgroundColor: theme.palette.primary.dark,
+                                        borderRadius: '2px',
+                                    },
+                                }}
+                            >
                                 {Array.isArray(influencersByDay?.[day]) && influencersByDay[day].length > 0 ? (
                                     influencersByDay[day].map((item, idx) => (
-                                        <Typography
+                                        <Box
                                             key={idx}
-                                            variant="caption"
                                             sx={{
-                                                display: 'block',
-                                                background: '#fff',
-                                                color: theme.palette.primary.main,
+                                                background: 'rgba(255,255,255,0.95)',
                                                 borderRadius: 1,
-                                                px: 1,
-                                                mb: 0.5,
-                                                fontSize: '0.75rem',
-                                                fontWeight: 600,
-                                                boxShadow: '0 1px 4px rgba(37,117,252,0.07)',
-                                                textAlign: 'center',
-                                                wordBreak: 'break-word',
+                                                p: { xs: 0.5, sm: 0.6, md: 0.7 },
+                                                borderLeft: `3px solid ${theme.palette.secondary.main}`,
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                                             }}
                                         >
-                                            <b>{item.influencer.split(' ')[0]}</b> en{' '}
-                                            <span style={{ color: theme.palette.secondary.main }}>{item.empresa}</span>
-                                        </Typography>
+                                            <Typography
+                                                variant="caption"
+                                                sx={{
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    color: theme.palette.primary.main,
+                                                    fontSize: {
+                                                        xs: '0.65rem',
+                                                        sm: '0.7rem',
+                                                        md: '0.75rem',
+                                                    },
+                                                    fontWeight: 600,
+                                                    lineHeight: 1.3,
+                                                }}
+                                            >
+                                                <Box component="span" sx={{ fontWeight: 'bold' }}>
+                                                    {item.influencer.split(' ')[0]}
+                                                </Box>
+                                                <Box
+                                                    component="span"
+                                                    sx={{
+                                                        color: theme.palette.secondary.main,
+                                                        wordBreak: 'break-word',
+                                                        whiteSpace: 'normal',
+                                                    }}
+                                                >
+                                                    {item.empresa}
+                                                </Box>
+                                            </Typography>
+                                        </Box>
                                     ))
                                 ) : (
-                                    // Mantener espacio aunque no haya influencers
-                                    <Typography variant="caption" sx={{ visibility: 'hidden', height: 30 }}>
+                                    <Typography
+                                        variant="caption"
+                                        sx={{
+                                            visibility: 'hidden',
+                                            height: { xs: 20, sm: 25, md: 30 },
+                                        }}
+                                    >
                                         Placeholder
                                     </Typography>
                                 )}
                             </Box>
+
+                            {/* Contador de empresas adicionales */}
+                            {Array.isArray(influencersByDay?.[day]) && influencersByDay[day].length > 4 && (
+                                <Typography
+                                    variant="caption"
+                                    sx={{
+                                        fontSize: '0.6rem',
+                                        color: 'rgba(255,255,255,0.8)',
+                                        fontStyle: 'italic',
+                                        mt: 0.5,
+                                        textShadow: '0 1px 4px rgba(0,0,0,0.3)',
+                                    }}
+                                >
+                                    +{influencersByDay[day].length - 4} más
+                                </Typography>
+                            )}
                         </Card>
                     </Grid>
                 ))}
