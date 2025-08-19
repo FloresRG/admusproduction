@@ -257,6 +257,7 @@ Route::get('/tareas/pdf', [TareaController::class, 'generarPdfTareasAsignadas'])
 
 
 Route::post('/create/tareas', [TareaController::class, 'store']);
+
 Route::put('/tareas/{tarea}', [TareaController::class, 'update']);
 Route::delete('/tareas/{tarea}', [TareaController::class, 'destroy']);
 Route::get('/api/tipos', function () {
