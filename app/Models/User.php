@@ -76,20 +76,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(Booking::class, 'user_id'); // Asumiendo que la tabla 'bookings' tiene una columna 'user_id'
     }
-public function fotos()
-{
-    return $this->photos()->where('tipo', 'foto');
-}
+    public function fotos()
+    {
+        return $this->photos()->where('tipo', 'foto');
+    }
 
-public function videos()
-{
-    return $this->photos()->where('tipo', 'video');
-}
+    public function videos()
+    {
+        return $this->photos()->where('tipo', 'video');
+    }
 
-public function datos()
-{
-    return $this->photos()->where('tipo', 'dato');
-}
+    public function datos()
+    {
+        return $this->photos()->where('tipo', 'dato');
+    }
+    
 
-
+    public function asignacionesPasante()
+    {
+        return $this->hasMany(AsignacionPasante::class);
+    }
 }
