@@ -306,135 +306,7 @@ class SemanaController extends Controller
 
         return back()->with('success', 'Influencer removido exitosamente.');
     }
-    /* public function generarPdfDisponibilidad()
-    {
-        $now = Carbon::now();
-
-        $week = Week::whereDate('start_date', '<=', $now)
-            ->whereDate('end_date', '>=', $now)
-            ->first();
-
-        if (!$week) {
-            return response()->json(['error' => 'No se encontró la semana actual.'], 404);
-        }
-
-        $bookings = Booking::with(['company', 'user'])
-            ->where('week_id', $week->id)
-            ->orderBy('company_id')
-            ->orderBy('day_of_week')
-            ->orderBy('turno')
-            ->get();
-
-        if ($bookings->isEmpty()) {
-            return response()->json(['error' => 'No hay asignaciones esta semana.'], 404);
-        }
-
-        $dias = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-        $diasTraducidos = [
-            'monday' => 'Lunes',
-            'tuesday' => 'Martes',
-            'wednesday' => 'Miércoles',
-            'thursday' => 'Jueves',
-            'friday' => 'Viernes',
-            'saturday' => 'Sábado',
-        ];
-
-        $calendario = [];
-        foreach ($bookings as $booking) {
-            $empresaNombre = $booking->company->name;
-            $dia = strtolower($booking->day_of_week);
-            $influencer = $booking->user->name . ' (' . ucfirst($booking->turno) . ')';
-
-            $calendario[$empresaNombre][$dia][] = $influencer;
-        }
-
-        $pdf = new \FPDF('L', 'mm', 'A4');
-
-        $cellWidth = 38;
-        $empresaWidth = 50;
-        $lineHeight = 6.5;
-
-        // Función para encabezado
-        $agregarEncabezado = function () use ($pdf, $dias, $diasTraducidos, $week, $empresaWidth, $cellWidth) {
-            $pdf->AddPage();
-            $pdf->SetMargins(10, 10, 10);
-            $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
-            $pdf->Image(public_path('logo.jpeg'), 255, 10, 25);
-            $pdf->SetFont('Arial', 'B', 16);
-            $pdf->SetXY(0, 15);
-            $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
-
-            $pdf->Ln(8);
-            $pdf->SetFont('Arial', 'B', 18);
-            $pdf->SetFillColor(0, 102, 204);
-            $pdf->SetTextColor(255, 255, 255);
-            $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
-
-            $pdf->SetFont('Arial', '', 12);
-            $pdf->SetTextColor(0, 0, 0);
-            $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
-            $pdf->Ln(4);
-
-            // Encabezado de tabla
-            $pdf->SetFont('Arial', 'B', 10);
-            $pdf->SetFillColor(220, 220, 220);
-            $pdf->Cell($empresaWidth, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
-            foreach ($dias as $dia) {
-                $pdf->Cell($cellWidth, 10, utf8_decode($diasTraducidos[$dia]), 1, 0, 'C', true);
-            }
-            $pdf->Ln();
-        };
-
-        $agregarEncabezado();
-
-        $empresaCount = 0;
-        $pdf->SetFont('Arial', '', 9);
-
-        foreach ($calendario as $empresaNombre => $diasData) {
-            if ($empresaCount === 8) {
-                $agregarEncabezado();
-                $empresaCount = 0;
-            }
-
-            // Calcular altura máxima de fila
-            $maxLines = 2;
-            foreach ($dias as $dia) {
-                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
-                $lines = substr_count($text, "\n") + 1;
-                $maxLines = max($maxLines, $lines);
-            }
-            $rowHeight = $lineHeight * $maxLines;
-
-            $yStart = $pdf->GetY();
-            $xStart = $pdf->GetX();
-
-            // Empresa
-            $pdf->Rect($xStart, $yStart, $empresaWidth, $rowHeight);
-            $pdf->MultiCell($empresaWidth, $lineHeight, utf8_decode($empresaNombre), 0, 'L');
-            $pdf->SetXY($xStart + $empresaWidth, $yStart);
-
-            // Días
-            foreach ($dias as $dia) {
-                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
-                $x = $pdf->GetX();
-                $y = $pdf->GetY();
-
-                // Dibuja borde externo de la celda
-                $pdf->Rect($x, $y, $cellWidth, $rowHeight);
-
-                // Escribe el texto sin bordes internos
-                $pdf->MultiCell($cellWidth, $lineHeight, utf8_decode($text), 0, 'C');
-                $pdf->SetXY($x + $cellWidth, $y);
-            }
-
-            $pdf->SetY($yStart + $rowHeight);
-            $empresaCount++;
-        }
-
-        return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
-    } */
+    
     public function generarPdfDisponibilidad()
     {
         $now = Carbon::now();
@@ -763,4 +635,122 @@ class SemanaController extends Controller
             'detalle' => $asignaciones,
         ]);
     }
+
+    public function indexpasante(Request $request)
+    {
+        $weekId = $request->query('week_id');
+
+        // Si viene el ID, lo usamos; si no, se usa la semana actual
+        if ($weekId) {
+            $week = Week::findOrFail($weekId); // Lanza 404 si no existe
+            $inicioSemana = Carbon::parse($week->start_date);
+            $finSemana = Carbon::parse($week->end_date);
+        } else {
+            // Semana actual por defecto
+            $hoy = Carbon::now();
+            $inicioSemana = $hoy->copy()->startOfWeek(Carbon::MONDAY);
+            $finSemana = $hoy->copy()->endOfWeek(Carbon::SUNDAY);
+
+            $week = Week::firstOrCreate(
+                ['start_date' => $inicioSemana->toDateString(), 'end_date' => $finSemana->toDateString()],
+                ['name' => 'Semana del ' . $inicioSemana->format('d/m/Y')]
+            );
+            $weekId = $week->id;
+        }
+
+        // Preparar días de la semana para mostrar
+        $diasSemana = [];
+        for ($i = 0; $i < 6; $i++) {
+            $fecha = $inicioSemana->copy()->addDays($i);
+            $diasSemana[] = [
+                'nombre' => strtolower($fecha->englishDayOfWeek),
+                'fecha' => $fecha->format('Y-m-d'),
+            ];
+        }
+
+        // Empresas con disponibilidad
+        $empresas = Company::with('availabilityDays')->get();
+
+        // Influencers con disponibilidad
+        $influencers = User::role('influencer')
+            ->with('availabilities')
+            ->select('id', 'name')
+            ->get();
+
+        // Bookings de toda la semana (usado para validaciones cruzadas)
+        $bookingsSemana = Booking::where('week_id', $weekId)->get();
+
+        $datosPorEmpresa = $empresas->map(function ($empresa) use ($influencers, $weekId, $bookingsSemana) {
+            // Bookings de esta empresa en la semana
+            $bookings = $bookingsSemana->where('company_id', $empresa->id);
+
+            $disponibilidadEmpresa = [];
+            $influencersDisponibles = [];
+            $influencersAsignados = [];
+
+            foreach ($empresa->availabilityDays as $availability) {
+                $day = strtolower($availability->day_of_week);
+                $turno = strtolower($availability->turno);
+
+                if (!isset($disponibilidadEmpresa[$day])) {
+                    $disponibilidadEmpresa[$day] = [];
+                }
+
+                $disponibilidadEmpresa[$day][] = $turno;
+
+                $coincidentes = $influencers->filter(function ($influencer) use ($day, $turno, $bookings, $bookingsSemana, $empresa) {
+                    // Verifica si ya está asignado en esta empresa, día y turno
+                    $yaAsignadoEstaEmpresa = $bookings->contains(function ($b) use ($influencer, $day, $turno) {
+                        return $b->user_id === $influencer->id &&
+                            strtolower($b->day_of_week) === $day &&
+                            strtolower($b->turno) === $turno;
+                    });
+
+                    // Verifica si está asignado en otra empresa con mismo día y turno
+                    $yaAsignadoOtraEmpresa = $bookingsSemana->contains(function ($b) use ($influencer, $day, $turno, $empresa) {
+                        return $b->user_id === $influencer->id &&
+                            strtolower($b->day_of_week) === $day &&
+                            strtolower($b->turno) === $turno &&
+                            $b->company_id !== $empresa->id;
+                    });
+
+                    // Solo incluir si tiene disponibilidad, no está asignado en esta empresa, y no está asignado en otra empresa en mismo día y turno
+                    return !$yaAsignadoEstaEmpresa && !$yaAsignadoOtraEmpresa && $influencer->availabilities->contains(function ($a) use ($day, $turno) {
+                        return strtolower($a->day_of_week) === $day &&
+                            strtolower($a->turno) === $turno;
+                    });
+                })->map(fn($i) => ['id' => $i->id, 'name' => $i->name])->values();
+
+                $influencersDisponibles[$day][$turno] = $coincidentes;
+
+                $asignados = $bookings->filter(function ($b) use ($day, $turno) {
+                    return strtolower($b->day_of_week) === $day && strtolower($b->turno) === $turno;
+                })->map(fn($b) => [
+                    'id' => $b->user_id,
+                    'name' => optional($b->user)->name,
+                ])->values();
+
+                $influencersAsignados[$day][$turno] = $asignados;
+            }
+
+            return [
+                'empresa' => [
+                    'id' => $empresa->id,
+                    'name' => $empresa->name,
+                ],
+                'disponibilidad' => $disponibilidadEmpresa,
+                'influencersDisponibles' => $influencersDisponibles,
+                'influencersAsignados' => $influencersAsignados,
+            ];
+        });
+
+        return Inertia::render('Semana/influencer', [
+            'datosPorEmpresa' => $datosPorEmpresa,
+            'diasSemana' => $diasSemana,
+            'influencers' => $influencers,
+            'week' => $week, // También podrías enviar el objeto semana
+        ]);
+    }
+
+
 }

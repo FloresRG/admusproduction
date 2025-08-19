@@ -203,6 +203,7 @@ export function AppSidebar() {
                 icon: EmojiPeopleIcon,
                 items: [
                     { title: 'Semana Influencer', href: '/semanainfluencer', icon: AccessTimeIcon },
+                    { title: 'Semana Pasante', href: '/semana-pasantes', icon: AccessTimeIcon },
                     { title: 'Administrar Influencers', href: '/infuencersdatos', icon: EmojiPeopleIcon },
                     { title: 'Influencers', href: '/influencers', icon: GroupIcon },
                     { title: 'Historial de Semanas', href: '/weeks', icon: CalendarViewWeekIcon },
