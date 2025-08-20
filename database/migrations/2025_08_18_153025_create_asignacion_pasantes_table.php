@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('turno'); // mañana, tarde, noche
             $table->date('fecha');
             $table->unsignedBigInteger('week_id');
-            $table->string('day_of_week'); // monday, tuesday, etc.
+            $table->string('dia'); // monday, tuesday, etc.
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
