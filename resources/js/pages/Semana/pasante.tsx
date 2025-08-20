@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
-import { usePage } from '@inertiajs/react';
-import { Add, Business, Close, Person } from '@mui/icons-material';
+import { router, usePage } from '@inertiajs/react';
+import { Add, Business, Close, Delete, Person } from '@mui/icons-material';
 import {
+    Alert,
     Box,
     Button,
     Card,
@@ -25,343 +26,388 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Tooltip,
     Typography,
 } from '@mui/material';
-import axios from 'axios';
 import { useMemo, useState } from 'react';
 
-const SemanaPasantes = () => {
-    const { datosPorEmpresa: datosPorEmpresaProp, diasSemana, pasantes } = usePage().props;
+interface User {
+    id: number;
+    name: string;
+    email: string;
+}
 
-    const [datosPorEmpresa, setDatosPorEmpresa] = useState(datosPorEmpresaProp);
-    const [search, setSearch] = useState('');
+interface Company {
+    id: number;
+    name: string;
+}
+
+interface Week {
+    id: number;
+    name: string;
+    start_date: string;
+    end_date: string;
+}
+
+interface Asignacion {
+    id: number;
+    user_id: number;
+    company_id: number;
+    turno: string;
+    dia: string;
+    fecha: string;
+    user: User;
+    company: Company;
+}
+
+interface PageProps {
+    companies: Company[];
+    pasantes: User[];
+    asignaciones: Record<string, Record<string, Record<string, Asignacion[]>>>;
+    currentWeek: Week;
+    weeks: Week[];
+    diasSemana: string[];
+    turnos: string[];
+    flash?: {
+        success?: string;
+        error?: string;
+    };
+}
+
+const SemanaPasantes = () => {
+    const { companies, pasantes, asignaciones, currentWeek, weeks, diasSemana, turnos, flash, filters } = usePage<PageProps>().props;
+
     const [modalOpen, setModalOpen] = useState(false);
-    const [selectedTurno, setSelectedTurno] = useState(null);
-    const [selectedPasante, setSelectedPasante] = useState('');
+    const [selectedCompany, setSelectedCompany] = useState<number | null>(null);
+    const [selectedTurno, setSelectedTurno] = useState<string>('');
+    const [selectedDia, setSelectedDia] = useState<string>('');
+    const [selectedPasante, setSelectedPasante] = useState<number | null>(null);
+    const [selectedWeek, setSelectedWeek] = useState<number>(currentWeek.id);
     const [loading, setLoading] = useState(false);
 
-    // Filtrado de empresas por nombre
-    const empresasFiltradas = useMemo(() => {
-        if (!search.trim()) return datosPorEmpresa;
-        const normalizar = (str) =>
-            str
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase();
-        return datosPorEmpresa.filter((empresaData) => normalizar(empresaData.empresa.name || '').includes(normalizar(search)));
-    }, [search, datosPorEmpresa]);
+    const [search, setSearch] = useState(filters?.search || '');
 
-    const dayOfWeekInSpanish = {
-        monday: 'Lunes',
-        tuesday: 'Martes',
-        wednesday: 'Miércoles',
-        thursday: 'Jueves',
-        friday: 'Viernes',
-        saturday: 'Sábado',
-        sunday: 'Domingo',
+    // NUEVO: Estado para rastrear la celda sobre la que está el mouse
+    const [hoveredCell, setHoveredCell] = useState<{ companyId: number; turno: string; dia: string } | null>(null);
+
+    const handleSearch = (value: string) => {
+        setSearch(value);
+        router.get(
+            '/semana-pasantes',
+            {
+                week_id: currentWeek.id,
+                search: value,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     };
 
-    const getTurnoColor = (turno) => {
-        switch (turno) {
-            case 'mañana':
-                return '#FFD700';
-            case 'tarde':
-                return '#4A90E2';
-            case 'noche':
-                return '#8E44AD';
-            default:
-                return '#999';
-        }
-    };
+    // Calcular fechas de la semana
+    const weekDates = useMemo(() => {
+        const startDate = new Date(currentWeek.start_date);
+        const dates: Record<string, string> = {};
 
-    const handleOpenModal = (empresaId, dia, turno) => {
-        setSelectedTurno({ empresaId, dia, turno });
+        diasSemana.forEach((dia, index) => {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + index);
+            dates[dia] = date.toISOString().split('T')[0];
+        });
+
+        return dates;
+    }, [currentWeek, diasSemana]);
+
+    const handleOpenModal = (companyId: number, turno: string, dia: string) => {
+        setSelectedCompany(companyId);
+        setSelectedTurno(turno);
+        setSelectedDia(dia);
         setModalOpen(true);
     };
 
     const handleCloseModal = () => {
         setModalOpen(false);
-        setSelectedTurno(null);
-        setSelectedPasante('');
+        setSelectedCompany(null);
+        setSelectedTurno('');
+        setSelectedDia('');
+        setSelectedPasante(null);
     };
 
-    const handleAsignarPasante = async () => {
-        if (!selectedTurno || !selectedPasante) {
-            alert('Debes seleccionar un pasante.');
+    const handleSubmit = async () => {
+        if (!selectedPasante || !selectedCompany || !selectedTurno || !selectedDia) {
             return;
         }
 
         setLoading(true);
+
         try {
-            await axios.post('/asignar-pasante', {
-                empresa_id: selectedTurno.empresaId,
-                dia: selectedTurno.dia,
-                turno: selectedTurno.turno,
-                pasante_id: selectedPasante,
+            await router.post('/asignacion-pasantes', {
+                user_id: selectedPasante,
+                company_id: selectedCompany,
+                turno: selectedTurno,
+                dia: selectedDia,
+                week_id: selectedWeek,
+                fecha: weekDates[selectedDia],
             });
+
             handleCloseModal();
-            window.location.reload();
         } catch (error) {
             console.error('Error al asignar pasante:', error);
-            alert(error.response?.data?.message || 'Error al asignar pasante.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleQuitarPasante = async (empresaId, dia, turno, pasanteId) => {
-        setLoading(true);
+    const handleDeleteAsignacion = async (asignacionId: number) => {
+        if (confirm('¿Estás seguro de eliminar esta asignación?')) {
+            try {
+                await router.delete(`/asignacion-pasantes/${asignacionId}`);
+            } catch (error) {
+                console.error('Error al eliminar asignación:', error);
+            }
+        }
+    };
+
+    const handleWeekChange = (weekId: number) => {
+        setSelectedWeek(weekId);
+        router.get('/semana-pasantes', { week_id: weekId });
+    };
+
+    const getAsignacionesByCompanyTurnoDia = (companyId: number, turno: string, dia: string): Asignacion[] => {
+        return asignaciones[companyId]?.[turno]?.[dia] || [];
+    };
+    const handleGeneratePdf = async () => {
         try {
-            await axios.post('/quitar-pasante', {
-                empresa_id: empresaId,
-                dia,
-                turno,
-                pasante_id: pasanteId,
-            });
-
-            // Actualizar estado local
-            setDatosPorEmpresa((prev) =>
-                prev.map((empresa) =>
-                    empresa.empresa.id === empresaId
-                        ? {
-                              ...empresa,
-                              pasantesAsignados: {
-                                  ...empresa.pasantesAsignados,
-                                  [dia]: {
-                                      ...empresa.pasantesAsignados[dia],
-                                      [turno]: empresa.pasantesAsignados[dia][turno].filter((p) => p.id !== pasanteId),
-                                  },
-                              },
-                          }
-                        : empresa,
-                ),
-            );
+            // Se usa window.open para que el navegador maneje la descarga del PDF
+            // Esto es más simple que manejar la respuesta binaria con fetch
+            window.open('/generar-pdf-disponibilidad', '_blank');
         } catch (error) {
-            console.error('Error al quitar pasante:', error);
-            alert('Error al quitar el pasante');
-        } finally {
-            setLoading(false);
+            console.error('Error al generar el PDF:', error);
+            // Opcional: mostrar un mensaje de error al usuario
+            alert('Hubo un error al generar el PDF. Por favor, inténtalo de nuevo.');
         }
     };
-
-    const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-        });
+    const getFirstName = (fullName: string) => {
+        return fullName.split(' ')[0];
     };
-
-    const getTotalPasantesAsignados = () => {
-        return datosPorEmpresa.reduce((total, empresa) => {
-            return (
-                total +
-                Object.values(empresa.pasantesAsignados).reduce((empresaTotal, dia) => {
-                    return (
-                        empresaTotal +
-                        Object.values(dia).reduce((diaTotal, turno) => {
-                            return diaTotal + turno.length;
-                        }, 0)
-                    );
-                }, 0)
-            );
-        }, 0);
-    };
-
     return (
         <AppLayout>
-            <Box p={3}>
-                {/* Header */}
-                <Box mb={4}>
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center" justifyContent="space-between">
-                        <Box>
-                            <Typography variant="h4" fontWeight="bold" mb={1}>
-                                📋 Gestión Semanal - Pasantes
-                            </Typography>
-                            <Typography variant="h6" color="text.secondary">
-                                Asignación de pasantes por empresa y turno
-                            </Typography>
-                        </Box>
+            <Box sx={{ p: 3 }}>
+                <Card>
+                    <CardHeader
+                        title={`Gestión de Pasantes - ${currentWeek.name}`}
+                        action={
+                            <Stack direction="row" spacing={2}>
+                                {/* BOTÓN PARA GENERAR PDF */}
+                                <Button variant="contained" color="success" onClick={handleGeneratePdf}>
+                                    Generar PDF
+                                </Button>
 
-                        <Box display="flex" alignItems="center" gap={2}>
-                            <TextField
-                                label="Buscar empresa"
-                                variant="outlined"
-                                size="small"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                sx={{ minWidth: 280 }}
-                            />
-                        </Box>
+                                {/* CAMPO DE BÚSQUEDA EXISTENTE */}
+                                <TextField
+                                    size="small"
+                                    label="Buscar empresa"
+                                    variant="outlined"
+                                    value={search}
+                                    onChange={(e) => handleSearch(e.target.value)}
+                                />
+                            </Stack>
+                        }
+                    />
 
-                        <Stack direction="row" spacing={2}>
-                            <Card>
-                                <CardContent sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
-                                    <Typography variant="h4" fontWeight="bold" color="primary">
-                                        {datosPorEmpresa.length}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Empresas
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                            <Card>
-                                <CardContent sx={{ py: 1.5, px: 2, textAlign: 'center' }}>
-                                    <Typography variant="h4" fontWeight="bold" color="secondary">
-                                        {getTotalPasantesAsignados()}
-                                    </Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        Asignados
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        </Stack>
-                    </Stack>
-                </Box>
+                    <CardContent>
+                        {flash?.success && (
+                            <Alert severity="success" sx={{ mb: 2 }}>
+                                {flash.success}
+                            </Alert>
+                        )}
 
-                {/* Tabla Principal */}
-                <Paper elevation={2} sx={{ overflowX: 'auto' }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Empresa</TableCell>
-                                <TableCell sx={{ fontWeight: 'bold' }}>Turno</TableCell>
-                                {diasSemana.map((dia, idx) => (
-                                    <TableCell key={idx} align="center" sx={{ fontWeight: 'bold' }}>
-                                        <Stack alignItems="center" gap={0.5}>
-                                            <Typography fontWeight="bold" fontSize="0.9rem">
-                                                {dayOfWeekInSpanish[dia.nombre.toLowerCase()] ?? dia.nombre}
-                                            </Typography>
-                                            <Chip label={formatDate(dia.fecha)} size="small" variant="outlined" />
-                                        </Stack>
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        </TableHead>
+                        {flash?.error && (
+                            <Alert severity="error" sx={{ mb: 2 }}>
+                                {flash.error}
+                            </Alert>
+                        )}
 
-                        <TableBody>
-                            {empresasFiltradas.map((empresaData, idx) =>
-                                ['mañana', 'tarde', 'noche'].map((turno, turnoIdx) => (
-                                    <TableRow key={`${empresaData.empresa.id}-${turno}`}>
-                                        {turnoIdx === 0 ? (
-                                            <TableCell
-                                                rowSpan={3}
-                                                sx={{
-                                                    fontWeight: 'bold',
-                                                    verticalAlign: 'middle',
-                                                    backgroundColor: '#fafafa',
-                                                }}
-                                            >
-                                                <Stack direction="row" alignItems="center" gap={1}>
-                                                    <Business />
-                                                    <Typography variant="subtitle1" fontWeight="bold">
-                                                        {empresaData.empresa.name}
-                                                    </Typography>
-                                                </Stack>
-                                            </TableCell>
-                                        ) : null}
-
-                                        <TableCell sx={{ fontWeight: 'bold', color: getTurnoColor(turno) }}>
-                                            <Typography fontWeight="bold">{turno.charAt(0).toUpperCase() + turno.slice(1)}</Typography>
+                        <Paper sx={{ overflow: 'auto' }}>
+                            <Table size="small">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell
+                                            sx={{
+                                                width: 150,
+                                                fontWeight: 'bold',
+                                                position: 'sticky', // Esto la hace estática
+                                                left: 0, // La pega al lado izquierdo
+                                                zIndex: 10, // Asegura que esté por encima
+                                                bgcolor: 'background.paper', // Fondo para que no se vea transparente
+                                            }}
+                                        >
+                                            <Business sx={{ mr: 1, verticalAlign: 'middle' }} />
+                                            Empresa
                                         </TableCell>
-
-                                        {diasSemana.map((dia, j) => (
-                                            <TableCell key={j} sx={{ verticalAlign: 'top', px: 1 }}>
-                                                <Card variant="outlined" sx={{ minHeight: 60 }}>
-                                                    <CardHeader
-                                                        title={
-                                                            <Typography variant="caption" fontWeight="bold">
-                                                                {turno.charAt(0).toUpperCase() + turno.slice(1)}
-                                                            </Typography>
-                                                        }
-                                                        action={
-                                                            <Tooltip title="Agregar Pasante">
-                                                                <IconButton
-                                                                    size="small"
-                                                                    onClick={() =>
-                                                                        handleOpenModal(empresaData.empresa.id, dia.nombre.toLowerCase(), turno)
-                                                                    }
-                                                                >
-                                                                    <Add fontSize="small" />
-                                                                </IconButton>
-                                                            </Tooltip>
-                                                        }
-                                                        sx={{ py: 0.5, px: 1 }}
-                                                    />
-                                                    <CardContent sx={{ pt: 0, px: 1, pb: 1 }}>
-                                                        <Stack spacing={0.5}>
-                                                            {(empresaData.pasantesAsignados?.[dia.nombre.toLowerCase()]?.[turno] ?? []).map(
-                                                                (pasante, i) => (
-                                                                    <Chip
-                                                                        key={i}
-                                                                        avatar={<Person />}
-                                                                        label={pasante.name.split(' ')[0]}
-                                                                        deleteIcon={<Close />}
-                                                                        onDelete={() =>
-                                                                            handleQuitarPasante(
-                                                                                empresaData.empresa.id,
-                                                                                dia.nombre.toLowerCase(),
-                                                                                turno,
-                                                                                pasante.id,
-                                                                            )
-                                                                        }
-                                                                        variant="outlined"
-                                                                        size="small"
-                                                                        sx={{
-                                                                            borderColor: getTurnoColor(turno),
-                                                                            color: getTurnoColor(turno),
-                                                                        }}
-                                                                    />
-                                                                ),
-                                                            )}
-                                                        </Stack>
-                                                    </CardContent>
-                                                </Card>
+                                        <TableCell sx={{ width: 100, fontWeight: 'bold' }}>Turno</TableCell>
+                                        {diasSemana.map((dia) => (
+                                            <TableCell key={dia} sx={{ minWidth: 150, fontWeight: 'bold' }}>
+                                                {dia.charAt(0).toUpperCase() + dia.slice(1)}
+                                                <br />
+                                                <Typography variant="caption" color="textSecondary">
+                                                    {new Date(
+                                                        new Date(weekDates[dia]).setDate(new Date(weekDates[dia]).getDate() + 1),
+                                                    ).toLocaleDateString()}
+                                                </Typography>
                                             </TableCell>
                                         ))}
                                     </TableRow>
-                                )),
-                            )}
-                        </TableBody>
-                    </Table>
-                </Paper>
-            </Box>
+                                </TableHead>
+                                <TableBody>
+                                    {companies.map((company) =>
+                                        turnos.map((turno, turnoIndex) => (
+                                            <TableRow key={`${company.id}-${turno}`}>
+                                                {turnoIndex === 0 && (
+                                                    <TableCell
+                                                        rowSpan={turnos.length}
+                                                        sx={{
+                                                            verticalAlign: 'top',
+                                                            borderRight: 1,
+                                                            borderRightColor: 'divider',
+                                                            position: 'sticky', // Esto la hace estática
+                                                            left: 0, // La pega al lado izquierdo
+                                                            zIndex: 5, // Un zIndex menor que el encabezado, pero mayor que el resto de celdas
+                                                            bgcolor: 'background.paper', // Fondo para que no se vea transparente
+                                                        }}
+                                                    >
+                                                        <Typography variant="body2" fontWeight="medium">
+                                                            {company.name}
+                                                        </Typography>
+                                                    </TableCell>
+                                                )}
+                                                <TableCell sx={{ fontWeight: 'medium' }}>
+                                                    <Chip
+                                                        label={turno.charAt(0).toUpperCase() + turno.slice(1)}
+                                                        size="small"
+                                                        color={turno === 'mañana' ? 'primary' : turno === 'tarde' ? 'secondary' : 'default'}
+                                                    />
+                                                </TableCell>
+                                                {diasSemana.map((dia) => {
+                                                    const asignacionesCelda = getAsignacionesByCompanyTurnoDia(company.id, turno, dia);
+                                                    
+                                                    // NUEVO: Comprobar si la celda actual es la celda sobre la que se pasa el mouse
+                                                    const isHovered = hoveredCell?.companyId === company.id && hoveredCell?.turno === turno && hoveredCell?.dia === dia;
+                                                    
+                                                    return (
+                                                        // NUEVO: Añadir onMouseEnter y onMouseLeave a la celda
+                                                        <TableCell
+                                                            key={dia}
+                                                            sx={{ verticalAlign: 'top' }}
+                                                            onMouseEnter={() => setHoveredCell({ companyId: company.id, turno, dia })}
+                                                            onMouseLeave={() => setHoveredCell(null)}
+                                                        >
+                                                            <Stack spacing={1}>
+                                                                {asignacionesCelda.map((asignacion) => (
+                                                                    <Box
+                                                                        key={asignacion.id}
+                                                                        sx={{
+                                                                            display: 'flex',
+                                                                            alignItems: 'center',
+                                                                            justifyContent: 'space-between',
+                                                                            bgcolor: 'grey.100',
+                                                                            p: 1,
+                                                                            borderRadius: 1,
+                                                                            fontSize: '0.875rem',
+                                                                        }}
+                                                                    >
+                                                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                            <Person sx={{ fontSize: 16, mr: 0.5 }} />
+                                                                            <Typography variant="body2">
+                                                                                {getFirstName(asignacion.user.name)}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                        <IconButton
+                                                                            size="small"
+                                                                            color="error"
+                                                                            onClick={() => handleDeleteAsignacion(asignacion.id)}
+                                                                        >
+                                                                            <Delete sx={{ fontSize: 16 }} />
+                                                                        </IconButton>
+                                                                    </Box>
+                                                                ))}
 
-            {/* Modal para agregar pasante */}
-            <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
-                <DialogTitle>Agregar Pasante</DialogTitle>
-                <DialogContent>
-                    <Stack spacing={2} mt={2}>
-                        <Typography>
-                            <strong>Día:</strong> {dayOfWeekInSpanish[selectedTurno?.dia ?? ''] ?? selectedTurno?.dia}
-                        </Typography>
-                        <Typography>
-                            <strong>Turno:</strong> {selectedTurno?.turno}
-                        </Typography>
+                                                                {/* CAMBIO: Renderizar el botón solo si la celda está en hover o si ya hay asignaciones (opcional) */}
+                                                                {(isHovered || asignacionesCelda.length === 0) && (
+                                                                     <Button
+                                                                        size="small"
+                                                                        startIcon={<Add />}
+                                                                        variant="outlined"
+                                                                        sx={{
+                                                                            mt: 1,
+                                                                            // NUEVO: Estilo para la transición de visibilidad.
+                                                                            opacity: isHovered ? 1 : 0,
+                                                                            transition: 'opacity 0.2s ease-in-out',
+                                                                        }}
+                                                                        onClick={() => handleOpenModal(company.id, turno, dia)}
+                                                                    >
+                                                                        Agregar
+                                                                    </Button>
+                                                                )}
+                                                            </Stack>
+                                                        </TableCell>
+                                                    );
+                                                })}
+                                            </TableRow>
+                                        )),
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </Paper>
+                    </CardContent>
+                </Card>
 
-                        <FormControl fullWidth>
-                            <InputLabel>Pasante</InputLabel>
-                            <Select value={selectedPasante} label="Pasante" onChange={(e) => setSelectedPasante(e.target.value)}>
-                                {pasantes.length === 0 ? (
-                                    <MenuItem disabled>No hay pasantes registrados</MenuItem>
-                                ) : (
-                                    pasantes.map((pasante) => (
+                {/* Modal para agregar pasante */}
+                <Dialog open={modalOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+                    <DialogTitle>
+                        Agregar Pasante
+                        <IconButton onClick={handleCloseModal} sx={{ position: 'absolute', right: 8, top: 8 }}>
+                            <Close />
+                        </IconButton>
+                    </DialogTitle>
+
+                    <DialogContent>
+                        <Stack spacing={3} sx={{ mt: 2 }}>
+                            <Typography variant="body1">
+                                <strong>Empresa:</strong> {companies.find((c) => c.id === selectedCompany)?.name}
+                                <br />
+                                <strong>Turno:</strong> {selectedTurno}
+                                <br />
+                                <strong>Día:</strong> {selectedDia}
+                                <br />
+                                <strong>Fecha:</strong> {selectedDia ? new Date(weekDates[selectedDia]).toLocaleDateString() : ''}
+                            </Typography>
+
+                            <FormControl fullWidth>
+                                <InputLabel>Seleccionar Pasante</InputLabel>
+                                <Select
+                                    value={selectedPasante || ''}
+                                    label="Seleccionar Pasante"
+                                    onChange={(e) => setSelectedPasante(e.target.value as number)}
+                                >
+                                    {pasantes.map((pasante) => (
                                         <MenuItem key={pasante.id} value={pasante.id}>
                                             {pasante.name}
                                         </MenuItem>
-                                    ))
-                                )}
-                            </Select>
-                        </FormControl>
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={handleCloseModal}>Cancelar</Button>
-                    <Button variant="contained" onClick={handleAsignarPasante} disabled={loading}>
-                        {loading ? 'Guardando...' : 'Guardar'}
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Stack>
+                    </DialogContent>
+
+                    <DialogActions>
+                        <Button onClick={handleCloseModal}>Cancelar</Button>
+                        <Button onClick={handleSubmit} variant="contained" disabled={!selectedPasante || loading}>
+                            {loading ? 'Asignando...' : 'Asignar Pasante'}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
         </AppLayout>
     );
 };
