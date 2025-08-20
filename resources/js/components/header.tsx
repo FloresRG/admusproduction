@@ -29,7 +29,7 @@ export default function Header() {
 
     const services = [
         { title: 'Marketing Digital', description: 'Estrategias digitales...', icon: '📱', href: '/marketing' },
-        { title: 'Desarrollo Web', description: 'Sitios web modernos...', icon: '💻', href: '#desarrollo-web' },
+        // { title: 'Desarrollo Web', description: 'Sitios web modernos...', icon: '💻', href: '#desarrollo-web' },
         { title: 'Diseño Gráfico', description: 'Branding y diseño...', icon: '🎨', href: '/diseño' },
         { title: 'Producción Audiovisual', description: 'Videos profesionales...', icon: '🎬', href: '/servicios/produccion-audiovisual' },
         { title: 'Fotografía', description: 'Fotografía profesional...', icon: '📸', href: '/fotografias' },
