@@ -451,16 +451,12 @@ Route::get('/companias', function () {
 });
 
 Route::get('/semanapasante', [SemanaController::class, 'indexpasante']);
-Route::get('/semana-pasantes', [SemanaPasantesController::class, 'index'])->name('semana.pasantes.index');
 
-// Asignar un pasante a una empresa
-Route::post('/asignar-pasante', [SemanaPasantesController::class, 'asignarPasante'])->name('asignar-pasante');
-
-// Quitar un pasante asignado
-Route::post('/quitar-pasante', [SemanaPasantesController::class, 'quitarPasante'])->name('semana.pasantes.quitar');
-
-// Asignación masiva de empresas
-Route::post('/semana-pasantes/asignar-masivo', [SemanaPasantesController::class, 'asignarEmpresasMasivamente'])->name('semana.pasantes.masivo');
+Route::get('/semana-pasantes', [SemanaPasantesController::class, 'index'])->name('semana-pasantes.index');
+Route::post('/asignacion-pasantes', [SemanaPasantesController::class, 'store'])->name('asignacion-pasantes.store');
+Route::delete('/asignacion-pasantes/{id}', [SemanaPasantesController::class, 'destroy'])->name('asignacion-pasantes.destroy');
+Route::get('/asignaciones-week/{weekId}', [SemanaPasantesController::class, 'getAsignacionesByWeek'])->name('asignaciones.by-week');
+Route::get('/generar-pdf-disponibilidad', [SemanaPasantesController::class, 'generarPdfDisponibilidad'])->name('generar.pdf');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

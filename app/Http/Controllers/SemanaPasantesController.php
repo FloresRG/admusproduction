@@ -7,282 +7,384 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\Week;
 use Carbon\Carbon;
+use FPDF;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 
 class SemanaPasantesController extends Controller
 {
-    public function index(Request $request)
+    /* public function index(Request $request)
     {
-        $weekId = $request->query('week_id');
+        // Obtener la semana actual o la especificada
+        $weekId = $request->get('week_id');
+        $currentWeek = $weekId ? Week::find($weekId) : Week::where('start_date', '<=', Carbon::now())
+            ->where('end_date', '>=', Carbon::now())
+            ->first();
 
-        // Si viene el ID, lo usamos; si no, se usa la semana actual
-        if ($weekId) {
-            $week = Week::findOrFail($weekId);
-            $inicioSemana = Carbon::parse($week->start_date);
-            $finSemana = Carbon::parse($week->end_date);
-        } else {
-            // Semana actual por defecto
-            $hoy = Carbon::now();
-            $inicioSemana = $hoy->copy()->startOfWeek(Carbon::MONDAY);
-            $finSemana = $hoy->copy()->endOfWeek(Carbon::SUNDAY);
 
-            $week = Week::firstOrCreate(
-                ['start_date' => $inicioSemana->toDateString(), 'end_date' => $finSemana->toDateString()],
-                ['name' => 'Semana del ' . $inicioSemana->format('d/m/Y')]
-            );
-            $weekId = $week->id;
+        if (!$currentWeek) {
+            // Crear semana actual si no existe
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $endOfWeek = Carbon::now()->endOfWeek();
+
+            $currentWeek = Week::create([
+                'name' => 'Semana ' . $startOfWeek->format('d/m') . ' - ' . $endOfWeek->format('d/m'),
+                'start_date' => $startOfWeek,
+                'end_date' => $endOfWeek,
+
+            ]);
         }
 
-        // Preparar días de la semana para mostrar
-        $diasSemana = [];
-        for ($i = 0; $i < 6; $i++) {
-            $fecha = $inicioSemana->copy()->addDays($i);
-            $diasSemana[] = [
-                'nombre' => strtolower($fecha->englishDayOfWeek),
-                'fecha' => $fecha->format('Y-m-d'),
-            ];
-        }
+        // Obtener todas las empresas
+        $companies = Company::select('id', 'name')->get();
 
-        // Empresas con disponibilidad
-        $empresas = Company::with('availabilityDays')->get();
+        // Obtener todos los usuarios con rol de pasante
+        $pasantes = User::whereHas('roles', function ($query) {
+            $query->where('name', 'pasante');
+        })->whereHas('tipos', function ($query) {
+            $query->where('nombre_tipo', 'grabacion');
+        })->select('id', 'name', 'email')->get();
 
-        // Pasantes con tipo "grabacion"
-        $pasantes = User::role('pasante')
-            ->select('id', 'name')
-            ->get();
 
-        // Asignaciones de toda la semana
-        $asignacionesSemana = AsignacionPasante::where('week_id', $weekId)->with('user')->get();
+        // Obtener asignaciones de la semana actual
+        $asignaciones = AsignacionPasante::with(['user:id,name', 'company:id,name'])
+            ->where('week_id', $currentWeek->id)
+            ->get()
+            ->groupBy(['company_id', 'turno', 'dia']);
 
-        $datosPorEmpresa = $empresas->map(function ($empresa) use ($pasantes, $weekId, $asignacionesSemana) {
-            // Asignaciones de esta empresa en la semana
-            $asignaciones = $asignacionesSemana->where('company_id', $empresa->id);
+        // Días de la semana
+        $diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        $turnos = ['mañana', 'tarde', 'noche'];
 
-            $disponibilidadEmpresa = [];
-            $pasantesDisponibles = [];
-            $pasantesAsignados = [];
-
-            foreach ($empresa->availabilityDays as $availability) {
-                $day = strtolower($availability->day_of_week);
-                $turno = strtolower($availability->turno);
-
-                if (!isset($disponibilidadEmpresa[$day])) {
-                    $disponibilidadEmpresa[$day] = [];
-                }
-
-                $disponibilidadEmpresa[$day][] = $turno;
-
-                // Incluir también turno "noche" si es necesario
-                if (!in_array('noche', $disponibilidadEmpresa[$day])) {
-                    $disponibilidadEmpresa[$day][] = 'noche';
-                }
-
-                $turnos = ['mañana', 'tarde', 'noche'];
-
-                foreach ($turnos as $turnoActual) {
-                    $coincidentes = $pasantes->filter(function ($pasante) use ($day, $turnoActual, $asignaciones, $asignacionesSemana, $empresa) {
-                        // Verifica si ya está asignado en esta empresa, día y turno
-                        $yaAsignadoEstaEmpresa = $asignaciones->contains(function ($a) use ($pasante, $day, $turnoActual) {
-                            return $a->user_id === $pasante->id &&
-                                strtolower($a->day_of_week) === $day &&
-                                strtolower($a->turno) === $turnoActual;
-                        });
-
-                        // Verifica si está asignado en otra empresa con mismo día y turno
-                        $yaAsignadoOtraEmpresa = $asignacionesSemana->contains(function ($a) use ($pasante, $day, $turnoActual, $empresa) {
-                            return $a->user_id === $pasante->id &&
-                                strtolower($a->day_of_week) === $day &&
-                                strtolower($a->turno) === $turnoActual &&
-                                $a->company_id !== $empresa->id;
-                        });
-
-                        // Verificar disponibilidad del pasante
-                        $tieneDisponibilidad = $pasante->availabilities->contains(function ($avail) use ($day, $turnoActual) {
-                            return strtolower($avail->day_of_week) === $day &&
-                                strtolower($avail->turno) === $turnoActual;
-                        });
-
-                        return !$yaAsignadoEstaEmpresa && !$yaAsignadoOtraEmpresa && $tieneDisponibilidad;
-                    })->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values();
-
-                    $pasantesDisponibles[$day][$turnoActual] = $coincidentes;
-
-                    $asignados = $asignaciones->filter(function ($a) use ($day, $turnoActual) {
-                        return strtolower($a->day_of_week) === $day && strtolower($a->turno) === $turnoActual;
-                    })->map(fn($a) => [
-                        'id' => $a->user_id,
-                        'name' => optional($a->user)->name,
-                    ])->values();
-
-                    $pasantesAsignados[$day][$turnoActual] = $asignados;
-                }
-            }
-
-            return [
-                'empresa' => [
-                    'id' => $empresa->id,
-                    'name' => $empresa->name,
-                ],
-                'disponibilidad' => $disponibilidadEmpresa,
-                'pasantesDisponibles' => $pasantesDisponibles,
-                'pasantesAsignados' => $pasantesAsignados,
-            ];
-        });
+        // Obtener todas las semanas para el selector
+        $weeks = Week::orderBy('start_date', 'desc')->get();
 
         return Inertia::render('Semana/pasante', [
-            'datosPorEmpresa' => $datosPorEmpresa,
-            'diasSemana' => $diasSemana,
+            'companies' => $companies,
             'pasantes' => $pasantes,
-            'week' => $week,
+            'asignaciones' => $asignaciones,
+            'currentWeek' => $currentWeek,
+            'weeks' => $weeks,
+            'diasSemana' => $diasSemana,
+            'turnos' => $turnos
+        ]);
+    } */
+    /* public function index(Request $request)
+    {
+        // Obtener la semana actual o la especificada
+        $weekId = $request->get('week_id');
+        $search = $request->get('search'); // 👈 nuevo parámetro para buscar
+
+        $currentWeek = $weekId ? Week::find($weekId) : Week::where('start_date', '<=', Carbon::now())
+            ->where('end_date', '>=', Carbon::now())
+            ->first();
+
+        if (!$currentWeek) {
+            $startOfWeek = Carbon::now()->startOfWeek();
+            $endOfWeek = Carbon::now()->endOfWeek();
+
+            $currentWeek = Week::create([
+                'name' => 'Semana ' . $startOfWeek->format('d/m') . ' - ' . $endOfWeek->format('d/m'),
+                'start_date' => $startOfWeek,
+                'end_date' => $endOfWeek,
+            ]);
+        }
+
+        // 🔎 Filtro de empresas
+        $companiesQuery = Company::select('id', 'name');
+        if ($search) {
+            $companiesQuery->where('name', 'like', "%{$search}%");
+        }
+        $companies = $companiesQuery->get();
+
+        // Obtener todos los usuarios con rol de pasante
+        $pasantes = User::whereHas('roles', function ($query) {
+            $query->where('name', 'pasante');
+        })->whereHas('tipos', function ($query) {
+            $query->where('nombre_tipo', 'grabacion');
+        })
+            ->select('id', 'name', 'email')
+            ->get();
+
+        // Obtener asignaciones de la semana actual
+        $asignaciones = AsignacionPasante::with(['user:id,name', 'company:id,name'])
+            ->where('week_id', $currentWeek->id)
+            ->get()
+            ->groupBy(['company_id', 'turno', 'dia']);
+
+        $diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        $turnos = ['mañana', 'tarde', 'noche'];
+
+        $weeks = Week::orderBy('start_date', 'desc')->get();
+
+        return Inertia::render('Semana/pasante', [
+            'companies' => $companies,
+            'pasantes' => $pasantes,
+            'asignaciones' => $asignaciones,
+            'currentWeek' => $currentWeek,
+            'weeks' => $weeks,
+            'diasSemana' => $diasSemana,
+            'turnos' => $turnos,
+            'filters' => [
+                'search' => $search, // 👈 devolvemos el valor actual
+            ]
+        ]);
+    } */
+    public function index(Request $request)
+    {
+        $search = $request->get('search');
+
+        // 📅 Fecha actual
+        $today = Carbon::now();
+
+        // 🟢 Si es domingo → tomar la próxima semana
+        if ($today->isSunday()) {
+            $startOfWeek = $today->copy()->addDay()->startOfWeek(); // lunes próximo
+            $endOfWeek = $startOfWeek->copy()->endOfWeek();
+        } else {
+            // 🟢 Lunes a sábado → tomar esta semana
+            $startOfWeek = $today->copy()->startOfWeek();
+            $endOfWeek = $today->copy()->endOfWeek();
+        }
+
+        // Buscar semana ya creada
+        $currentWeek = Week::where('start_date', $startOfWeek->toDateString())
+            ->where('end_date', $endOfWeek->toDateString())
+            ->first();
+
+        // Si no existe → crearla
+        if (!$currentWeek) {
+            $currentWeek = Week::create([
+                'name' => 'Semana del ' . $startOfWeek->format('d/m/Y'),
+                'start_date' => $startOfWeek,
+                'end_date' => $endOfWeek,
+            ]);
+        }
+
+        // 🔎 Filtro de empresas
+        $companiesQuery = Company::select('id', 'name');
+        if ($search) {
+            $companiesQuery->where('name', 'like', "%{$search}%");
+        }
+        $companies = $companiesQuery->get();
+
+        // Pasantes
+        $pasantes = User::whereHas('roles', function ($query) {
+            $query->where('name', 'pasante');
+        })
+            ->whereHas('tipos', function ($query) {
+                $query->where('nombre_tipo', 'grabacion');
+            })
+            ->select('id', 'name', 'email')
+            ->get();
+
+        // Asignaciones de la semana actual
+        $asignaciones = AsignacionPasante::with(['user:id,name', 'company:id,name'])
+            ->where('week_id', $currentWeek->id)
+            ->get()
+            ->groupBy(['company_id', 'turno', 'dia']);
+
+        $diasSemana = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        $turnos = ['mañana', 'tarde', 'noche'];
+
+        return Inertia::render('Semana/pasante', [
+            'companies' => $companies,
+            'pasantes' => $pasantes,
+            'asignaciones' => $asignaciones,
+            'currentWeek' => $currentWeek,
+            'diasSemana' => $diasSemana,
+            'turnos' => $turnos,
+            'filters' => [
+                'search' => $search,
+            ]
         ]);
     }
 
-    public function asignarPasante(Request $request)
+
+
+    public function store(Request $request)
     {
-        $validated = $request->validate([
-            'empresa_id' => 'required|exists:companies,id',
-            'dia' => 'required|string',
-            'turno' => 'required|string|in:mañana,tarde,noche',
-            'pasante_id' => 'required|exists:users,id',
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'company_id' => 'required|exists:companies,id',
+            'turno' => 'required|in:mañana,tarde,noche',
+            'dia' => 'required|in:lunes,martes,miercoles,jueves,viernes,sabado',
+            'week_id' => 'required|exists:weeks,id',
+            'fecha' => 'required|date'
         ]);
 
-        // Obtener semana actual (de lunes a domingo)
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
-
-        // Buscar o crear semana
-        $week = Week::firstOrCreate(
-            ['start_date' => $startOfWeek->toDateString(), 'end_date' => $endOfWeek->toDateString()],
-            ['name' => 'Semana del ' . $startOfWeek->format('d/m/Y')]
-        );
-
-        $dias = [
-            'monday' => 0,
-            'tuesday' => 1,
-            'wednesday' => 2,
-            'thursday' => 3,
-            'friday' => 4,
-            'saturday' => 5,
-            'sunday' => 6,
-        ];
-
-        $diaOffset = $dias[strtolower($validated['dia'])] ?? 0;
-        $fecha = $startOfWeek->copy()->addDays($diaOffset);
-
-        // Validar si ya está asignado ese pasante en el mismo turno y día
-        $existe = AsignacionPasante::where([
-            ['user_id', $validated['pasante_id']],
-            ['day_of_week', strtolower($validated['dia'])],
-            ['turno', $validated['turno']],
-            ['week_id', $week->id],
+        // Verificar que no existe ya una asignación para ese usuario en ese día y turno
+        $existeAsignacion = AsignacionPasante::where([
+            'user_id' => $request->user_id,
+            'dia' => $request->dia,
+            'turno' => $request->turno,
+            'week_id' => $request->week_id
         ])->exists();
 
-        if ($existe) {
-            return response()->json(['message' => 'El pasante ya está asignado ese día y turno.'], 422);
+        if ($existeAsignacion) {
+            return back()->withErrors(['error' => 'El pasante ya tiene una asignación en ese día y turno']);
         }
 
-        // Crear asignación
-        AsignacionPasante::create([
-            'company_id'   => $validated['empresa_id'],
-            'user_id'      => $validated['pasante_id'],
-            'turno'        => $validated['turno'],
-            'fecha'        => $fecha->toDateString(),
-            'week_id'      => $week->id,
-            'day_of_week'  => strtolower($validated['dia']),
-        ]);
+        AsignacionPasante::create($request->all());
 
-        return response()->json(['message' => 'Pasante asignado exitosamente.']);
+        return back()->with('success', 'Pasante asignado correctamente');
     }
 
-
-    /* public function quitarPasante(Request $request)
+    public function destroy($id)
     {
-        $validated = $request->validate([
-            'empresa_id' => 'required|exists:companies,id',
-            'dia' => 'required|string',
-            'turno' => 'required|string|in:mañana,tarde,noche',
-            'pasante_id' => 'required|exists:users,id',
-        ]);
-
-        // Calcular inicio y fin de la semana actual
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
-
-        // Buscar la semana actual
-        $week = Week::where('start_date', $startOfWeek->toDateString())
-            ->where('end_date', $endOfWeek->toDateString())
-            ->first();
-
-        if (!$week) {
-            return response()->json(['error' => 'No se encontró la semana actual'], 404);
-        }
-
-        $weekId = $week->id;
-
-        // Buscar la asignación para eliminar
-        $asignacion = AsignacionPasante::where('company_id', $validated['empresa_id'])
-            ->where('user_id', $validated['pasante_id'])
-            ->where('week_id', $weekId)
-            ->where('day_of_week', strtolower($validated['dia']))
-            ->where('turno', strtolower($validated['turno']))
-            ->first();
-
-        if (!$asignacion) {
-            return response()->json(['error' => 'No se encontró la asignación para eliminar'], 404);
-        }
-
+        $asignacion = AsignacionPasante::findOrFail($id);
         $asignacion->delete();
 
-        return response()->json(['message' => 'Pasante removido exitosamente.']);
-    } */
-    public function quitarPasante(Request $request)
-    {
-        $validated = $request->validate([
-            'empresa_id' => 'required|exists:companies,id',
-            'pasante_id' => 'required|exists:users,id',
-            'dia' => 'required|string',
-            'turno' => 'required|string|in:mañana,tarde,noche',
-        ]);
+        return back()->with('success', 'Asignación eliminada correctamente');
+    }
 
-        // Obtener semana actual
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+    public function getAsignacionesByWeek($weekId)
+    {
+        $asignaciones = AsignacionPasante::with(['user:id,name', 'company:id,name'])
+            ->where('week_id', $weekId)
+            ->get()
+            ->groupBy(['company_id', 'turno', 'dia']);
+
+        return response()->json($asignaciones);
+    }
+    public function generarPdfDisponibilidad()
+    {
+        // 📅 Lógica para obtener la semana actual (la misma que en el método index)
+        $today = Carbon::now();
+        if ($today->isSunday()) {
+            $startOfWeek = $today->copy()->addDay()->startOfWeek();
+            $endOfWeek = $startOfWeek->copy()->endOfWeek();
+        } else {
+            $startOfWeek = $today->copy()->startOfWeek();
+            $endOfWeek = $today->copy()->endOfWeek();
+        }
 
         $week = Week::where('start_date', $startOfWeek->toDateString())
             ->where('end_date', $endOfWeek->toDateString())
             ->first();
 
         if (!$week) {
-            return response()->json(['message' => 'Semana no encontrada.'], 404);
+            return response('No se encontró la semana actual.', 404);
         }
 
-        // Eliminar asignación
-        AsignacionPasante::where([
-            'company_id' => $validated['empresa_id'],
-            'user_id' => $validated['pasante_id'],
-            'day_of_week' => strtolower($validated['dia']),
-            'turno' => $validated['turno'],
-            'week_id' => $week->id,
-        ])->delete();
+        // 📊 Consulta para obtener las asignaciones de la tabla AsignacionPasante
+        $asignaciones = AsignacionPasante::with(['company', 'user'])
+            ->where('week_id', $week->id)
+            ->orderBy('company_id')
+            ->orderBy('dia')
+            ->orderBy('turno')
+            ->get();
 
-        return response()->json(['message' => 'Pasante eliminado correctamente.']);
-    }
+        if ($asignaciones->isEmpty()) {
+            return response('No hay asignaciones para la semana actual.', 404);
+        }
 
+        $dias = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+        $turnos = ['mañana', 'tarde', 'noche'];
 
-    public function asignarEmpresasMasivamente()
-    {
-        // Implementar lógica de asignación masiva similar a la de influencers
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
+        $calendario = [];
+        foreach ($asignaciones as $asignacion) {
+            $empresaNombre = $asignacion->company->name;
+            $dia = strtolower($asignacion->dia);
+            $primerNombre = explode(' ', $asignacion->user->name)[0];
+            $pasanteTurno = $primerNombre . ' (' . ucfirst($asignacion->turno) . ')';
 
-        $week = Week::firstOrCreate(
-            ['start_date' => $startOfWeek->toDateString(), 'end_date' => $endOfWeek->toDateString()],
-            ['name' => 'Semana del ' . $startOfWeek->format('d/m/Y')]
-        );
+            $calendario[$empresaNombre][$dia][] = $pasanteTurno;
+        }
 
-        // Aquí puedes implementar la lógica de asignación automática
-        return response()->json(['message' => 'Asignación masiva completada']);
+        // FPDF
+        $pdf = new FPDF('L', 'mm', 'A4');
+        $cellWidth = 38;
+        $empresaWidth = 50;
+        $lineHeight = 6.5;
+
+        // Función para encabezado
+        $agregarEncabezado = function () use ($pdf, $dias, $week, $empresaWidth, $cellWidth) {
+            $pdf->AddPage();
+            $pdf->SetMargins(10, 10, 10);
+            $pdf->Image(public_path('logo.jpeg'), 10, 10, 25);
+            $pdf->Image(public_path('logo.jpeg'), 255, 10, 25);
+            $pdf->SetFont('Arial', 'B', 16);
+            $pdf->SetXY(0, 15);
+            $pdf->Cell(0, 10, utf8_decode('ADMUS PRODUCTIONS'), 0, 1, 'C');
+
+            $pdf->Ln(8);
+            $pdf->SetFont('Arial', 'B', 18);
+            $pdf->SetFillColor(25, 118, 210);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->Cell(0, 14, utf8_decode('Disponibilidad Semanal por Empresa'), 0, 1, 'C', true);
+
+            $pdf->SetFont('Arial', '', 12);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(0, 10, utf8_decode('Semana: ' . $week->name), 0, 1, 'C');
+            $pdf->Ln(4);
+
+            $pdf->SetFont('Arial', 'B', 10);
+            $pdf->SetFillColor(33, 150, 243);
+            $pdf->SetTextColor(255, 255, 255);
+            $pdf->Cell($empresaWidth, 10, utf8_decode('Empresa'), 1, 0, 'C', true);
+            foreach ($dias as $dia) {
+                $pdf->Cell($cellWidth, 10, utf8_decode(ucfirst($dia)), 1, 0, 'C', true);
+            }
+            $pdf->Ln();
+        };
+
+        $agregarEncabezado();
+
+        $empresaCount = 0;
+        $pdf->SetFont('Arial', '', 9);
+
+        foreach ($calendario as $empresaNombre => $diasData) {
+            if ($empresaCount === 8) {
+                $agregarEncabezado();
+                $empresaCount = 0;
+            }
+
+            $maxLines = 1;
+            foreach ($dias as $dia) {
+                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
+                $lines = substr_count($text, "\n") + 1;
+                $maxLines = max($maxLines, $lines);
+            }
+            $rowHeight = $lineHeight * $maxLines;
+
+            $yStart = $pdf->GetY();
+            $xStart = $pdf->GetX();
+
+            $fillColor = ($empresaCount % 2 === 0) ? [245, 245, 245] : [255, 255, 255];
+            $pdf->SetFillColor($fillColor[0], $fillColor[1], $fillColor[2]);
+            $pdf->Rect($xStart, $yStart, $pdf->GetPageWidth() - 20, $rowHeight, 'F');
+            $pdf->Rect($xStart, $yStart, $pdf->GetPageWidth() - 20, $rowHeight, 'D');
+
+            $pdf->SetFont('Arial', 'B', 9);
+            $pdf->SetTextColor(37, 37, 37);
+            $pdf->SetXY($xStart, $yStart);
+            $pdf->MultiCell($empresaWidth, $rowHeight, utf8_decode($empresaNombre), 0, 'C');
+            $pdf->SetXY($xStart + $empresaWidth, $yStart);
+
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(0, 0, 0);
+            foreach ($dias as $dia) {
+                $text = isset($diasData[$dia]) ? implode("\n", $diasData[$dia]) : '';
+                $x = $pdf->GetX();
+                $y = $pdf->GetY();
+
+                $pdf->SetFillColor($fillColor[0], $fillColor[1], $fillColor[2]);
+                $pdf->Rect($x, $y, $cellWidth, $rowHeight, 'F');
+                $pdf->SetDrawColor(180, 180, 180);
+                $pdf->Rect($x, $y, $cellWidth, $rowHeight);
+
+                $pdf->MultiCell($cellWidth, $lineHeight, utf8_decode($text), 0, 'C');
+                $pdf->SetXY($x + $cellWidth, $y);
+            }
+
+            $pdf->SetY($yStart + $rowHeight);
+            $empresaCount++;
+        }
+
+        return response($pdf->Output('S', 'disponibilidad_semanal.pdf'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
     }
 }

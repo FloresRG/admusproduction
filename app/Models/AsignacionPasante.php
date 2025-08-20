@@ -15,7 +15,7 @@ class AsignacionPasante extends Model
         'turno',
         'fecha',
         'week_id',
-        'day_of_week',
+        'dia',
     ];
 
     protected $casts = [
