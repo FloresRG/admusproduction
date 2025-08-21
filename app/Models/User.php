@@ -22,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'puntos_ganados',
     ];
 
     /**
@@ -90,10 +91,20 @@ class User extends Authenticatable
     {
         return $this->photos()->where('tipo', 'dato');
     }
-    
+
 
     public function asignacionesPasante()
     {
         return $this->hasMany(AsignacionPasante::class);
+    }
+
+    public function seguimientos()
+    {
+        return $this->hasMany(SeguimientoEmpresa::class, 'id_user');
+    }
+
+    public function canjes()
+    {
+        return $this->hasMany(Canje::class, 'id_user');
     }
 }
