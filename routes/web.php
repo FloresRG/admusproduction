@@ -15,6 +15,7 @@ use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\CompanyLinkComprobanteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
+use App\Http\Controllers\HorarioPersonalController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
@@ -458,5 +459,13 @@ Route::delete('/asignacion-pasantes/{id}', [SemanaPasantesController::class, 'de
 Route::get('/asignaciones-week/{weekId}', [SemanaPasantesController::class, 'getAsignacionesByWeek'])->name('asignaciones.by-week');
 Route::get('/generar-pdf-disponibilidad', [SemanaPasantesController::class, 'generarPdfDisponibilidad'])->name('generar.pdf');
 
+// Agregar esta ruta en tu archivo routes/web.php
+
+// Ruta para ver el horario personal (solo para pasantes autenticados)
+
+// OPCIÓN 1: Validar directamente en el controlador (más simple)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/mi-horario', [HorarioPersonalController::class, 'index'])->name('horario.personal');
+});
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
