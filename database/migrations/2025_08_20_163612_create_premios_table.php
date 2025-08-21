@@ -11,25 +11,17 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('seguimiento_empresa', function (Blueprint $table) {
+        Schema::create('premios', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_empresa');
-            $table->unsignedBigInteger('id_user');
-            $table->unsignedBigInteger('id_paquete');
-            $table->string('estado');
-            $table->date('fecha_inicio')->nullable();
-            $table->date('fecha_fin')->nullable();
+            $table->string('nombre_premio');
             $table->text('descripcion')->nullable();
+            $table->integer('puntos_necesarios')->nullable();
             $table->timestamps();
-
-            // Relaciones (si existen las tablas users y paquetes)
-            $table->foreign('id_user')->references('id')->on('users')->onDelete('cascade');
-            $table->foreign('id_paquete')->references('id')->on('paquetes')->onDelete('cascade');
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('seguimiento_empresa');
+        Schema::dropIfExists('premios');
     }
 };
