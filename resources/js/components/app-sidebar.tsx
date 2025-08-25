@@ -225,6 +225,16 @@ export function AppSidebar() {
                 ],
                 isCollapsible: true,
             },
+            {
+                title: 'GEstion de Vendedores',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // CAMBIADO
+                    { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
+                    { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
+                ],
+                isCollapsible: true,
+            },
         );
     } else {
         if (isInfluencer) {
@@ -249,6 +259,7 @@ export function AppSidebar() {
                     { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
+                    { title: 'Mi Horario', href: '/mi-horario', icon: AccessTimeIcon },
                 ],
                 isCollapsible: false,
             });
