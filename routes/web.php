@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AsignacionTareaController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CanjeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CompanyController;
@@ -21,8 +22,10 @@ use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PagosController;
+use App\Http\Controllers\PaqueteController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\PremioController;
 use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\SemanaPasantesController;
 use App\Http\Controllers\TareaController;
@@ -459,6 +462,17 @@ Route::delete('/asignacion-pasantes/{id}', [SemanaPasantesController::class, 'de
 Route::get('/asignaciones-week/{weekId}', [SemanaPasantesController::class, 'getAsignacionesByWeek'])->name('asignaciones.by-week');
 Route::get('/generar-pdf-disponibilidad', [SemanaPasantesController::class, 'generarPdfDisponibilidad'])->name('generar.pdf');
 
+// Rutas para el CRUD de paquetes
+Route::resource('paquetes', PaqueteController::class);
+Route::resource('premios', PremioController::class);
+// Rutas de canjes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/canjes', [CanjeController::class, 'index'])->name('canjes.index');
+    Route::post('/canjes', [CanjeController::class, 'store'])->name('canjes.store');
+    Route::get('/canjes/historial', [CanjeController::class, 'historial'])->name('canjes.historial');
+     Route::get('/canjes/pendientes', [CanjeController::class, 'pendientes'])->name('canjes.pendientes');
+    Route::post('/canjes/{canje}/recoger', [CanjeController::class, 'marcarRecogido'])->name('canjes.marcar-recogido');
+});
 // Agregar esta ruta en tu archivo routes/web.php
 
 // Ruta para ver el horario personal (solo para pasantes autenticados)

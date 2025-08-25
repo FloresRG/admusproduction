@@ -18,13 +18,6 @@ class HorarioPersonalController extends Controller
         
         // OPCIÓN 1: Verificar si tiene rol de pasante usando relaciones
         $esPasante = $user->roles()->where('name', 'pasante')->exists();
-        
-        // OPCIÓN 2: Si usas un campo en la tabla users
-        // $esPasante = $user->role === 'pasante';
-        
-        // OPCIÓN 3: Si usas Spatie Laravel Permission
-        // $esPasante = $user->hasRole('pasante');
-        
         if (!$esPasante) {
             return redirect()->route('dashboard')->withErrors(['error' => 'No tienes permisos para acceder a esta página']);
         }
@@ -34,11 +27,12 @@ class HorarioPersonalController extends Controller
         $currentWeek = $this->getCurrentWeek($weekId);
 
         // Obtener todas las asignaciones del usuario para la semana
-        $asignaciones = AsignacionPasante::with(['company:id,name'])
+       // En el método index(), modifica la línea del with():
+        $asignaciones = AsignacionPasante::with(['company:id,name,ubicacion'])
             ->where('user_id', $user->id)
             ->where('week_id', $currentWeek->id)
             ->get();
-
+            
         // Organizar las asignaciones por día y turno
         $horarioSemanal = $this->organizarHorario($asignaciones);
 
