@@ -164,6 +164,7 @@ export function AppSidebar() {
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
+    const isVendedor = roles.includes('vendedor');
     const isEmpresa = roles.includes('empresa');
 
     useEffect(() => {
@@ -190,8 +191,6 @@ export function AppSidebar() {
                 icon: BusinessIcon,
                 items: [
                     { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
-                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // CAMBIADO
-                    { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // CAMBIADO
                     { title: 'Categorias', href: '/categories', icon: CategoryIcon },
                     { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
@@ -229,9 +228,13 @@ export function AppSidebar() {
                 title: 'GEstion de Vendedores',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // CAMBIADO
+                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
+                    { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, // admin
+                    { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
                     { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
                     { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
+                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor
                 ],
                 isCollapsible: true,
             },
@@ -260,6 +263,17 @@ export function AppSidebar() {
                     { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
                     { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
                     { title: 'Mi Horario', href: '/mi-horario', icon: AccessTimeIcon },
+                ],
+                isCollapsible: false,
+            });
+        }
+        if (isVendedor) {
+            menuSections.push({
+                title: 'Vendedor',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
+                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor
                 ],
                 isCollapsible: false,
             });

@@ -25,6 +25,9 @@ use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PaqueteController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\PremioController;
+use App\Http\Controllers\SeguimientoEmpresaController;
+use App\Http\Controllers\SeguimientoEmpresaVendedorController;
 use App\Http\Controllers\SemanaController;
 use App\Http\Controllers\SemanaPasantesController;
 use App\Http\Controllers\TareaController;
@@ -461,5 +464,59 @@ Route::delete('/asignacion-pasantes/{id}', [SemanaPasantesController::class, 'de
 Route::get('/asignaciones-week/{weekId}', [SemanaPasantesController::class, 'getAsignacionesByWeek'])->name('asignaciones.by-week');
 Route::get('/generar-pdf-disponibilidad', [SemanaPasantesController::class, 'generarPdfDisponibilidad'])->name('generar.pdf');
 
+/* // Agregar estas rutas a tu archivo routes/web.php
+Route::prefix('seguimiento-empresa')->name('seguimiento-empresa.')->group(function () {
+    Route::get('/', [SeguimientoEmpresaController::class, 'index'])->name('index');
+    Route::post('/', [SeguimientoEmpresaController::class, 'store'])->name('store');
+    Route::put('/{seguimientoEmpresa}', [SeguimientoEmpresaController::class, 'update'])->name('update');
+    Route::delete('/{seguimientoEmpresa}', [SeguimientoEmpresaController::class, 'destroy'])->name('destroy');
+}); */
+Route::middleware(['auth'])->group(function () {
+    Route::resource('seguimiento-empresa', SeguimientoEmpresaController::class);
+    Route::get('/seguimientos-empresa/pdf', [SeguimientoEmpresaController::class, 'generarPdf'])->name('seguimiento-empresa.pdf');
+    Route::get('/seguimiento-historial', [SeguimientoEmpresaController::class, 'historial'])
+        ->name('seguimiento.historial');
+});
+Route::middleware(['auth'])->group(function () {
+    // Rutas básicas del resource
+    Route::get('/seguimiento-empresa-vendedor', [SeguimientoEmpresaVendedorController::class, 'index'])
+        ->name('seguimiento-empresa-vendedor.index');
+
+    Route::post('/seguimiento-empresa-vendedor', [SeguimientoEmpresaVendedorController::class, 'store'])
+        ->name('seguimiento-empresa-vendedor.store');
+
+    Route::put('/seguimiento-empresa-vendedor/{seguimiento_empresa}', [SeguimientoEmpresaVendedorController::class, 'update'])
+        ->name('seguimiento-empresa-vendedor.update');
+
+    Route::delete('/seguimiento-empresa-vendedor/{seguimiento_empresa}', [SeguimientoEmpresaVendedorController::class, 'destroy'])
+        ->name('seguimiento-empresa-vendedor.destroy');
+
+    // Rutas adicionales personalizadas
+    Route::put('/seguimiento-empresa-vendedor/{seguimiento_empresa}/finalize', [SeguimientoEmpresaVendedorController::class, 'finalize'])
+        ->name('seguimiento-empresa-vendedor.finalize');
+
+    Route::put('/seguimiento-empresa-vendedor/{seguimiento_empresa}/cancel', [SeguimientoEmpresaVendedorController::class, 'cancel'])
+        ->name('seguimiento-empresa-vendedor.cancel');
+});
+
+// Rutas para el CRUD de paquetes
+Route::resource('paquetes', PaqueteController::class);
+Route::resource('premios', PremioController::class);
+// Rutas de canjes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/canjes', [CanjeController::class, 'index'])->name('canjes.index');
+    Route::post('/canjes', [CanjeController::class, 'store'])->name('canjes.store');
+    Route::get('/canjes/historial', [CanjeController::class, 'historial'])->name('canjes.historial');
+    Route::get('/canjes/pendientes', [CanjeController::class, 'pendientes'])->name('canjes.pendientes');
+    Route::post('/canjes/{canje}/recoger', [CanjeController::class, 'marcarRecogido'])->name('canjes.marcar-recogido');
+});
+// Agregar esta ruta en tu archivo routes/web.php
+
+// Ruta para ver el horario personal (solo para pasantes autenticados)
+
+// OPCIÓN 1: Validar directamente en el controlador (más simple)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/mi-horario', [HorarioPersonalController::class, 'index'])->name('horario.personal');
+});
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

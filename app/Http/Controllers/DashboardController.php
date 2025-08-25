@@ -30,6 +30,7 @@ class DashboardController extends Controller
             // ¡Cambiamos la vista renderizada aquí!
             $user->hasRole('influencer') => $this->showInfluencerDashboard($user),
              $user->hasRole('pasante') => app(TareaController::class)->estadisticasUsuario(),
+             $user->hasRole('vendedor') => $this->showEmpresaDashboard($user),
             $user->hasRole('empresa') => $this->showEmpresaDashboard($user),
             default => abort(403, 'Acceso no autorizado'),
         };
