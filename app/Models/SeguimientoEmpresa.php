@@ -19,6 +19,7 @@ class SeguimientoEmpresa extends Model
         'fecha_inicio',
         'fecha_fin',
         'descripcion',
+        'celular', 
     ];
 
     // Relación con el usuario

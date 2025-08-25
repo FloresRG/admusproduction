@@ -22,6 +22,7 @@ return new class extends Migration
             $table->date('fecha_inicio')->nullable();
             $table->date('fecha_fin')->nullable();
             $table->text('descripcion')->nullable();
+            $table->string('celular')->nullable();
             $table->timestamps();
 
             // Relaciones (si existen las tablas users y paquetes)

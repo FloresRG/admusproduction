@@ -190,6 +190,8 @@ export function AppSidebar() {
                 icon: BusinessIcon,
                 items: [
                     { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
+                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // CAMBIADO
+                    { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // CAMBIADO
                     { title: 'Categorias', href: '/categories', icon: CategoryIcon },
                     { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
