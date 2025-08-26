@@ -35,7 +35,7 @@ class SeguimientoEmpresaVendedorController extends Controller
 
         // Ordenar por fecha de creación más reciente
         $seguimientos = $query->orderBy('created_at', 'desc')
-            ->paginate(10)
+            ->paginate(12)
             ->withQueryString(); // Mantiene los parámetros de búsqueda en la paginación
 
         // Filtra solo usuarios con el rol "Ejecutivo de Ventas"
