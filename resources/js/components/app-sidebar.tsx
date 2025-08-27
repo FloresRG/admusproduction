@@ -272,7 +272,7 @@ export function AppSidebar() {
                 title: 'Ejecutivo de Ventas',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
+                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
                     { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor
                 ],
                 isCollapsible: false,
