@@ -8,6 +8,7 @@ use App\Models\CompanyLinkComprobante;
 use App\Models\Dato;
 use App\Models\InfluencerAvailability;
 use App\Models\Photo;
+use App\Models\SeguimientoEmpresa;
 use App\Models\Tipo;
 use App\Models\User;
 use App\Models\Week; // Importamos el modelo Week
@@ -29,8 +30,8 @@ class DashboardController extends Controller
             ]),
             // ¡Cambiamos la vista renderizada aquí!
             $user->hasRole('influencer') => $this->showInfluencerDashboard($user),
-             $user->hasRole('pasante') => app(TareaController::class)->estadisticasUsuario(),
-             $user->hasRole('vendedor') => $this->showEmpresaDashboard($user),
+            $user->hasRole('pasante') => app(TareaController::class)->estadisticasUsuario(),
+            $user->hasRole('Ejecutivo de Ventas') => $this->showVendedorDashboard($user),
             $user->hasRole('empresa') => $this->showEmpresaDashboard($user),
             default => abort(403, 'Acceso no autorizado'),
         };
@@ -70,6 +71,25 @@ class DashboardController extends Controller
             'monthlyStats' => $monthlyStats,
         ]);
     }
+
+    protected function showVendedorDashboard(User $user)
+    {
+        $seguimientos = SeguimientoEmpresa::where('id_user', $user->id)->get();
+
+        $estadisticas = [
+            'total' => $seguimientos->count(),
+            'completado' => $seguimientos->where('estado', 'Completado')->count(),
+            'en_proceso' => $seguimientos->where('estado', 'En proceso')->count(),
+            'sin_exito' => $seguimientos->where('estado', 'Sin exito')->count(),
+        ];
+
+        return Inertia::render('Dashboard/Vendedor', [
+            'user' => $user,
+            'estadisticas' => $estadisticas,
+        ]);
+    }
+
+
 
     /**
      * Obtiene los videos de TikTok para una empresa específica
