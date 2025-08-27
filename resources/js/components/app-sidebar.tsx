@@ -225,7 +225,7 @@ export function AppSidebar() {
                 isCollapsible: true,
             },
             {
-                title: 'GEstion de Vendedores',
+                title: 'Gestion de Vendedores',
                 icon: WorkIcon,
                 items: [
                     { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
@@ -233,8 +233,8 @@ export function AppSidebar() {
                     { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
                     { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
                     { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
-                    { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
-                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor
+                    /* { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
+                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor */
                 ],
                 isCollapsible: true,
             },
@@ -269,7 +269,7 @@ export function AppSidebar() {
         }
         if (isVendedor) {
             menuSections.push({
-                title: 'Vendedor',
+                title: 'Ejecutivo de Ventas',
                 icon: WorkIcon,
                 items: [
                     { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
