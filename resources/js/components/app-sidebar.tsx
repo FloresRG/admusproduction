@@ -164,7 +164,7 @@ export function AppSidebar() {
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
-    const isVendedor = roles.includes('vendedor');
+    const isVendedor = roles.includes('Ejecutivo de Ventas');
     const isEmpresa = roles.includes('empresa');
 
     useEffect(() => {
