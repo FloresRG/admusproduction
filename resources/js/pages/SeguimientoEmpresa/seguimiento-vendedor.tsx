@@ -6,7 +6,6 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ClearIcon from '@mui/icons-material/Clear';
-import DescriptionIcon from '@mui/icons-material/Description';
 import EditIcon from '@mui/icons-material/Edit';
 import PhoneIcon from '@mui/icons-material/Phone';
 import SearchIcon from '@mui/icons-material/Search';
@@ -245,8 +244,6 @@ const CompanyCard: React.FC<{
                             </Typography>
                         </Box>
                     )}
-
-                    
                 </Box>
             </CardContent>
 
@@ -273,21 +270,27 @@ const CompanyCard: React.FC<{
                                 </IconButton>
                             </Tooltip>
                             <Tooltip title="Completar contrato">
-                                <IconButton
+                                <Button
+                                    variant="contained"
                                     size="small"
+                                    startIcon={<CheckCircleIcon fontSize="small" />}
                                     onClick={() => onFinalize(seguimiento)}
                                     disabled={disabled}
                                     sx={{
                                         bgcolor: 'success.main',
                                         color: 'white',
+                                        borderRadius: 2,
+                                        textTransform: 'none', // evita mayúsculas automáticas
+                                        fontSize: '0.85rem',
                                         '&:hover': {
                                             bgcolor: 'success.dark',
                                         },
                                     }}
                                 >
-                                    <CheckCircleIcon fontSize="small" />
-                                </IconButton>
+                                    Completar contrato
+                                </Button>
                             </Tooltip>
+
                             <Tooltip title="Cancelar empresa">
                                 <IconButton
                                     size="small"
@@ -653,10 +656,7 @@ const SeguimientoVendedor: React.FC = () => {
                     </Box>
 
                     {/* Grid de Cards */}
-                    <Grid container spacing={3} sx={{ mb: 4 ,display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        }}>
+                    <Grid container spacing={3} sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         {paginatedSeguimientos.data.map((seguimiento: Seguimiento) => (
                             <Grid item xs={12} sm={6} lg={4} key={seguimiento.id} sx={{ display: 'flex' }}>
                                 <CompanyCard
@@ -788,7 +788,7 @@ const SeguimientoVendedor: React.FC = () => {
                                 <Select
                                     value={data.estado}
                                     label="Estado"
-                                    onChange={(e) => setData('estado', e.target.value)}
+                                    disabled // 🔹 Aquí lo haces solo visible
                                     sx={{ borderRadius: 2 }}
                                 >
                                     {ESTADOS.map((estado) => (
@@ -804,6 +804,7 @@ const SeguimientoVendedor: React.FC = () => {
                                 )}
                             </FormControl>
                         </Grid>
+
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
