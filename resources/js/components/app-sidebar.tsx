@@ -166,6 +166,7 @@ export function AppSidebar() {
     const isPasante = roles.includes('pasante');
     const isVendedor = roles.includes('Ejecutivo de Ventas');
     const isEmpresa = roles.includes('empresa');
+    const isEjefeventas = roles.includes('Jefe de Ventas');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);
@@ -288,6 +289,22 @@ export function AppSidebar() {
                     { title: 'Realizar Pagos', href: '/pagos', icon: BusinessIcon },
                 ],
                 isCollapsible: false,
+            });
+        }
+        if (isEjefeventas) {
+            menuSections.push({
+                title: 'Gestion de Vendedores',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
+                    { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, // admin
+                    { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
+                    { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
+                    { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
+                    /* { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
+                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor */
+                ],
+                isCollapsible: true,
             });
         }
     }

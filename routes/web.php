@@ -173,12 +173,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/users', function () {
     return Inertia::render('user');
 });
-
-
-
-
-
-
 //para la vista de marketing
 Route::get('/marketing', function () {
     return Inertia::render('Marketing'); // Note the capital 'M'
@@ -187,12 +181,6 @@ Route::get('/marketing', function () {
 Route::get('/diseño', function () {
     return Inertia::render('Diseño'); // Note the capital 'M'
 });
-
-
-
-
-
-
 
 Route::get('/api/users', [UserController::class, 'index']);
 Route::post('/users', [UserController::class, 'store']);
@@ -243,18 +231,6 @@ Route::patch('/asignaciones/{id}', [TareaController::class, 'actualizarAsignacio
 // Lista mis tareas POR FECHA (vista día)
 Route::get('tareas/fecha/g-{fecha}', [AsignacionTareaController::class, 'myShowByFecha'])
     ->name('tareas.fecha');
-
-
-
-
-
-
-
-
-
-
-
-
 
 Route::get('/api/vertareas', [TareaController::class, 'vertareas']);
 Route::get('/api/tareas', [TareaController::class, 'index']);

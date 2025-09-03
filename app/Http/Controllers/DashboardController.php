@@ -33,9 +33,18 @@ class DashboardController extends Controller
             $user->hasRole('pasante') => app(TareaController::class)->estadisticasUsuario(),
             $user->hasRole('Ejecutivo de Ventas') => $this->showVendedorDashboard($user),
             $user->hasRole('empresa') => $this->showEmpresaDashboard($user),
+            $user->hasRole('Jefe de Ventas') => $this->showJefeVentasDashboard($user),
             default => abort(403, 'Acceso no autorizado'),
         };
     }
+
+ protected function showJefeVentasDashboard(User $user)
+{
+    return Inertia::render('Dashboard/JefeVentas', [
+        'user' => $user
+    ]);
+}
+
 
     protected function showEmpresaDashboard(User $user)
     {
