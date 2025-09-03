@@ -165,6 +165,7 @@ export function AppSidebar() {
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
     const isVendedor = roles.includes('Ejecutivo de Ventas');
+    const isMarketing = roles.includes('marketing');
     const isEmpresa = roles.includes('empresa');
 
     useEffect(() => {
@@ -274,6 +275,21 @@ export function AppSidebar() {
                 items: [
                     { title: 'Seguimiento Empresas', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
                     { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor
+                ],
+                isCollapsible: false,
+            });
+        }
+        if (isMarketing) {
+            menuSections.push({
+                title: 'Encargado de marketing',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: TodayIcon }, // CAMBIADO
+                    { title: 'Tareas para revision', href: '/tareas/revicion', icon: PendingActionsIcon },
+                    { title: 'Agenda Semanal', href: '/semana', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                 ],
                 isCollapsible: false,
             });

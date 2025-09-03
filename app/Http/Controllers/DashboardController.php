@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AsignacionTarea;
 use App\Models\Booking; // Asegúrate de tener estas importaciones
 use App\Models\Company;
 use App\Models\CompanyLinkComprobante;
@@ -32,6 +33,7 @@ class DashboardController extends Controller
             $user->hasRole('influencer') => $this->showInfluencerDashboard($user),
             $user->hasRole('pasante') => app(TareaController::class)->estadisticasUsuario(),
             $user->hasRole('Ejecutivo de Ventas') => $this->showVendedorDashboard($user),
+            $user->hasRole('marketing') => $this->showMarketingDashboard($user),
             $user->hasRole('empresa') => $this->showEmpresaDashboard($user),
             default => abort(403, 'Acceso no autorizado'),
         };
@@ -88,6 +90,51 @@ class DashboardController extends Controller
             'estadisticas' => $estadisticas,
         ]);
     }
+    protected function showMarketingDashboard(User $user)
+    {
+        // Todas las tareas para estadísticas
+        // Todas las tareas (de todos los usuarios)
+        $todasTareas = AsignacionTarea::all();
+
+
+        $estadisticas = [
+            'total' => $todasTareas->count(),
+            'pendiente' => $todasTareas->where('estado', 'pendiente')->count(),
+            'en_revision' => $todasTareas->where('estado', 'en_revision')->count(),
+            'publicada' => $todasTareas->where('estado', 'publicada')->count(),
+        ];
+
+        // Últimas 5 tareas asignadas basadas en la fecha de la tabla Tarea
+        // Últimas 5 tareas (solo del usuario actual)
+        $ultimasTareas = AsignacionTarea::with(['tarea', 'user']) // incluir user
+            ->join('tareas', 'asignacion_tarea.tarea_id', '=', 'tareas.id')
+            ->orderBy('tareas.fecha', 'desc')
+            ->select('asignacion_tarea.*')
+            ->take(10) // si quieres limitar, por ejemplo las 10 últimas
+            ->get();
+
+
+        // Influencers disponibles hoy
+        $influencers = InfluencerAvailability::with('user')
+            ->where('day_of_week', now()->format('l'))
+            ->get();
+
+        // Campañas activas con comprobantes
+        $campanias = CompanyLinkComprobante::with(['company', 'link', 'comprobante'])
+            ->orderBy('fecha', 'desc')
+            ->take(10)
+            ->get();
+
+        return Inertia::render('Dashboard/Marketing', [
+            'user' => $user,
+            'estadisticas' => $estadisticas,
+            'tareas' => $ultimasTareas,
+            'influencers' => $influencers,
+            'campanias' => $campanias,
+        ]);
+    }
+
+
 
 
 

@@ -179,7 +179,8 @@ class AsignacionTareaController extends Controller
             $query->whereMonth('fecha', $request->mes);
         }
 
-        $asignaciones = $query->get();
+       $asignaciones = $query->orderBy('fecha', 'desc')->get();
+
 
         return Inertia::render('tareas/reporte', [
             'asignaciones' => $asignaciones,

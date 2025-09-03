@@ -291,6 +291,7 @@ Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
 Route::get('/semana', [SemanaController::class, 'index']);
+Route::get('/mes', [SemanaController::class, 'indexMensual']);
 Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
 Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
 Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
