@@ -21,6 +21,7 @@ class SeguimientoEmpresa extends Model
         'descripcion',
         'celular', 
     ];
+    
 
     // Relación con el usuario
     public function usuario()
