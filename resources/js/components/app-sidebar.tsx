@@ -167,7 +167,7 @@ export function AppSidebar() {
     const isVendedor = roles.includes('Ejecutivo de Ventas');
     const isMarketing = roles.includes('marketing');
     const isEmpresa = roles.includes('empresa');
-    const isEjefeventas = roles.includes('Jefe de Ventas');
+    const isjefeventas = roles.includes('Jefe de Ventas');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);
@@ -287,10 +287,12 @@ export function AppSidebar() {
                 items: [
                     { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: TodayIcon }, // CAMBIADO
                     { title: 'Tareas para revision', href: '/tareas/revicion', icon: PendingActionsIcon },
-                    { title: 'Agenda Semanal', href: '/semana', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
+                    { title: 'Informes', href: '/informes', icon: BusinessIcon },
+
                 ],
                 isCollapsible: false,
             });
@@ -307,7 +309,7 @@ export function AppSidebar() {
                 isCollapsible: false,
             });
         }
-        if (isEjefeventas) {
+        if (isjefeventas) {
             menuSections.push({
                 title: 'Gestion de Vendedores',
                 icon: WorkIcon,
@@ -315,10 +317,6 @@ export function AppSidebar() {
                     { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
                     { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, // admin
                     { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
-                    { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
-                    { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
-                    /* { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
-                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor */
                 ],
                 isCollapsible: true,
             });
