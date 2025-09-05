@@ -117,23 +117,7 @@ const MarketingDashboard: FC<MarketingDashboardProps> = ({ user, estadisticas, t
                         )}
                     </SectionCard>
 
-                    {/* Influencers disponibles */}
-                    <SectionCard title="Influencers Disponibles Hoy" icon={<UserGroupIcon className="h-6 w-6 text-indigo-500" />}>
-                        {influencers.length > 0 ? (
-                            <ul className="space-y-3">
-                                {influencers.map((inf) => (
-                                    <li key={inf.id} className="rounded-lg border bg-gray-50 p-3 transition hover:bg-gray-100">
-                                        <p className="font-semibold text-gray-800">{inf.user.name}</p>
-                                        <p className="text-sm text-gray-500">
-                                            {inf.start_time} - {inf.end_time} ({inf.turno})
-                                        </p>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="text-gray-500">No hay influencers disponibles hoy</p>
-                        )}
-                    </SectionCard>
+                    
 
                     {/* Campañas */}
                     <SectionCard title="Últimas Publicaciones" icon={<LinkIcon className="h-6 w-6 text-green-500" />}>
@@ -156,6 +140,23 @@ const MarketingDashboard: FC<MarketingDashboardProps> = ({ user, estadisticas, t
                             </ul>
                         ) : (
                             <p className="text-gray-500">No hay campañas registradas</p>
+                        )}
+                    </SectionCard>
+                    {/* Influencers disponibles */}
+                    <SectionCard title="Influencers Disponibles Hoy" icon={<UserGroupIcon className="h-6 w-6 text-indigo-500" />}>
+                        {influencers.length > 0 ? (
+                            <ul className="space-y-3">
+                                {influencers.map((inf) => (
+                                    <li key={inf.id} className="rounded-lg border bg-gray-50 p-3 transition hover:bg-gray-100">
+                                        <p className="font-semibold text-gray-800">{inf.user.name}</p>
+                                        <p className="text-sm text-gray-500">
+                                            {inf.start_time} - {inf.end_time} ({inf.turno})
+                                        </p>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-gray-500">No hay influencers disponibles hoy</p>
                         )}
                     </SectionCard>
                 </div>

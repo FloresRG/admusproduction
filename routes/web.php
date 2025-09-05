@@ -362,9 +362,15 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
 Route::get('/tareas/hoy', function () {
     return Inertia::render('tareas/tareashoy');
 })->name('tareas.index');
+Route::get('/tareas/dehoy', function () {
+    return Inertia::render('tareas/tareasdehoy');
+})->name('tareas.index');
 
 Route::get('/tareas/revicion', function () {
     return Inertia::render('tareas/tareasrevicion');
+})->name('tareas.index');
+Route::get('/tareas/enrevicion', function () {
+    return Inertia::render('tareas/tareasenrevicion');
 })->name('tareas.index');
 
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);

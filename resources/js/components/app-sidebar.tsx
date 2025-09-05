@@ -285,8 +285,8 @@ export function AppSidebar() {
                 title: 'Encargado de marketing',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Tareas de Hoy', href: '/tareas/hoy', icon: TodayIcon }, // CAMBIADO
-                    { title: 'Tareas para revision', href: '/tareas/revicion', icon: PendingActionsIcon },
+                    { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO
+                    { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
                     { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO

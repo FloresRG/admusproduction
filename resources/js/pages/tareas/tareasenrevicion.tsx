@@ -1311,7 +1311,7 @@ export default function Tareas() {
                                                                             <Edit fontSize="small" />
                                                                         </IconButton>
                                                                     </Tooltip>
-                                                                    <Tooltip title="Eliminar tarea">
+                                                                    {/* <Tooltip title="Eliminar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1326,7 +1326,7 @@ export default function Tareas() {
                                                                         >
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
-                                                                    </Tooltip>
+                                                                    </Tooltip> */}
 
                                                                     {/* Icono de expandir/colapsar */}
                                                                     <IconButton size="small" sx={{ color: '#1976d2' }}>

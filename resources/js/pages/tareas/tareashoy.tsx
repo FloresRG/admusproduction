@@ -446,8 +446,8 @@ export default function Tareas() {
             setNewUserId(null);
             fetchData();
         } catch (err) {
-            console.error('Error al cambiar editor:', err);
-            setError('Error al cambiar el editor');
+            console.error('Error al cambiar pasante:', err);
+            setError('Error al cambiar el pasante');
         }
     };
 
@@ -539,7 +539,7 @@ export default function Tareas() {
                                 📅 Tareas de Hoy
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Gestiona y edita tus tareas del día de manera eficienteeee
+                                Gestiona y edita tus tareas del día de manera eficiente
                             </Typography>
                             {/* Controles principales */}
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -745,7 +745,7 @@ export default function Tareas() {
                                                 value={usuarios.find((p) => String(p.id) === selectedPasanteId) || null}
                                                 onChange={(_, newValue) => setSelectedPasanteId(newValue ? String(newValue.id) : '')}
                                                 sx={{ minWidth: 300 }} // 👈 ancho mínimo mejorado
-                                                renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Editor" fullWidth />}
+                                                renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Pasante" fullWidth />}
                                             />
                                         </Grid>
                                     )}
@@ -1095,7 +1095,7 @@ export default function Tareas() {
 
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                                     {/* Botones de acción */}
-                                                                    <Tooltip title="Editar tarea">
+                                                                    <Tooltip title="npm runr tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1111,7 +1111,7 @@ export default function Tareas() {
                                                                         </IconButton>
                                                                     </Tooltip>
 
-                                                                    {/* <Tooltip title="Eliminar tarea">
+                                                                    <Tooltip title="Eliminar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1126,9 +1126,9 @@ export default function Tareas() {
                                                                         >
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
-                                                                    </Tooltip> */}
+                                                                    </Tooltip>
 
-                                                                    <Tooltip title="Cambiar editor">
+                                                                    <Tooltip title="Cambiar pasante">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1160,14 +1160,14 @@ export default function Tareas() {
                                                                     }}
                                                                 >
                                                                     <Typography variant="h6" sx={{ mb: 2, color: '#4caf50', fontWeight: 'bold' }}>
-                                                                        🔄 Cambiar Editor
+                                                                        🔄 Cambiar Pasante
                                                                     </Typography>
                                                                     <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                                                                        <InputLabel>Seleccionar Nuevo Editor</InputLabel>
+                                                                        <InputLabel>Nuevo Pasante</InputLabel>
                                                                         <Select
                                                                             value={newUserId ?? ''}
                                                                             onChange={(e) => setNewUserId(Number(e.target.value))}
-                                                                            label="Seleccionar Nuevo Editor"
+                                                                            label="Nuevo Pasante"
                                                                         >
                                                                             {usuarios.map((user) => (
                                                                                 <MenuItem key={user.id} value={user.id}>

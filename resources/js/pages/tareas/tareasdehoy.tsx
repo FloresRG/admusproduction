@@ -8,7 +8,6 @@ import {
     CalendarToday as CalendarTodayIcon,
     Cancel,
     Category as CategoryIcon,
-    Delete as DeleteIcon,
     Edit,
     ExpandLess,
     ExpandMore,
@@ -446,8 +445,8 @@ export default function Tareas() {
             setNewUserId(null);
             fetchData();
         } catch (err) {
-            console.error('Error al cambiar pasante:', err);
-            setError('Error al cambiar el pasante');
+            console.error('Error al cambiar editor:', err);
+            setError('Error al cambiar el editor');
         }
     };
 
@@ -539,7 +538,7 @@ export default function Tareas() {
                                 📅 Tareas de Hoy
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Gestiona y edita tus tareas del día de manera eficiente
+                                Gestiona y edita tus tareas del día de manera eficienteeee
                             </Typography>
                             {/* Controles principales */}
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -745,7 +744,7 @@ export default function Tareas() {
                                                 value={usuarios.find((p) => String(p.id) === selectedPasanteId) || null}
                                                 onChange={(_, newValue) => setSelectedPasanteId(newValue ? String(newValue.id) : '')}
                                                 sx={{ minWidth: 300 }} // 👈 ancho mínimo mejorado
-                                                renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Pasante" fullWidth />}
+                                                renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Editor" fullWidth />}
                                             />
                                         </Grid>
                                     )}
@@ -1095,7 +1094,7 @@ export default function Tareas() {
 
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                                     {/* Botones de acción */}
-                                                                    <Tooltip title="npm runr tarea">
+                                                                    <Tooltip title="Editar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1111,7 +1110,7 @@ export default function Tareas() {
                                                                         </IconButton>
                                                                     </Tooltip>
 
-                                                                    <Tooltip title="Eliminar tarea">
+                                                                    {/* <Tooltip title="Eliminar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1126,9 +1125,9 @@ export default function Tareas() {
                                                                         >
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
-                                                                    </Tooltip>
+                                                                    </Tooltip> */}
 
-                                                                    <Tooltip title="Cambiar pasante">
+                                                                    <Tooltip title="Cambiar editor">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1160,14 +1159,14 @@ export default function Tareas() {
                                                                     }}
                                                                 >
                                                                     <Typography variant="h6" sx={{ mb: 2, color: '#4caf50', fontWeight: 'bold' }}>
-                                                                        🔄 Cambiar Pasante
+                                                                        🔄 Cambiar Editor
                                                                     </Typography>
                                                                     <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-                                                                        <InputLabel>Nuevo Pasante</InputLabel>
+                                                                        <InputLabel>Seleccionar Nuevo Editor</InputLabel>
                                                                         <Select
                                                                             value={newUserId ?? ''}
                                                                             onChange={(e) => setNewUserId(Number(e.target.value))}
-                                                                            label="Nuevo Pasante"
+                                                                            label="Seleccionar Nuevo Editor"
                                                                         >
                                                                             {usuarios.map((user) => (
                                                                                 <MenuItem key={user.id} value={user.id}>
