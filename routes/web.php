@@ -356,6 +356,11 @@ Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actua
 Route::get('/influencersts', [InfluencerDatosController::class, 'index'])
     ->name('influencers.index');
 
+//videos portafolio
+Route::get('/videosportafolio', [InfluencerDatosController::class, 'videosportafolio'])
+    ->name('videosportafolio.videosportafolio');
+Route::get('/companiesvideos/{company}', [InfluencerDatosController::class, 'showvideos'])->name('companiesvideos.showvideos');
+
 Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
     ->name('influencers.show');
 

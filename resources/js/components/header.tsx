@@ -139,6 +139,13 @@ export default function Header() {
                         active={false} // o mantén tu lógica si necesitas destacar esa ruta
                         onClick={scrollToSection('/influencersts')}
                     >
+                        Portafolio Influencer
+                    </NavLink>
+                    <NavLink
+                        href="/videosportafolio"
+                        active={false} // o mantén tu lógica si necesitas destacar esa ruta
+                        onClick={scrollToSection('//videosportafolio')}
+                    >
                         Portafolio
                     </NavLink>
 

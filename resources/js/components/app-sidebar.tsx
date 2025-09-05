@@ -199,6 +199,7 @@ export function AppSidebar() {
                     { title: 'Pagos del ANUALES', href: '/reportes/pagos-por-anio', icon: CalendarMonthIcon },
                     { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                     { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
+                    { title: 'Informes', href: '/informes', icon: BusinessIcon },
                 ],
                 isCollapsible: true,
             },
@@ -223,6 +224,7 @@ export function AppSidebar() {
                     { title: 'Tareas en revicion', href: '/tareas/revicion', icon: PendingActionsIcon },
                     { title: 'Semana Tareas', href: '/semana', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
                 ],
                 isCollapsible: true,
             },
