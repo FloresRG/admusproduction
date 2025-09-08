@@ -251,7 +251,7 @@ export default function Dashboard({ user, estadisticas }: DashboardProps) {
                 mr: 2,
               }}
             >
-              ¡Hola, {user.name}!
+              ¡ Hola, {user.name} !
             </Typography>
             <Box sx={{ color: "white", animation: "bounce 2s infinite" }}>
               <RocketIcon />
