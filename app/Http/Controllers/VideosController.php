@@ -30,7 +30,7 @@ class VideosController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user || !$user->hasAnyRole(['empresa', 'admin'])) {
+        if (!$user || !$user->hasAnyRole(['empresa', 'admin','marketing'])) {
             abort(403, 'Acceso no autorizado');
         }
         $empresaNombre = null;

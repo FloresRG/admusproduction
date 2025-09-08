@@ -165,8 +165,9 @@ export function AppSidebar() {
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
     const isVendedor = roles.includes('Ejecutivo de Ventas');
+    const isMarketing = roles.includes('marketing');
     const isEmpresa = roles.includes('empresa');
-    const isEjefeventas = roles.includes('Jefe de Ventas');
+    const isjefeventas = roles.includes('Jefe de Ventas');
 
     useEffect(() => {
         console.log('🔍 auth.user.roles =', roles);
@@ -198,6 +199,7 @@ export function AppSidebar() {
                     { title: 'Pagos del ANUALES', href: '/reportes/pagos-por-anio', icon: CalendarMonthIcon },
                     { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                     { title: 'Videos MES Empresas', href: '/videosmes', icon: BusinessIcon },
+                    { title: 'Informes', href: '/informes', icon: BusinessIcon },
                 ],
                 isCollapsible: true,
             },
@@ -222,6 +224,7 @@ export function AppSidebar() {
                     { title: 'Tareas en revicion', href: '/tareas/revicion', icon: PendingActionsIcon },
                     { title: 'Semana Tareas', href: '/semana', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
                 ],
                 isCollapsible: true,
             },
@@ -279,6 +282,23 @@ export function AppSidebar() {
                 isCollapsible: false,
             });
         }
+        if (isMarketing) {
+            menuSections.push({
+                title: 'Encargado de marketing',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO
+                    { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
+                    { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
+                    { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
+                    { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
+                    { title: 'Informes', href: '/informes', icon: BusinessIcon },
+
+                ],
+                isCollapsible: false,
+            });
+        }
         if (isEmpresa) {
             menuSections.push({
                 title: 'Empresa',
@@ -291,7 +311,7 @@ export function AppSidebar() {
                 isCollapsible: false,
             });
         }
-        if (isEjefeventas) {
+        if (isjefeventas) {
             menuSections.push({
                 title: 'Gestion de Vendedores',
                 icon: WorkIcon,
@@ -299,10 +319,6 @@ export function AppSidebar() {
                     { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
                     { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, // admin
                     { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
-                    { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
-                    { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
-                    /* { title: 'Seguimiento Empresas Vendedor', href: '/seguimiento-empresa-vendedor', icon: StoreIcon }, // vendedor
-                    { title: 'Canjes Pendientes', href: '/canjes', icon: TodayIcon }, // vendedor */
                 ],
                 isCollapsible: true,
             });

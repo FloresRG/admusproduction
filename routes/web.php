@@ -20,6 +20,7 @@ use App\Http\Controllers\HorarioPersonalController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
+use App\Http\Controllers\InformeController;
 use App\Http\Controllers\InicioController;
 use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PaqueteController;
@@ -267,6 +268,7 @@ Route::post('/api/datos', [DatoInfluencersController::class, 'storedato']);
 Route::get('/api/roles', fn() => response()->json(Role::all()));
 
 Route::get('/semana', [SemanaController::class, 'index']);
+Route::get('/mes', [SemanaController::class, 'indexMensual']);
 Route::get('/semanainfluencer', [SemanaController::class, 'indexinfluencer']);
 Route::post('/asignar-influencer', [SemanaController::class, 'asignarInfluencer'])->name('asignar.influencer');
 Route::post('/quitar-influencer', [SemanaController::class, 'quitarInfluencer'])->name('quitarInfluencer');
@@ -354,15 +356,26 @@ Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actua
 Route::get('/influencersts', [InfluencerDatosController::class, 'index'])
     ->name('influencers.index');
 
+//videos portafolio
+Route::get('/videosportafolio', [InfluencerDatosController::class, 'videosportafolio'])
+    ->name('videosportafolio.videosportafolio');
+Route::get('/companiesvideos/{company}', [InfluencerDatosController::class, 'showvideos'])->name('companiesvideos.showvideos');
+
 Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
     ->name('influencers.show');
 
 Route::get('/tareas/hoy', function () {
     return Inertia::render('tareas/tareashoy');
 })->name('tareas.index');
+Route::get('/tareas/dehoy', function () {
+    return Inertia::render('tareas/tareasdehoy');
+})->name('tareas.index');
 
 Route::get('/tareas/revicion', function () {
     return Inertia::render('tareas/tareasrevicion');
+})->name('tareas.index');
+Route::get('/tareas/enrevicion', function () {
+    return Inertia::render('tareas/tareasenrevicion');
 })->name('tareas.index');
 
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
@@ -380,6 +393,7 @@ Route::get('/tareas/semanatareas', function () {
 /////////empresas G
 
 Route::get('/company-links', [CompanyLinkComprobanteController::class, 'index'])->name('company-links.index');
+Route::get('/empresa-links', [CompanyLinkComprobanteController::class, 'indexMarketing'])->name('empresa-links.index');
 Route::post('/company-links', [CompanyLinkComprobanteController::class, 'store'])->name('company-links.store');
 Route::put('/company-links/{registro}', [CompanyLinkComprobanteController::class, 'update'])->name('company-links.update');
 Route::delete('/company-links/{registro}', [CompanyLinkComprobanteController::class, 'destroy'])->name('company-links.destroy');
@@ -486,9 +500,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/canjes/pendientes', [CanjeController::class, 'pendientes'])->name('canjes.pendientes');
     Route::post('/canjes/{canje}/recoger', [CanjeController::class, 'marcarRecogido'])->name('canjes.marcar-recogido');
 });
-// Agregar esta ruta en tu archivo routes/web.php
-
-// Ruta para ver el horario personal (solo para pasantes autenticados)
+Route::resource('informes', InformeController::class);
+Route::post('/comentarios', [InformeController::class, 'comentario'])->name('comentarios.store');
 
 // OPCIÓN 1: Validar directamente en el controlador (más simple)
 Route::middleware(['auth'])->group(function () {

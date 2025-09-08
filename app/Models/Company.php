@@ -45,4 +45,8 @@ class Company extends Model
     {
         return $this->hasMany(CompanyLinkComprobante::class);
     }
+    public function informes()
+    {
+        return $this->hasMany(Informe::class);
+    }
 }

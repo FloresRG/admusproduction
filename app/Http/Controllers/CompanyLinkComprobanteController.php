@@ -31,6 +31,26 @@ class CompanyLinkComprobanteController extends Controller
             'links' => $links,
         ]);
     }
+    public function indexMarketing(Request $request)
+    {
+        $empresaId = $request->input('empresa_id');
+        $mes = $request->input('mes');
+
+        $empresas = Company::select('id', 'name')->get();
+        $links = Link::select('id', 'link', 'detalle')->get();
+
+        $registros = CompanyLinkComprobante::with(['company', 'link', 'comprobante'])
+            ->when($empresaId, fn($q) => $q->where('company_id', $empresaId))
+            ->when($mes, fn($q) => $q->where('mes', $mes))
+            ->latest()
+            ->get();
+
+        return Inertia::render('CompanyLinkComprobante/IndexMarketing', [
+            'registros' => $registros,
+            'empresas' => $empresas,
+            'links' => $links,
+        ]);
+    }
 
     public function store(Request $request)
     {

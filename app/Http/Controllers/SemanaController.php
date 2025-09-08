@@ -68,6 +68,118 @@ class SemanaController extends Controller
             }),
         ]);
     }
+    /* public function indexMensual()
+    {
+        $hoy = Carbon::now();
+        $inicioMes = $hoy->copy()->startOfMonth();
+        $finMes = $hoy->copy()->endOfMonth();
+
+        $tareas = Tarea::with([
+            'company',
+            'tipo',
+            'asignaciones.user'
+        ])
+            ->whereBetween('fecha', [$inicioMes->toDateString(), $finMes->toDateString()])
+            ->orderBy('fecha')
+            ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
+            ->get();
+
+        $datosPorEmpresa = [];
+
+        foreach ($tareas as $tarea) {
+            $empresaId = $tarea->company_id ?? 0;
+
+            if (!isset($datosPorEmpresa[$empresaId])) {
+                $datosPorEmpresa[$empresaId] = [
+                    'empresa' => $tarea->company ?? ['id' => 0, 'nombre' => 'Sin empresa'],
+                    'tareas' => [],
+                ];
+            }
+
+            $fecha = $tarea->fecha;
+            if (!isset($datosPorEmpresa[$empresaId]['tareas'][$fecha])) {
+                $datosPorEmpresa[$empresaId]['tareas'][$fecha] = [];
+            }
+
+            $datosPorEmpresa[$empresaId]['tareas'][$fecha][] = $tarea;
+        }
+
+        // todos los días del mes
+        $diasMes = collect();
+        for ($date = $inicioMes->copy(); $date->lte($finMes); $date->addDay()) {
+            $diasMes->push([
+                'fecha' => $date->toDateString(),
+                'nombre' => $date->translatedFormat('l'),
+            ]);
+        }
+
+        return Inertia::render('Semana/IndexMensual', [
+            'datosPorEmpresa' => array_values($datosPorEmpresa),
+            'diasMes' => $diasMes,
+        ]);
+    } */
+    public function indexMensual()
+    {
+        $hoy = Carbon::now();
+        $inicioMes = $hoy->copy()->startOfMonth();
+        $finMes = $hoy->copy()->endOfMonth();
+
+        // Traer todas las tareas del mes
+        $tareas = Tarea::with(['company', 'tipo', 'asignaciones.user'])
+            ->whereBetween('fecha', [$inicioMes->toDateString(), $finMes->toDateString()])
+            ->orderBy('fecha')
+            ->get();
+
+        // Agrupar tareas por fecha y empresa
+        $tareasPorDia = [];
+        foreach ($tareas as $tarea) {
+            $fecha = $tarea->fecha;
+            $empresaId = $tarea->company_id ?? 0;
+
+            if (!isset($tareasPorDia[$fecha])) {
+                $tareasPorDia[$fecha] = [];
+            }
+            if (!isset($tareasPorDia[$fecha][$empresaId])) {
+                $tareasPorDia[$fecha][$empresaId] = [
+                    'empresa' => $tarea->company ?? ['id' => 0, 'name' => 'Sin empresa'],
+                    'tareas' => [],
+                ];
+            }
+            $tareasPorDia[$fecha][$empresaId]['tareas'][] = $tarea;
+        }
+
+        // Generar estructura de calendario mensual (semanas x días)
+        $inicioCalendario = $inicioMes->copy()->startOfWeek(Carbon::SUNDAY);
+        $finCalendario = $finMes->copy()->endOfWeek(Carbon::SATURDAY);
+
+        $semanas = [];
+        $semana = [];
+        $dia = $inicioCalendario->copy();
+
+        while ($dia->lte($finCalendario)) {
+            $fecha = $dia->toDateString();
+            $semana[] = [
+                'fecha' => $fecha,
+                'numero' => $dia->day,
+                'esDelMes' => $dia->month === $inicioMes->month,
+                'empresas' => $tareasPorDia[$fecha] ?? [],
+            ];
+
+            if ($dia->dayOfWeek === Carbon::SATURDAY) {
+                $semanas[] = $semana;
+                $semana = [];
+            }
+
+            $dia->addDay();
+        }
+
+        return Inertia::render('Semana/IndexMensual', [
+            'semanas' => $semanas,
+            'mes' => $inicioMes->translatedFormat('F Y'),
+        ]);
+    }
+
+
 
     public function indexinfluencer(Request $request)
     {
@@ -306,7 +418,7 @@ class SemanaController extends Controller
 
         return back()->with('success', 'Influencer removido exitosamente.');
     }
-    
+
     public function generarPdfDisponibilidad()
     {
         $now = Carbon::now();
@@ -751,6 +863,4 @@ class SemanaController extends Controller
             'week' => $week, // También podrías enviar el objeto semana
         ]);
     }
-
-
 }
