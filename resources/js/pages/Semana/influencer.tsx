@@ -365,7 +365,38 @@ const Semanainfluencer = () => {
                         >
                             Generar Reporte PDF
                         </Button>
-
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={async () => {
+                                if (window.confirm('¿Estás seguro de que deseas eliminar TODAS las disponibilidades de influencers?')) {
+                                    try {
+                                        const res = await axios.post('/clear-availabilities');
+                                        alert(res.data.message);
+                                        window.location.reload();
+                                    } catch (e) {
+                                        alert('Error al limpiar disponibilidades');
+                                    }
+                                }
+                            }}
+                            sx={{
+                                textTransform: 'none',
+                                fontWeight: 'bold',
+                                borderRadius: 3,
+                                background: 'linear-gradient(135deg, #ff1744 0%, #d50000 100%)',
+                                boxShadow: `0 8px 32px ${alpha('#d50000', 0.3)}`,
+                                px: 4,
+                                py: 1.5,
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #b71c1c 0%, #c62828 100%)',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: `0 12px 40px ${alpha('#d50000', 0.4)}`,
+                                },
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                            }}
+                        >
+                            Limpiar Disponibilidades
+                        </Button>
                         {/* Botón Asignar Empresas Masivamente con mensajes */}
                         <Box>
                             <Button

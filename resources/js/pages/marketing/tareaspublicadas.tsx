@@ -1,44 +1,44 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
-import {
-    Business as BusinessIcon,
-    CalendarToday as CalendarTodayIcon,
-    ExpandMore as ExpandMoreIcon,
-    FolderOutlined,
-    Search as SearchIcon,
-} from '@mui/icons-material';
-import {
-    alpha,
-    Box,
-    Chip,
-    Collapse,
-    Container,
-    debounce,
-    FormControl,
-    FormControlLabel,
-    IconButton,
-    InputAdornment,
-    InputLabel,
-    MenuItem,
-    Pagination,
-    Paper,
-    Radio,
-    RadioGroup,
-    Select,
-    Stack,
+import React, { useState, useCallback, useEffect } from 'react';
+import { 
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
+    Paper,
+    Radio,
+    RadioGroup,
+    FormControlLabel,
     TextField,
+    Chip,
+    Box,
+    Container,
     Typography,
+    IconButton,
+    Collapse,
+    alpha,
+    debounce,
+    InputAdornment,
+    Select,
+    MenuItem,
+    Pagination,
+    FormControl,
+    InputLabel,
+    Stack
 } from '@mui/material';
-import axios from 'axios';
+import { 
+    Business as BusinessIcon,
+    CalendarToday as CalendarTodayIcon,
+    ExpandMore as ExpandMoreIcon,
+    FolderOutlined,
+    Search as SearchIcon
+} from '@mui/icons-material';
 import { format } from 'date-fns';
-import React, { useCallback, useEffect, useState } from 'react';
+import axios from 'axios';
 
 interface Tarea {
     id: number;
@@ -67,26 +67,28 @@ interface Props {
     currentPage: number;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Mis Tareas', href: '/pasante/mistareas' }];
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Mis Tareas', href: '/pasante/mistareas' },
+];
 
 const getPriorityColor = (prioridad: string | null) => {
     if (!prioridad) return '#9E9E9E';
-
+    
     switch (prioridad.toLowerCase()) {
         case 'alta':
-            return '#FF1744'; // Rojo vibrante
+            return '#FF1744' // Rojo vibrante
         case 'media':
-            return '#FF9100'; // Naranja vibrante
+            return '#FF9100' // Naranja vibrante
         case 'baja':
-            return '#00E676'; // Verde vibrante
+            return '#00E676' // Verde vibrante
         default:
-            return '#9E9E9E';
+            return '#9E9E9E'
     }
 };
 
 const getStatusColor = (estado: string | null) => {
     if (!estado) return 'default';
-
+    
     switch (estado.toLowerCase()) {
         case 'publicada':
             return 'success';
@@ -102,7 +104,7 @@ const getStatusColor = (estado: string | null) => {
 export default function Mistareas({ tareas: initialTareas, total, perPage, currentPage }: Props) {
     const [tareas, setTareas] = useState(initialTareas);
     const [expandedRow, setExpandedRow] = useState<number | null>(null);
-
+    
     // Nuevos estados para filtros y búsqueda
     const [search, setSearch] = useState('');
     const [filterPriority, setFilterPriority] = useState('');
@@ -116,13 +118,13 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
             try {
                 await axios.patch(`/tareas/actualizar-estado/${id}`, {
                     detalle,
-                    estado: tareas.find((t) => t.id === id)?.estado || 'pendiente',
+                    estado: tareas.find(t => t.id === id)?.estado || 'pendiente'
                 });
             } catch (error) {
                 console.error('Error al guardar el detalle:', error);
             }
         }, 1000),
-        [tareas],
+        [tareas]
     );
 
     // Handle estado change
@@ -130,10 +132,12 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
         try {
             await axios.patch(`/tareas/actualizar-estado/${id}`, {
                 estado: newEstado,
-                detalle: tareas.find((t) => t.id === id)?.detalle || '',
+                detalle: tareas.find(t => t.id === id)?.detalle || ''
             });
 
-            setTareas(tareas.map((tarea) => (tarea.id === id ? { ...tarea, estado: newEstado } : tarea)));
+            setTareas(tareas.map(tarea => 
+                tarea.id === id ? { ...tarea, estado: newEstado } : tarea
+            ));
         } catch (error) {
             console.error('Error al actualizar el estado:', error);
         }
@@ -141,7 +145,9 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
 
     // Handle detalle change
     const handleDetalleChange = (id: number, detalle: string) => {
-        setTareas(tareas.map((tarea) => (tarea.id === id ? { ...tarea, detalle } : tarea)));
+        setTareas(tareas.map(tarea => 
+            tarea.id === id ? { ...tarea, detalle } : tarea
+        ));
         debouncedSaveDetail(id, detalle);
     };
 
@@ -153,16 +159,16 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
     const handleSearch = useCallback(
         debounce(async (searchTerm: string, filters: any) => {
             try {
-                const response = await axios.get('/pasante/mistareaspendientes', {
+                const response = await axios.get('/tareaspublicadas', {
                     params: {
                         search: searchTerm,
                         priority: filters.priority,
                         status: filters.status,
                         type: filters.type,
-                        page: filters.page,
-                    },
+                        page: filters.page
+                    }
                 });
-
+                
                 setTareas(response.data.tareas);
                 // Actualizar el total si cambió
                 if (response.data.total !== total) {
@@ -172,7 +178,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                 console.error('Error al buscar tareas:', error);
             }
         }, 500),
-        [],
+        []
     );
 
     // Actualiza los manejadores de cambios
@@ -183,12 +189,12 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
             priority: filterPriority,
             status: filterStatus,
             type: filterType,
-            page: 1, // Reset to first page on search
+            page: 1 // Reset to first page on search
         });
     };
 
     const handleFilterChange = (type: string, value: string) => {
-        switch (type) {
+        switch(type) {
             case 'priority':
                 setFilterPriority(value);
                 break;
@@ -204,7 +210,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
             priority: type === 'priority' ? value : filterPriority,
             status: type === 'status' ? value : filterStatus,
             type: type === 'type' ? value : filterType,
-            page: 1, // Reset to first page on filter change
+            page: 1 // Reset to first page on filter change
         });
     };
 
@@ -214,26 +220,32 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
             priority: filterPriority,
             status: filterStatus,
             type: filterType,
-            page: value,
+            page: value
         });
     };
 
     // Fix the uniqueTypes calculation to handle undefined
-    const uniqueTypes = Array.from(new Set(tareas?.map((t) => t.tarea.tipo?.nombre_tipo).filter(Boolean) || []));
+    const uniqueTypes = Array.from(
+        new Set(
+            tareas
+                ?.map(t => t.tarea.tipo?.nombre_tipo)
+                .filter(Boolean) || []
+        )
+    );
 
     // Add loadTareas function
     const loadTareas = async () => {
         try {
-            const response = await axios.get('/pasante/mistareaspendientes', {
+            const response = await axios.get('/tareaspublicadas', {
                 params: {
                     search: '',
                     priority: '',
                     status: '',
                     type: '',
-                    page: 1,
-                },
+                    page: 1
+                }
             });
-
+            
             setTareas(response.data.tareas);
         } catch (error) {
             console.error('Error al cargar tareas:', error);
@@ -248,7 +260,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Mis Tareas" />
-
+            
             {/* Header con gradiente */}
             <Box
                 sx={{
@@ -261,10 +273,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
             >
                 <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
                     <Typography variant="h4" fontWeight="bold">
-                        📋 Mis Tareas Asignadas
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                        Gestiona y actualiza el estado de tus tareas
+                        Tareas Publicadas
                     </Typography>
                 </Container>
             </Box>
@@ -287,38 +296,6 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                     ),
                                 }}
                             />
-
-                            <FormControl sx={{ minWidth: 120 }}>
-                                <InputLabel>Prioridad</InputLabel>
-                                <Select value={filterPriority} onChange={(e) => handleFilterChange('priority', e.target.value)} label="Prioridad">
-                                    <MenuItem value="">Todas</MenuItem>
-                                    <MenuItem value="alta">Alta</MenuItem>
-                                    <MenuItem value="media">Media</MenuItem>
-                                    <MenuItem value="baja">Baja</MenuItem>
-                                </Select>
-                            </FormControl>
-
-                            <FormControl sx={{ minWidth: 120 }}>
-                                <InputLabel>Estado</InputLabel>
-                                <Select value={filterStatus} onChange={(e) => handleFilterChange('status', e.target.value)} label="Estado">
-                                    <MenuItem value="">Todos</MenuItem>
-                                    <MenuItem value="pendiente">pendiente</MenuItem>
-                                    <MenuItem value="en_revision">en_revision</MenuItem>
-                                    <MenuItem value="publicada">publicada</MenuItem>
-                                </Select>
-                            </FormControl>
-
-                            <FormControl sx={{ minWidth: 120 }}>
-                                <InputLabel>Tipo</InputLabel>
-                                <Select value={filterType} onChange={(e) => handleFilterChange('type', e.target.value)} label="Tipo">
-                                    <MenuItem value="">Todos</MenuItem>
-                                    {uniqueTypes.map((type) => (
-                                        <MenuItem key={type} value={type}>
-                                            {type}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
                         </Box>
                     </Stack>
                 </Paper>
@@ -327,7 +304,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                     <Table>
                         <TableHead>
                             <TableRow sx={{ bgcolor: alpha('#1976d2', 0.05) }}>
-                                <TableCell sx={{ width: '40px' }}></TableCell>
+                               
                                 <TableCell>Título</TableCell>
                                 <TableCell>Tipo</TableCell>
                                 <TableCell>Empresa</TableCell>
@@ -339,24 +316,13 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                         <TableBody>
                             {tareas?.map((tarea) => (
                                 <React.Fragment key={tarea.id}>
-                                    <TableRow
-                                        sx={{
+                                    <TableRow 
+                                        sx={{ 
                                             '&:hover': { bgcolor: alpha('#1976d2', 0.02) },
-                                            borderLeft: `4px solid ${getPriorityColor(tarea.tarea.prioridad)}`,
+                                            borderLeft: `4px solid ${getPriorityColor(tarea.tarea.prioridad)}`
                                         }}
                                     >
-                                        <TableCell>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => toggleRow(tarea.id)}
-                                                sx={{
-                                                    transform: expandedRow === tarea.id ? 'rotate(180deg)' : 'none',
-                                                    transition: 'transform 0.2s',
-                                                }}
-                                            >
-                                                <ExpandMoreIcon />
-                                            </IconButton>
-                                        </TableCell>
+                                        
                                         <TableCell>
                                             <Typography variant="subtitle2" fontWeight="medium">
                                                 {tarea.tarea.titulo}
@@ -370,7 +336,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                                     size="small"
                                                     sx={{
                                                         bgcolor: alpha('#1976d2', 0.1),
-                                                        color: 'primary.main',
+                                                        color: 'primary.main'
                                                     }}
                                                 />
                                             )}
@@ -404,79 +370,14 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                             />
                                         </TableCell>
                                         <TableCell>
-                                            <Chip label={tarea.estado || 'Sin estado'} color={getStatusColor(tarea.estado)} size="small" />
+                                            <Chip
+                                                label={tarea.estado || 'Sin estado'}
+                                                color={getStatusColor(tarea.estado)}
+                                                size="small"
+                                            />
                                         </TableCell>
                                     </TableRow>
-                                    <TableRow key={`detail-${tarea.id}`}>
-                                        <TableCell colSpan={7} sx={{ py: 0 }}>
-                                            <Collapse in={expandedRow === tarea.id}>
-                                                <Box sx={{ p: 3 }}>
-                                                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                                                        Descripción:
-                                                    </Typography>
-                                                    <Typography variant="body2" sx={{ mb: 3 }}>
-                                                        {tarea.tarea.descripcion}
-                                                    </Typography>
-
-                                                    <Box
-                                                        sx={{
-                                                            p: 2,
-                                                            bgcolor: alpha('#1976d2', 0.05),
-                                                            borderRadius: 2,
-                                                        }}
-                                                    >
-                                                        <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 'bold', color: 'primary.main' }}>
-                                                            Estado de la tarea
-                                                        </Typography>
-
-                                                        <RadioGroup
-                                                            row
-                                                            value={tarea.estado || 'pendiente'}
-                                                            onChange={(e) => handleEstadoChange(tarea.id, e.target.value)}
-                                                            sx={{ mb: 2 }}
-                                                        >
-                                                            {/* <FormControlLabel
-                                                                value="publicada"
-                                                                control={<Radio color="success" />}
-                                                                label="publicada"
-                                                            /> */}
-                                                            <FormControlLabel
-                                                                value="pendiente"
-                                                                control={<Radio color="warning" />}
-                                                                label="Pendiente"
-                                                            />
-                                                            <FormControlLabel
-                                                                value="corregir"
-                                                                control={<Radio color="primary" />}
-                                                                label="Corregir"
-                                                            />
-                                                            <FormControlLabel
-                                                                value="en_revision"
-                                                                control={<Radio color="primary" />}
-                                                                label="Realizado"
-                                                            />
-                                                            
-                                                        </RadioGroup>
-
-                                                        {/* <TextField
-                                                            fullWidth
-                                                            multiline
-                                                            rows={2}
-                                                            variant="outlined"
-                                                            placeholder="Agregar detalles o comentarios sobre la tarea..."
-                                                            value={tarea.detalle || ''}
-                                                            onChange={(e) => handleDetalleChange(tarea.id, e.target.value)}
-                                                            sx={{
-                                                                '& .MuiOutlinedInput-root': {
-                                                                    bgcolor: 'white',
-                                                                },
-                                                            }}
-                                                        /> */}
-                                                    </Box>
-                                                </Box>
-                                            </Collapse>
-                                        </TableCell>
-                                    </TableRow>
+                                    
                                 </React.Fragment>
                             ))}
                         </TableBody>
@@ -496,19 +397,21 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                         <Typography variant="h5" color="text.secondary" sx={{ mb: 2 }}>
                             📝 No tienes tareas asignadas
                         </Typography>
-                        <Typography color="text.secondary">Por el momento no hay tareas asignadas para ti</Typography>
+                        <Typography color="text.secondary">
+                            Por el momento no hay tareas asignadas para ti
+                        </Typography>
                     </Paper>
                 )}
 
                 {/* Only show pagination when we have data */}
                 {tareas?.length > 0 && (
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-                        <Pagination
-                            count={Math.ceil(total / perPage)}
-                            page={page}
+                        <Pagination 
+                            count={Math.ceil(total / perPage)} 
+                            page={page} 
                             onChange={handlePageChange}
                             color="primary"
-                            showFirstButton
+                            showFirstButton 
                             showLastButton
                         />
                     </Box>

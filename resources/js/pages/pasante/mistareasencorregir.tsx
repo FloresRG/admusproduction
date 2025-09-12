@@ -153,7 +153,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
     const handleSearch = useCallback(
         debounce(async (searchTerm: string, filters: any) => {
             try {
-                const response = await axios.get('/pasante/mistareaspendientes', {
+                const response = await axios.get('/pasante/mistareasencorregir', {
                     params: {
                         search: searchTerm,
                         priority: filters.priority,
@@ -224,7 +224,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
     // Add loadTareas function
     const loadTareas = async () => {
         try {
-            const response = await axios.get('/pasante/mistareaspendientes', {
+            const response = await axios.get('/pasante/mistareasencorregir', {
                 params: {
                     search: '',
                     priority: '',
@@ -455,10 +455,9 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                                                 control={<Radio color="primary" />}
                                                                 label="Realizado"
                                                             />
-                                                            
                                                         </RadioGroup>
 
-                                                        {/* <TextField
+                                                        <TextField
                                                             fullWidth
                                                             multiline
                                                             rows={2}
@@ -471,7 +470,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                                                     bgcolor: 'white',
                                                                 },
                                                             }}
-                                                        /> */}
+                                                        />
                                                     </Box>
                                                 </Box>
                                             </Collapse>

@@ -17,7 +17,7 @@ class HorarioPersonalController extends Controller
         $user = Auth::user();
         
         // OPCIÓN 1: Verificar si tiene rol de pasante usando relaciones
-        $esPasante = $user->roles()->where('name', 'pasante')->exists();
+        $esPasante = $user->roles()->where('name', 'camarografo')->exists();
         if (!$esPasante) {
             return redirect()->route('dashboard')->withErrors(['error' => 'No tienes permisos para acceder a esta página']);
         }
@@ -28,7 +28,7 @@ class HorarioPersonalController extends Controller
 
         // Obtener todas las asignaciones del usuario para la semana
        // En el método index(), modifica la línea del with():
-        $asignaciones = AsignacionPasante::with(['company:id,name,ubicacion'])
+        $asignaciones = AsignacionPasante::with(['company:id,name,direccion,ubicacion'])
             ->where('user_id', $user->id)
             ->where('week_id', $currentWeek->id)
             ->get();

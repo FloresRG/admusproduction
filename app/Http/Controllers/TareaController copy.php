@@ -58,7 +58,6 @@ class TareaController extends Controller
                 'id'          => $tarea->id,
                 'titulo'      => $tarea->titulo,
                 'descripcion' => $tarea->descripcion,
-                'empresa' => $tarea->empresa,
                 'prioridad'   => $tarea->prioridad,
                 'fecha'       => $tarea->fecha,
                 'tipo'        => $tarea->tipo ? [
@@ -103,7 +102,7 @@ class TareaController extends Controller
     public function actualizarAsignacion(Request $request, $id)
     {
         $data = $request->validate([
-            'estado'  => 'nullable|string|in:pendiente,en_revision,corregir,publicada',
+            'estado'  => 'nullable|string|in:pendiente,en_revision,publicada',
             'detalle' => 'nullable|string',
         ]);
 
@@ -150,13 +149,12 @@ class TareaController extends Controller
             'titulo' => 'required|string|max:255',
             'prioridad' => 'nullable|string|max:255',
             'descripcion' => 'nullable|string',
-            'empresa' => 'nullable|string',
             'fecha' => 'nullable|date',
             'tipo_id' => 'nullable|exists:tipos,id',
             'company_id' => 'nullable|exists:companies,id',
             'asignacion_aleatoria' => 'required|boolean',
             'pasante_id' => 'required_if:asignacion_aleatoria,false|nullable|exists:users,id',
-            'estado' => 'nullable|string|in:pendiente,en_progreso,corregir,publicada',
+            'estado' => 'nullable|string|in:pendiente,en_progreso,finalizado',
             'detalle' => 'nullable|string',
         ]);
 
@@ -174,9 +172,9 @@ class TareaController extends Controller
             'titulo' => $data['titulo'],
             'prioridad' => $data['prioridad'],
             'descripcion' => $data['descripcion'],
-            'empresa' => $data['empresa'],
             'fecha' => $data['fecha'],
             'tipo_id' => $data['tipo_id'],
+            'empresa' => null,
             'company_id' => $data['company_id'] ?? null,
         ]);
 
@@ -185,7 +183,7 @@ class TareaController extends Controller
 
         // 5. Proceso de asignación según el tipo seleccionado
         if ($data['asignacion_aleatoria']) {
-            $usuariosQuery = User::role(['pasante', 'marketing', 'camarografo']);
+            $usuariosQuery = User::role(['pasante', 'marketing']);
 
             if (!empty($data['tipo_id'])) {
                 $usuariosQuery = $usuariosQuery->whereHas('tipos', function ($q) use ($data) {
@@ -197,7 +195,7 @@ class TareaController extends Controller
 
             // Si con tipo no encontró, intentar con cualquier usuario de esos roles
             if ($usuarios->isEmpty()) {
-                $usuarios = User::role(['pasante', 'marketing', 'camarografo'])->get();
+                $usuarios = User::role(['pasante', 'marketing'])->get();
             }
 
             if ($usuarios->isNotEmpty()) {
@@ -211,9 +209,9 @@ class TareaController extends Controller
             $pasanteId = $data['pasante_id'];
 
             // Validar que el usuario tenga el rol correcto
-            if (!User::role(['pasante', 'marketing', 'camarografo'])->where('id', $pasanteId)->exists()) {
+            if (!User::role(['pasante', 'marketing'])->where('id', $pasanteId)->exists()) {
                 return response()->json([
-                    'message' => 'El usuario seleccionado no tiene un rol válido'
+                    'message' => 'El usuario seleccionado no tiene un rol válido (pasante o marketing)'
                 ], 400);
             }
         }
@@ -236,6 +234,7 @@ class TareaController extends Controller
             ]
         ], 201);
     }
+
 
     public function storePersonal(Request $request)
     {
@@ -302,28 +301,7 @@ class TareaController extends Controller
             'user' => $user,
         ]);
     }
-    public function estadisticasUsuarioCamarografo()
-    {
-        $user = Auth::user();
-
-        // Agrupar las tareas asignadas al usuario logueado por estado
-        $estadisticas = AsignacionTarea::where('user_id', $user->id)
-            ->select('estado', DB::raw('count(*) as total'))
-            ->groupBy('estado')
-            ->pluck('total', 'estado'); // esto devuelve ['pendiente' => 3, 'en_revision' => 2, ...]
-
-        // Aseguramos que todos los estados estén presentes
-        $resultado = [
-            'pendiente'    => $estadisticas->get('pendiente', 0),
-            'en_revision'  => $estadisticas->get('en_revision', 0),
-            'publicada'    => $estadisticas->get('publicada', 0),
-        ];
-
-        return Inertia::render('Dashboard/Camarografo', [
-            'estadisticas' => $resultado,
-            'user' => $user,
-        ]);
-    }
+    
 
     public function estadisticasMesActual()
     {
@@ -495,7 +473,6 @@ class TareaController extends Controller
             'titulo'      => 'required|string|max:255',
             'prioridad'   => 'nullable|string|max:255',
             'descripcion' => 'nullable|string',
-            'empresa' => 'nullable|string',
             'fecha'       => 'nullable|date',
             'tipo_id'     => 'nullable|exists:tipos,id',
             'company_id'  => 'nullable|exists:companies,id', // usamos solo para obtener el nombre
@@ -515,7 +492,6 @@ class TareaController extends Controller
             'titulo'      => $data['titulo'],
             'prioridad'   => $data['prioridad'],
             'descripcion' => $data['descripcion'],
-            'empresa' => $data['empresa'],
             'fecha'       => $data['fecha'],
             'tipo_id'     => $data['tipo_id'],
             'company_id'  => $data['company_id'], // ✅ Actualizar company_id directamente

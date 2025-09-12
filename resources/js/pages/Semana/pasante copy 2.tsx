@@ -229,6 +229,7 @@ const SemanaPasantes = () => {
                         )}
 
                         <Paper sx={{ maxHeight: '600px', overflow: 'auto' }}>
+                            
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>

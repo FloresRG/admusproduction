@@ -157,6 +157,7 @@ const InfluencerAvailabilityCrud = () => {
             });
         }
     };
+    
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

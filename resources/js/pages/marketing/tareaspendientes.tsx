@@ -153,7 +153,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
     const handleSearch = useCallback(
         debounce(async (searchTerm: string, filters: any) => {
             try {
-                const response = await axios.get('/pasante/mistareaspendientes', {
+                const response = await axios.get('/tareaspendientes', {
                     params: {
                         search: searchTerm,
                         priority: filters.priority,
@@ -224,7 +224,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
     // Add loadTareas function
     const loadTareas = async () => {
         try {
-            const response = await axios.get('/pasante/mistareaspendientes', {
+            const response = await axios.get('/tareaspendientes', {
                 params: {
                     search: '',
                     priority: '',
@@ -261,10 +261,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
             >
                 <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
                     <Typography variant="h4" fontWeight="bold">
-                        📋 Mis Tareas Asignadas
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                        Gestiona y actualiza el estado de tus tareas
+                        📋 Tareas Pendientes
                     </Typography>
                 </Container>
             </Box>
@@ -298,7 +295,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                 </Select>
                             </FormControl>
 
-                            <FormControl sx={{ minWidth: 120 }}>
+                            {/* <FormControl sx={{ minWidth: 120 }}>
                                 <InputLabel>Estado</InputLabel>
                                 <Select value={filterStatus} onChange={(e) => handleFilterChange('status', e.target.value)} label="Estado">
                                     <MenuItem value="">Todos</MenuItem>
@@ -306,7 +303,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                     <MenuItem value="en_revision">en_revision</MenuItem>
                                     <MenuItem value="publicada">publicada</MenuItem>
                                 </Select>
-                            </FormControl>
+                            </FormControl> */}
 
                             <FormControl sx={{ minWidth: 120 }}>
                                 <InputLabel>Tipo</InputLabel>
@@ -327,7 +324,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                     <Table>
                         <TableHead>
                             <TableRow sx={{ bgcolor: alpha('#1976d2', 0.05) }}>
-                                <TableCell sx={{ width: '40px' }}></TableCell>
+                                
                                 <TableCell>Título</TableCell>
                                 <TableCell>Tipo</TableCell>
                                 <TableCell>Empresa</TableCell>
@@ -345,7 +342,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                             borderLeft: `4px solid ${getPriorityColor(tarea.tarea.prioridad)}`,
                                         }}
                                     >
-                                        <TableCell>
+                                        {/* <TableCell>
                                             <IconButton
                                                 size="small"
                                                 onClick={() => toggleRow(tarea.id)}
@@ -356,7 +353,8 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                             >
                                                 <ExpandMoreIcon />
                                             </IconButton>
-                                        </TableCell>
+                                        </TableCell> */}
+                                        
                                         <TableCell>
                                             <Typography variant="subtitle2" fontWeight="medium">
                                                 {tarea.tarea.titulo}
@@ -435,30 +433,25 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                                             onChange={(e) => handleEstadoChange(tarea.id, e.target.value)}
                                                             sx={{ mb: 2 }}
                                                         >
-                                                            {/* <FormControlLabel
-                                                                value="publicada"
-                                                                control={<Radio color="success" />}
-                                                                label="publicada"
-                                                            /> */}
+                                                            
                                                             <FormControlLabel
                                                                 value="pendiente"
                                                                 control={<Radio color="warning" />}
                                                                 label="Pendiente"
                                                             />
                                                             <FormControlLabel
-                                                                value="corregir"
-                                                                control={<Radio color="primary" />}
-                                                                label="Corregir"
-                                                            />
-                                                            <FormControlLabel
                                                                 value="en_revision"
                                                                 control={<Radio color="primary" />}
-                                                                label="Realizado"
+                                                                label="En Revisión"
                                                             />
-                                                            
+                                                            <FormControlLabel
+                                                                value="publicada"
+                                                                control={<Radio color="success" />}
+                                                                label="publicada"
+                                                            />
                                                         </RadioGroup>
 
-                                                        {/* <TextField
+                                                        <TextField
                                                             fullWidth
                                                             multiline
                                                             rows={2}
@@ -471,7 +464,7 @@ export default function Mistareas({ tareas: initialTareas, total, perPage, curre
                                                                     bgcolor: 'white',
                                                                 },
                                                             }}
-                                                        /> */}
+                                                        />
                                                     </Box>
                                                 </Box>
                                             </Collapse>

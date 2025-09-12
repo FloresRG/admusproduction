@@ -171,11 +171,9 @@ class SemanaPasantesController extends Controller
 
         // Pasantes
         $pasantes = User::whereHas('roles', function ($query) {
-            $query->where('name', 'pasante');
+            $query->where('name', 'camarografo');
         })
-            ->whereHas('tipos', function ($query) {
-                $query->where('nombre_tipo', 'grabacion');
-            })
+            
             ->select('id', 'name', 'email')
             ->get();
 

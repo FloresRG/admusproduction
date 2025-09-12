@@ -13,11 +13,45 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use FPDF;
+use Illuminate\Support\Facades\Cache;
+use Carbon\Carbon;
 
 class InfluencerAvailabilityController extends Controller
 {
+    private function autoCleanIfNeeded()
+    {
+        $now = Carbon::now();
+        $lastCleanDate = Cache::get('last_availability_clean');
+
+        // Verifica si hoy es viernes y la hora es 23:59
+        if ($now->isFriday() && $now->format('H:i') === '23:59') {
+            // Evita limpiar más de una vez por minuto
+            if ($lastCleanDate !== $now->format('Y-m-d H:i')) {
+                InfluencerAvailability::truncate();
+
+                // Guarda en la caché la fecha y hora exacta de la última limpieza
+                Cache::put('last_availability_clean', $now->format('Y-m-d H:i'), 60 * 24 * 7); // 1 semana
+
+                \Log::info('🧹 Auto-limpieza de disponibilidades ejecutada (viernes 23:59)', [
+                    'timestamp' => $now->toDateTimeString()
+                ]);
+            }
+        }
+    }
+    public function clearAll()
+    {
+        $count = InfluencerAvailability::count();
+        InfluencerAvailability::truncate();
+
+        return response()->json([
+            'message' => "Se eliminaron {$count} disponibilidades",
+            'count' => $count
+        ]);
+    }
+
     public function index()
     {
+        $this->autoCleanIfNeeded();
         $userId = Auth::id();
         $availabilities = InfluencerAvailability::with('user')
             ->where('user_id', $userId)

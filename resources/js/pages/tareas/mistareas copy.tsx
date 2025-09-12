@@ -569,7 +569,7 @@ export default function MisTareas() {
                                             py: 1,
                                         }}
                                     >
-                                        Registrar Tarea Realizada Hoy
+                                        Nueva Tarea Para Hoy
                                     </Button>
                                 </Box>
                             </Box>
@@ -1075,7 +1075,7 @@ export default function MisTareas() {
                                                                 </Box>
 
                                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                                    {/* <Tooltip title="Editar tarea">
+                                                                    <Tooltip title="Editar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1089,9 +1089,9 @@ export default function MisTareas() {
                                                                         >
                                                                             <Edit fontSize="small" />
                                                                         </IconButton>
-                                                                    </Tooltip> */}
+                                                                    </Tooltip>
 
-                                                                    {/* <Tooltip title="Eliminar tarea">
+                                                                    <Tooltip title="Eliminar tarea">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1106,9 +1106,9 @@ export default function MisTareas() {
                                                                         >
                                                                             <DeleteIcon fontSize="small" />
                                                                         </IconButton>
-                                                                    </Tooltip> */}
+                                                                    </Tooltip>
 
-                                                                    {/* <Tooltip title="Cambiar pasante">
+                                                                    <Tooltip title="Cambiar pasante">
                                                                         <IconButton
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
@@ -1122,7 +1122,7 @@ export default function MisTareas() {
                                                                         >
                                                                             <SwapHoriz fontSize="small" />
                                                                         </IconButton>
-                                                                    </Tooltip> */}
+                                                                    </Tooltip>
 
                                                                     <IconButton size="small" sx={{ color: '#1976d2' }}>
                                                                         {expandedTasks[tarea.id] ? <ExpandLess /> : <ExpandMore />}
@@ -1238,24 +1238,44 @@ export default function MisTareas() {
                                                                                                 label="Pendiente"
                                                                                             />
                                                                                             <FormControlLabel
-                                                                                                value="corregir"
-                                                                                                control={<Radio size="small" />}
-                                                                                                label="Corregir"
-                                                                                            />
-                                                                                            <FormControlLabel
                                                                                                 value="en_revision"
                                                                                                 control={<Radio size="small" />}
-                                                                                                label="Realizado"
+                                                                                                label="En revisión"
                                                                                             />
-                                                                                            {/* <FormControlLabel
+                                                                                            <FormControlLabel
                                                                                                 value="publicada"
                                                                                                 control={<Radio size="small" />}
                                                                                                 label="Publicada"
-                                                                                            /> */}
+                                                                                            />
                                                                                         </RadioGroup>
                                                                                     </FormControl>
                                                                                 </Box>
 
+                                                                                {/* Detalle */}
+                                                                                <Box sx={{ mb: 2 }}>
+                                                                                    <Typography
+                                                                                        variant="body2"
+                                                                                        color="text.secondary"
+                                                                                        sx={{ mb: 1, fontWeight: 'bold' }}
+                                                                                    >
+                                                                                        📝 Detalle del progreso del Pasante: {asignado.user_name}
+                                                                                    </Typography>
+                                                                                    <TextField
+                                                                                        fullWidth
+                                                                                        size="small"
+                                                                                        multiline
+                                                                                        rows={2}
+                                                                                        placeholder="Escribe aquí los detalles del progreso..."
+                                                                                        defaultValue={asignado.detalle || ''}
+                                                                                        onChange={(e) => autoSaveDetalle(asignado.id, e.target.value)}
+                                                                                        sx={{
+                                                                                            '& .MuiOutlinedInput-root': {
+                                                                                                borderRadius: 2,
+                                                                                                bgcolor: 'white',
+                                                                                            },
+                                                                                        }}
+                                                                                    />
+                                                                                </Box>
                                                                             </Box>
                                                                         ))}
 

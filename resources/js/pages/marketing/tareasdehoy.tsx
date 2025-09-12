@@ -67,6 +67,7 @@ interface TareaAsignada {
     titulo: string;
     prioridad: string;
     descripcion: string;
+    empresa: string;
     fecha: string;
     tipo?: { id: number; nombre_tipo: string };
     company?: { id: number; name: string };
@@ -111,6 +112,7 @@ export default function Tareas() {
         titulo: '',
         prioridad: '',
         descripcion: '',
+        empresa: '',
         fecha: '',
         tipo_id: '',
         company_id: '',
@@ -125,6 +127,7 @@ export default function Tareas() {
         titulo: '',
         prioridad: '',
         descripcion: '',
+        empresa: '',
         fecha: '',
         tipo_id: '',
         company_id: '',
@@ -311,6 +314,7 @@ export default function Tareas() {
             titulo: tarea.titulo,
             prioridad: tarea.prioridad,
             descripcion: tarea.descripcion,
+            empresa: tarea.empresa,
             fecha: tarea.fecha,
             tipo_id: tarea.tipo?.id ? String(tarea.tipo.id) : '',
             company_id: tarea.company?.id ? String(tarea.company.id) : '',
@@ -324,6 +328,7 @@ export default function Tareas() {
             titulo: '',
             prioridad: '',
             descripcion: '',
+            empresa: '',
             fecha: '',
             tipo_id: '',
             company_id: '',
@@ -369,6 +374,7 @@ export default function Tareas() {
             titulo: '',
             prioridad: '',
             descripcion: '',
+            empresa: '',
             fecha: new Date().toISOString().split('T')[0],
             tipo_id: '',
             company_id: '',
@@ -382,6 +388,7 @@ export default function Tareas() {
             titulo: '',
             prioridad: '',
             descripcion: '',
+            empresa: '',
             fecha: '',
             tipo_id: '',
             company_id: '',
@@ -538,7 +545,7 @@ export default function Tareas() {
                                 📅 Tareas de Hoy
                             </Typography>
                             <Typography variant="subtitle1" sx={{ opacity: 0.9 }}>
-                                Gestiona y edita tus tareas del día de manera eficienteeee
+                                Gestiona y edita tus tareas del día de manera eficiente
                             </Typography>
                             {/* Controles principales */}
                             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -744,7 +751,7 @@ export default function Tareas() {
                                                 value={usuarios.find((p) => String(p.id) === selectedPasanteId) || null}
                                                 onChange={(_, newValue) => setSelectedPasanteId(newValue ? String(newValue.id) : '')}
                                                 sx={{ minWidth: 300 }} // 👈 ancho mínimo mejorado
-                                                renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Editor" fullWidth />}
+                                                renderInput={(params) => <TextField {...params} label="🧑‍💼 Seleccionar Usuario" fullWidth />}
                                             />
                                         </Grid>
                                     )}
@@ -788,11 +795,21 @@ export default function Tareas() {
 
                                     <Grid item xs={12}>
                                         <TextField
-                                            label="📄 Descripción"
+                                            label="📄 Breve Descripción"
                                             multiline
                                             rows={3}
                                             value={newTaskData.descripcion}
                                             onChange={(e) => setNewTaskData({ ...newTaskData, descripcion: e.target.value })}
+                                            fullWidth
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="📄 Agrega Contenido"
+                                            multiline
+                                            rows={3}
+                                            value={newTaskData.empresa}
+                                            onChange={(e) => setNewTaskData({ ...newTaskData, empresa: e.target.value })}
                                             fullWidth
                                         />
                                     </Grid>
@@ -944,6 +961,16 @@ export default function Tareas() {
                                             label="📄 Descripción"
                                             value={editFormData.descripcion}
                                             onChange={(e) => setEditFormData({ ...editFormData, descripcion: e.target.value })}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            label="📄 Contenido"
+                                            value={editFormData.empresa}
+                                            onChange={(e) => setEditFormData({ ...editFormData, empresa: e.target.value })}
                                         />
                                     </Grid>
                                     <Grid item xs={12}>
@@ -1262,6 +1289,11 @@ export default function Tareas() {
                                                                                                 label="En revisión"
                                                                                             />
                                                                                             <FormControlLabel
+                                                                                                value="corregir"
+                                                                                                control={<Radio size="small" />}
+                                                                                                label="Corregir"
+                                                                                            />
+                                                                                            <FormControlLabel
                                                                                                 value="publicada"
                                                                                                 control={<Radio size="small" />}
                                                                                                 label="Publicada"
@@ -1277,7 +1309,7 @@ export default function Tareas() {
                                                                                         color="text.secondary"
                                                                                         sx={{ mb: 1, fontWeight: 'bold' }}
                                                                                     >
-                                                                                        📝 Detalle del progreso del Pasante: {asignado.user_name}
+                                                                                        📝 Detalle del progreso de: {asignado.user_name}
                                                                                     </Typography>
                                                                                     <TextField
                                                                                         fullWidth
@@ -1345,6 +1377,15 @@ export default function Tareas() {
                                                                                     >
                                                                                         {tarea.descripcion ||
                                                                                             'Haz clic para agregar una descripción...'}
+                                                                                    </Typography>
+                                                                                    <Typography
+                                                                                        variant="body2"
+                                                                                        color={tarea.empresa ? 'text.primary' : 'text.secondary'}
+                                                                                        sx={{
+                                                                                            fontStyle: tarea.empresa ? 'normal' : 'italic',
+                                                                                        }}
+                                                                                    >
+                                                                                        {tarea.empresa || 'Haz clic para agregar una descripción...'}
                                                                                     </Typography>
                                                                                 </Box>
                                                                             )}

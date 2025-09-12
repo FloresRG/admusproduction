@@ -38,7 +38,8 @@ interface User {
 interface Company {
     id: number;
     name: string;
-    direccion?: string;// Ejemplo: "-16.504385,-68.132903"
+    direccion?: string;
+    ubicacion?: string; // Ejemplo: "-16.504385,-68.132903"
 }
 
 interface Asignacion {
@@ -248,6 +249,15 @@ export default function HorarioPersonal({ user, horarioSemanal, currentWeek, wee
                                                                     {asignacion.company.name}
                                                                 </Typography>
                                                                 {asignacion.company.direccion && (
+                                                                    <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'green.main' }}>
+                                                                        {asignacion.company.direccion}
+                                                                    </Typography>
+                                                                )}
+                                                                <Typography variant="caption" sx={{ color: 'green.main' }}>
+                                                                    {new Date(asignacion.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                                                </Typography>
+
+                                                                {asignacion.company.ubicacion && (
                                                                     <Button
                                                                         size="small"
                                                                         variant="outlined"
@@ -292,14 +302,14 @@ export default function HorarioPersonal({ user, horarioSemanal, currentWeek, wee
                                         <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 'bold' }}>
                                             {selectedCompany.name}
                                         </Typography>
-                                        {/* {selectedCompany.direccion && (
+                                        {selectedCompany.direccion && (
                                             <Typography variant="body2" sx={{ mb: 2 }}>
                                                 Dirección: {selectedCompany.direccion}
                                             </Typography>
-                                        )} */}
-                                        {selectedCompany.direccion && (
+                                        )}
+                                        {selectedCompany.ubicacion && (
                                             <MapComponent
-                                                direccion={selectedCompany.direccion}
+                                                ubicacion={selectedCompany.ubicacion}
                                                 nombre={selectedCompany.name}
                                                 direccion={selectedCompany.direccion}
                                             />
@@ -320,6 +330,6 @@ export default function HorarioPersonal({ user, horarioSemanal, currentWeek, wee
                 </Box>
             </>
         </AppLayout>
-
+        
     );
 }

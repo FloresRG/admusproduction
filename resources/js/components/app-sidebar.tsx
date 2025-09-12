@@ -164,6 +164,7 @@ export function AppSidebar() {
     const isAdmin = roles.includes('admin');
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
+    const isCamarografo = roles.includes('camarografo');
     const isVendedor = roles.includes('Ejecutivo de Ventas');
     const isMarketing = roles.includes('marketing');
     const isEmpresa = roles.includes('empresa');
@@ -258,17 +259,33 @@ export function AppSidebar() {
         }
         if (isPasante) {
             menuSections.push({
-                title: 'Pasante',
+                title: 'Editor',
                 icon: WorkIcon,
                 items: [
                     { title: 'Mis Tareas de HOY', href: '/tareas-personales', icon: TodayIcon },
+                    { title: 'Tareas Pendientes', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
+                    { title: 'Tareas Para Corregir', href: '/pasante/mistareas/encorregir', icon: RateReviewIcon },
                     { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
-                    { title: 'Tareas Pendiente', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
-                    { title: 'Tareas En Revisión', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
-                    { title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
+                    { title: 'Tareas Realizadas', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon },
+                    //{ title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
+                    //{ title: 'Mi Horario', href: '/mi-horario', icon: AccessTimeIcon },
+                ],
+                isCollapsible: true,
+            });
+        }
+        if (isCamarografo) {
+            menuSections.push({
+                title: 'Camarografo',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Mis Tareas de HOY', href: '/tareas-personales', icon: TodayIcon },
+                    /* { title: 'Tareas Pendientes', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
+                    { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
+                    { title: 'Tareas Realizadas', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon }, */
+                    //{ title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
                     { title: 'Mi Horario', href: '/mi-horario', icon: AccessTimeIcon },
                 ],
-                isCollapsible: false,
+                isCollapsible: true,
             });
         }
         if (isVendedor) {
@@ -282,23 +299,37 @@ export function AppSidebar() {
                 isCollapsible: false,
             });
         }
+        
         if (isMarketing) {
-            menuSections.push({
-                title: 'Encargado de marketing',
-                icon: WorkIcon,
-                items: [
-                    { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO
-                    { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
-                    { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
-                    { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
-                    { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
-                    { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
-                    { title: 'Informes', href: '/informes', icon: BusinessIcon },
-
-                ],
-                isCollapsible: false,
-            });
+            menuSections.push(
+                {
+                    title: 'Encargado de marketing',
+                    icon: WorkIcon,
+                    items: [
+                        { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO     
+                        { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
+                        { title: 'Tareas Pendientes', href: '/tareas/pendientes', icon: PendingActionsIcon },
+                        { title: 'Tareas Publicadas', href: '/tareas/publicadas', icon: PublishedWithChangesIcon },
+                        { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
+                        { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
+                        { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
+                        { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
+                        { title: 'Informes', href: '/informes', icon: BusinessIcon },
+                    ],
+                    isCollapsible: true,
+                },
+                /* {
+                    title: 'Mis tareas',
+                    icon: ListAltIcon,
+                    items: [
+                        { title: 'Mis Tareas de HOY', href: '/tareas-personales', icon: TodayIcon },
+                        { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
+                    ],
+                    isCollapsible: true,
+                }, */
+            );
         }
+        
         if (isEmpresa) {
             menuSections.push({
                 title: 'Empresa',

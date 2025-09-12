@@ -9,7 +9,6 @@ import {
     CalendarToday as CalendarTodayIcon,
     Cancel,
     Category as CategoryIcon,
-    Delete as DeleteIcon,
     Edit,
     ExpandLess,
     ExpandMore,
@@ -65,6 +64,7 @@ interface TareaAsignada {
     titulo: string;
     prioridad: string;
     descripcion: string;
+    empresa: string;
     fecha: string;
     tipo?: { id: number; nombre_tipo: string };
     company?: { id: number; name: string };
@@ -111,6 +111,7 @@ export default function Tareas() {
         titulo: '',
         prioridad: '',
         descripcion: '',
+        empresa: '',
         fecha: '',
         tipo_id: '',
         company_id: '',
@@ -122,6 +123,7 @@ export default function Tareas() {
         titulo: '',
         prioridad: '',
         descripcion: '',
+        empresa: '',
         fecha: '',
         tipo_id: '',
         company_id: '',
@@ -338,6 +340,7 @@ export default function Tareas() {
             titulo: tarea.titulo,
             prioridad: tarea.prioridad,
             descripcion: tarea.descripcion,
+            empresa: tarea.empresa,
             fecha: tarea.fecha,
             tipo_id: tarea.tipo?.id ? String(tarea.tipo.id) : '',
             company_id: tarea.company?.id ? String(tarea.company.id) : '',
@@ -351,6 +354,7 @@ export default function Tareas() {
             titulo: '',
             prioridad: '',
             descripcion: '',
+            empresa: '',
             fecha: '',
             tipo_id: '',
             company_id: '',
@@ -384,6 +388,7 @@ export default function Tareas() {
             titulo: '',
             prioridad: '',
             descripcion: '',
+            empresa: '',
             fecha: new Date().toISOString().split('T')[0],
             tipo_id: '',
             company_id: '',
@@ -397,6 +402,7 @@ export default function Tareas() {
             titulo: '',
             prioridad: '',
             descripcion: '',
+            empresa: '',
             fecha: '',
             tipo_id: '',
             company_id: '',
@@ -592,7 +598,7 @@ export default function Tareas() {
                             <Typography variant="h5" fontWeight="bold">
                                 📄 Tareas
                             </Typography>
-                            <Chip label="En Revisión" color="warning" variant="outlined" />
+                            <Chip label="Para Revisión" color="warning" variant="outlined" />
                         </Box>
                     </Fade>
                 </Container>
@@ -754,6 +760,7 @@ export default function Tareas() {
                                                         ...prev,
                                                         titulo: tarea.titulo,
                                                         descripcion: tarea.descripcion,
+                                                        empresa: tarea.empresa,
                                                     }));
                                                 }
                                             }}
@@ -884,6 +891,16 @@ export default function Tareas() {
                                             rows={3}
                                             value={newTaskData.descripcion}
                                             onChange={(e) => setNewTaskData({ ...newTaskData, descripcion: e.target.value })}
+                                            fullWidth
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            label="📄 Contenido"
+                                            multiline
+                                            rows={3}
+                                            value={newTaskData.empresa}
+                                            onChange={(e) => setNewTaskData({ ...newTaskData, empresa: e.target.value })}
                                             fullWidth
                                         />
                                     </Grid>
@@ -1086,6 +1103,18 @@ export default function Tareas() {
                                             label="📄 Descripción"
                                             value={editFormData.descripcion}
                                             onChange={(e) => setEditFormData({ ...editFormData, descripcion: e.target.value })}
+                                            placeholder="Describe la tarea en detalle..."
+                                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            label="📄 Contenido"
+                                            value={editFormData.empresa}
+                                            onChange={(e) => setEditFormData({ ...editFormData, empresa: e.target.value })}
                                             placeholder="Describe la tarea en detalle..."
                                             sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                                         />
@@ -1430,6 +1459,29 @@ export default function Tareas() {
                                                                                                         sx={{ fontSize: '0.875rem' }}
                                                                                                     >
                                                                                                         En revisión
+                                                                                                    </Typography>
+                                                                                                }
+                                                                                            />
+                                                                                            <FormControlLabel
+                                                                                                value="corregir"
+                                                                                                control={
+                                                                                                    <Radio
+                                                                                                        size="small"
+                                                                                                        sx={{
+                                                                                                            color: '#2196F3',
+                                                                                                            '&.Mui-checked': { color: '#2196F3' },
+                                                                                                            '&:hover': {
+                                                                                                                bgcolor: alpha('#2196F3', 0.1),
+                                                                                                            },
+                                                                                                        }}
+                                                                                                    />
+                                                                                                }
+                                                                                                label={
+                                                                                                    <Typography
+                                                                                                        variant="body2"
+                                                                                                        sx={{ fontSize: '0.875rem' }}
+                                                                                                    >
+                                                                                                        Corregir
                                                                                                     </Typography>
                                                                                                 }
                                                                                             />

@@ -1,38 +1,39 @@
-import { useState } from 'react';
-import axios from 'axios';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import {
+    Add as AddIcon,
+    AssignmentInd as AssignmentIndIcon,
+    Close as CloseIcon,
+    Label as LabelIcon,
+    Person as PersonIcon,
+    Search as SearchIcon,
+    Delete as DeleteIcon,
+} from '@mui/icons-material';
+import {
+    Alert,
+    Autocomplete,
+    Avatar,
     Box,
     Button,
     Card,
-    CardContent,
     CardActions,
-    Typography,
-    Grid,
-    Modal,
-    TextField,
-    InputAdornment,
-    IconButton,
+    CardContent,
     Chip,
-    Stack,
-    Divider,
-    Snackbar,
-    Alert,
     CircularProgress,
-    Avatar,
+    Divider,
+    Grid,
     Grow,
+    IconButton,
+    InputAdornment,
+    Modal,
+    Snackbar,
+    Stack,
+    TextField,
     Tooltip,
+    Typography,
 } from '@mui/material';
-import {
-    Search as SearchIcon,
-    Add as AddIcon,
-    Close as CloseIcon,
-    Person as PersonIcon,
-    Label as LabelIcon,
-    AssignmentInd as AssignmentIndIcon,
-} from '@mui/icons-material';
-import { Autocomplete } from "@mui/material";
+import axios from 'axios';
+import { useState } from 'react';
 
 interface User {
     id: number;
@@ -60,12 +61,15 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
     const [userTipos, setUserTipos] = useState<number[]>([]);
     const [loadingUserTipos, setLoadingUserTipos] = useState(false);
     const [savingUserTipos, setSavingUserTipos] = useState(false);
-    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+    const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+        open: false,
+        message: '',
+        severity: 'success',
+    });
 
     // Filtrar usuarios por búsqueda
-    const filteredUsers = users.filter(user =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase())
+    const filteredUsers = users.filter(
+        (user) => user.name.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase()),
     );
 
     // Modal para crear tipo
@@ -80,7 +84,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
         if (!newTipo.trim()) return;
         try {
             const res = await axios.post('/tipos', { nombre_tipo: newTipo });
-            setTipos(prev => [...prev, res.data.tipo]);
+            setTipos((prev) => [...prev, res.data.tipo]);
             setSnackbar({ open: true, message: 'Tipo creado con éxito', severity: 'success' });
             handleCloseTipoModal();
         } catch {
@@ -109,9 +113,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
 
     // Agregar o quitar tipo del usuario
     const toggleTipoForUser = (tipoId: number) => {
-        setUserTipos(prev =>
-            prev.includes(tipoId) ? prev.filter(id => id !== tipoId) : [...prev, tipoId]
-        );
+        setUserTipos((prev) => (prev.includes(tipoId) ? prev.filter((id) => id !== tipoId) : [...prev, tipoId]));
     };
 
     // Guardar tipos asignados al usuario
@@ -128,10 +130,17 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
         setSavingUserTipos(false);
     };
 
-    const chipColors = [
-        'primary', 'secondary', 'success', 'error', 'warning', 'info'
-    ];
-
+    const chipColors = ['primary', 'secondary', 'success', 'error', 'warning', 'info'];
+    const handleDeleteTipo = async (tipoId: number) => {
+        if (!window.confirm('¿Seguro que deseas eliminar este tipo?')) return;
+        try {
+            await axios.delete(`/tipos/${tipoId}`);
+            setTipos((prev) => prev.filter((t) => t.id !== tipoId));
+            setSnackbar({ open: true, message: 'Tipo eliminado con éxito', severity: 'success' });
+        } catch {
+            setSnackbar({ open: true, message: 'Error al eliminar tipo', severity: 'error' });
+        }
+    };
     return (
         <AppLayout breadcrumbs={[{ title: 'Tipos', href: '/tipos' }]}>
             <Head title="Tipos" />
@@ -150,20 +159,31 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                 >
                     {tipos.map((tipo, idx) => (
                         <Grow in key={tipo.id} timeout={400 + idx * 80}>
-                            <Chip
-                                icon={<LabelIcon />}
-                                label={tipo.nombre_tipo}
-                                color={chipColors[idx % chipColors.length] as any}
-                                sx={{
-                                    fontWeight: 500,
-                                    fontSize: 15,
-                                    borderRadius: 2,
-                                    boxShadow: 2,
-                                    px: 2,
-                                    py: 1,
-                                    mb: 1, // margen inferior para separación vertical
-                                }}
-                            />
+                            <Box display="flex" alignItems="center">
+                                <Chip
+                                    icon={<LabelIcon />}
+                                    label={tipo.nombre_tipo}
+                                    color={chipColors[idx % chipColors.length] as any}
+                                    sx={{
+                                        fontWeight: 500,
+                                        fontSize: 15,
+                                        borderRadius: 2,
+                                        boxShadow: 2,
+                                        px: 2,
+                                        py: 1,
+                                        mb: 1,
+                                    }}
+                                />
+                                <IconButton
+                                    aria-label="Eliminar tipo"
+                                    color="error"
+                                    size="small"
+                                    onClick={() => handleDeleteTipo(tipo.id)}
+                                    sx={{ ml: 1 }}
+                                >
+                                    <DeleteIcon />
+                                </IconButton>
+                            </Box>
                         </Grow>
                     ))}
                 </Stack>
@@ -178,7 +198,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                         borderRadius: 2,
                         boxShadow: 2,
                         fontWeight: 600,
-                        textTransform: 'none'
+                        textTransform: 'none',
                     }}
                 >
                     Nuevo Tipo
@@ -186,18 +206,21 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
             </Box>
 
             {/* Modal crear tipo */}
-            <Modal
-                open={openTipoModal}
-                onClose={handleCloseTipoModal}
-                closeAfterTransition
-                BackdropProps={{ timeout: 500 }}
-            >
-                <Box sx={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)', width: 400,
-                    bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
-                    outline: 'none'
-                }}>
+            <Modal open={openTipoModal} onClose={handleCloseTipoModal} closeAfterTransition BackdropProps={{ timeout: 500 }}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 400,
+                        bgcolor: 'background.paper',
+                        borderRadius: 4,
+                        boxShadow: 24,
+                        p: 4,
+                        outline: 'none',
+                    }}
+                >
                     <Typography variant="h6" fontWeight={700} gutterBottom color="primary.main">
                         <LabelIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                         Crear Nuevo Tipo
@@ -207,7 +230,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                         variant="outlined"
                         fullWidth
                         value={newTipo}
-                        onChange={e => setNewTipo(e.target.value)}
+                        onChange={(e) => setNewTipo(e.target.value)}
                         sx={{ mb: 3 }}
                     />
                     <Button
@@ -229,7 +252,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                 variant="outlined"
                 fullWidth
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 InputProps={{
                     endAdornment: (
                         <InputAdornment position="end">
@@ -253,19 +276,21 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                                     transition: 'transform 0.2s',
                                     '&:hover': { transform: 'scale(1.025)', boxShadow: 12 },
                                     mb: 2,
-                                    bgcolor: 'background.paper'
+                                    bgcolor: 'background.paper',
                                 }}
                             >
                                 <CardContent>
                                     <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                                        <Avatar sx={{
-                                            bgcolor: 'primary.main',
-                                            width: 48,
-                                            height: 48,
-                                            fontWeight: 700,
-                                            fontSize: 22,
-                                            boxShadow: 2,
-                                        }}>
+                                        <Avatar
+                                            sx={{
+                                                bgcolor: 'primary.main',
+                                                width: 48,
+                                                height: 48,
+                                                fontWeight: 700,
+                                                fontSize: 22,
+                                                boxShadow: 2,
+                                            }}
+                                        >
                                             <PersonIcon fontSize="large" />
                                         </Avatar>
                                         <Box>
@@ -289,7 +314,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                                             fontWeight: 600,
                                             textTransform: 'none',
                                             py: 1,
-                                            letterSpacing: 0.5
+                                            letterSpacing: 0.5,
                                         }}
                                         startIcon={<AssignmentIndIcon />}
                                     >
@@ -303,24 +328,29 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
             </Grid>
 
             {/* Modal asignar tipos a usuario */}
-            <Modal
-                open={openUserModal}
-                onClose={handleCloseUserModal}
-                closeAfterTransition
-                BackdropProps={{ timeout: 500 }}
-            >
-                <Box sx={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)', width: 440,
-                    bgcolor: 'background.paper', borderRadius: 4, boxShadow: 24, p: 4,
-                    outline: 'none'
-                }}>
+            <Modal open={openUserModal} onClose={handleCloseUserModal} closeAfterTransition BackdropProps={{ timeout: 500 }}>
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 440,
+                        bgcolor: 'background.paper',
+                        borderRadius: 4,
+                        boxShadow: 24,
+                        p: 4,
+                        outline: 'none',
+                    }}
+                >
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                         <Typography variant="h6" fontWeight={700} color="primary.main">
                             <PersonIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
                             Tipos de {selectedUser?.name}
                         </Typography>
-                        <IconButton onClick={handleCloseUserModal}><CloseIcon /></IconButton>
+                        <IconButton onClick={handleCloseUserModal}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
                     {loadingUserTipos ? (
                         <Box display="flex" justifyContent="center" py={4}>
@@ -330,11 +360,9 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                         <>
                             {/* Select con buscador para agregar tipo */}
                             <Autocomplete
-                                options={tipos.filter(tipo => !userTipos.includes(tipo.id))}
-                                getOptionLabel={option => option.nombre_tipo}
-                                renderInput={(params) => (
-                                    <TextField {...params} label="Agregar tipo" variant="outlined" />
-                                )}
+                                options={tipos.filter((tipo) => !userTipos.includes(tipo.id))}
+                                getOptionLabel={(option) => option.nombre_tipo}
+                                renderInput={(params) => <TextField {...params} label="Agregar tipo" variant="outlined" />}
                                 renderOption={(props, option) => (
                                     <li {...props} key={option.id}>
                                         {option.nombre_tipo}
@@ -353,25 +381,32 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                             </Typography>
                             <Stack spacing={1} sx={{ mb: 2 }}>
                                 {tipos
-                                    .filter(tipo => userTipos.includes(tipo.id))
+                                    .filter((tipo) => userTipos.includes(tipo.id))
                                     .map((tipo, idx) => (
                                         <Grow in key={tipo.id} timeout={400 + idx * 60}>
-                                            <Box display="flex" alignItems="center" justifyContent="space-between" sx={{
-                                                border: '1px solid',
-                                                borderColor: 'primary.light',
-                                                borderRadius: 2,
-                                                px: 2,
-                                                py: 1,
-                                                bgcolor: 'primary.50',
-                                                boxShadow: 1,
-                                            }}>
+                                            <Box
+                                                display="flex"
+                                                alignItems="center"
+                                                justifyContent="space-between"
+                                                sx={{
+                                                    border: '1px solid',
+                                                    borderColor: 'primary.light',
+                                                    borderRadius: 2,
+                                                    px: 2,
+                                                    py: 1,
+                                                    bgcolor: 'primary.50',
+                                                    boxShadow: 1,
+                                                }}
+                                            >
                                                 <Stack direction="row" alignItems="center" spacing={1}>
-                                                    <Avatar sx={{
-                                                        bgcolor: 'primary.light',
-                                                        width: 32,
-                                                        height: 32,
-                                                        fontSize: 18,
-                                                    }}>
+                                                    <Avatar
+                                                        sx={{
+                                                            bgcolor: 'primary.light',
+                                                            width: 32,
+                                                            height: 32,
+                                                            fontSize: 18,
+                                                        }}
+                                                    >
                                                         <LabelIcon fontSize="small" />
                                                     </Avatar>
                                                     <Typography fontWeight={600}>{tipo.nombre_tipo}</Typography>
@@ -389,9 +424,8 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
                                                 </Tooltip>
                                             </Box>
                                         </Grow>
-                                    ))
-                                }
-                                {tipos.filter(tipo => userTipos.includes(tipo.id)).length === 0 && (
+                                    ))}
+                                {tipos.filter((tipo) => userTipos.includes(tipo.id)).length === 0 && (
                                     <Typography variant="body2" color="text.secondary" align="center">
                                         No hay tipos asignados.
                                     </Typography>
@@ -417,7 +451,7 @@ export default function Tipos({ users, tipos: initialTipos }: Props) {
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={3000}
-                onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+                onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             >
                 <Alert severity={snackbar.severity} variant="filled" sx={{ width: '100%' }}>

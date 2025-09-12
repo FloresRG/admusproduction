@@ -190,7 +190,7 @@ class BookingController extends Controller
                 return [
                     'id' => $booking->id,
                     'day_of_week' => $booking->day_of_week,
-                    
+
                     'turno' => $booking->turno,
                     'start_time' => $booking->start_time, // sin toDateTimeString()
                     'end_time' => $booking->end_time,
@@ -214,11 +214,11 @@ class BookingController extends Controller
 
 
         // Devuelve como JSON para verificación
-      //  return response()->json([
+        //  return response()->json([
         //    'bookings' => $bookings,
-          //  'user' => Auth::user()
+        //  'user' => Auth::user()
         //]);
-         return \Inertia\Inertia::render('Bookings/ThisWeek', [
+        return \Inertia\Inertia::render('Bookings/ThisWeek', [
             'bookings' => $bookings,
             'user' => Auth::user(),
         ]);

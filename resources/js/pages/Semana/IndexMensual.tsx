@@ -5,36 +5,37 @@ import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import { usePage } from '@inertiajs/react';
 import {
+    Assignment,
+    Business,
+    CalendarMonth,
+    Category,
+    CheckCircle,
+    Close,
+    Flag,
+    Person,
+    PictureAsPdf,
+    PriorityHigh,
+    Schedule,
+} from '@mui/icons-material';
+import {
+    Avatar,
+    Badge,
+    Box,
     Button,
+    Card,
+    CardContent,
     Chip,
+    Container,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Typography,
-    Container,
-    Card,
-    CardContent,
-    Avatar,
-    Box,
     Divider,
     Paper,
     Stack,
-    Badge,
+    Typography,
 } from '@mui/material';
-import {
-    CalendarMonth,
-    Business,
-    Assignment,
-    Person,
-    Flag,
-    Category,
-    Close,
-    CheckCircle,
-    Schedule,
-    PriorityHigh,
-} from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
+import { alpha, styled } from '@mui/material/styles';
 import { useState } from 'react';
 
 type User = {
@@ -195,10 +196,7 @@ const Mes = () => {
             return empresaColores[empresaId];
         }
 
-        const colors = [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-            '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
-        ];
+        const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'];
         const newColor = colors[empresaId % colors.length];
         empresaColores[empresaId] = newColor;
         return newColor;
@@ -275,6 +273,30 @@ const Mes = () => {
                                     Visualiza y gestiona las tareas de todas las empresas
                                 </Typography>
                             </Box>
+
+                            <Button
+                                variant="contained"
+                                startIcon={<PictureAsPdf />}
+                                onClick={() => window.open('/disponibilidad-semanal-pdf', '_blank')}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontWeight: 'bold',
+                                    borderRadius: 3,
+                                    background: 'linear-gradient(135deg, #ff4e50 0%, #000000 100%)',
+                                    color: '#fff',
+                                    boxShadow: `0 8px 32px ${alpha('#ff4e50', 0.3)}`,
+                                    px: 4,
+                                    py: 1.5,
+                                    '&:hover': {
+                                        background: 'linear-gradient(135deg, #d7263d 0%, #111111 100%)',
+                                        transform: 'translateY(-2px)',
+                                        boxShadow: `0 12px 40px ${alpha('#ff4e50', 0.4)}`,
+                                    },
+                                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                }}
+                            >
+                                Generar Reporte PDF de Influencers
+                            </Button>
                         </Box>
                     </CardContent>
                 </GradientCard>
@@ -300,23 +322,25 @@ const Mes = () => {
                 </CalendarCard>
 
                 {/* Modal de detalle por empresa */}
-                <Dialog 
-                    open={!!empresaSeleccionada} 
-                    onClose={() => setEmpresaSeleccionada(null)} 
-                    maxWidth="lg" 
+                <Dialog
+                    open={!!empresaSeleccionada}
+                    onClose={() => setEmpresaSeleccionada(null)}
+                    maxWidth="lg"
                     fullWidth
                     PaperProps={{
                         sx: {
                             borderRadius: 4,
                             maxHeight: '90vh',
-                        }
+                        },
                     }}
                 >
-                    <DialogTitle sx={{ 
-                        background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)', 
-                        color: 'white',
-                        p: 3
-                    }}>
+                    <DialogTitle
+                        sx={{
+                            background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                            color: 'white',
+                            p: 3,
+                        }}
+                    >
                         <Box display="flex" alignItems="center" gap={2}>
                             <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.2)' }}>
                                 <Business />
@@ -368,9 +392,9 @@ const Mes = () => {
                                                     <Typography variant="body2" color="text.secondary">
                                                         Tipo:
                                                     </Typography>
-                                                    <Chip 
-                                                        label={tarea.tipo?.nombre_tipo || 'No especificado'} 
-                                                        size="small" 
+                                                    <Chip
+                                                        label={tarea.tipo?.nombre_tipo || 'No especificado'}
+                                                        size="small"
                                                         variant="outlined"
                                                         color="primary"
                                                     />
@@ -391,11 +415,7 @@ const Mes = () => {
                                                 <Typography variant="subtitle1" fontWeight="bold">
                                                     Asignaciones
                                                 </Typography>
-                                                <Badge 
-                                                    badgeContent={tarea.asignaciones?.length || 0} 
-                                                    color="primary"
-                                                    sx={{ ml: 1 }}
-                                                >
+                                                <Badge badgeContent={tarea.asignaciones?.length || 0} color="primary" sx={{ ml: 1 }}>
                                                     <Box />
                                                 </Badge>
                                             </Box>
@@ -403,13 +423,13 @@ const Mes = () => {
                                             {tarea.asignaciones && tarea.asignaciones.length > 0 ? (
                                                 <Stack spacing={2}>
                                                     {tarea.asignaciones.map((asg) => (
-                                                        <Paper 
-                                                            key={asg.id} 
-                                                            sx={{ 
-                                                                p: 2, 
+                                                        <Paper
+                                                            key={asg.id}
+                                                            sx={{
+                                                                p: 2,
                                                                 bgcolor: '#f8fafc',
                                                                 borderRadius: 2,
-                                                                border: '1px solid #e2e8f0'
+                                                                border: '1px solid #e2e8f0',
                                                             }}
                                                         >
                                                             <Box display="flex" alignItems="center" justify="space-between">
@@ -437,13 +457,13 @@ const Mes = () => {
                                                     ))}
                                                 </Stack>
                                             ) : (
-                                                <Paper 
-                                                    sx={{ 
-                                                        p: 3, 
+                                                <Paper
+                                                    sx={{
+                                                        p: 3,
                                                         textAlign: 'center',
                                                         bgcolor: '#f8fafc',
                                                         borderRadius: 2,
-                                                        border: '1px dashed #cbd5e1'
+                                                        border: '1px dashed #cbd5e1',
                                                     }}
                                                 >
                                                     <Typography variant="body1" color="text.secondary">
@@ -471,11 +491,7 @@ const Mes = () => {
                     </DialogContent>
 
                     <DialogActions sx={{ p: 3, bgcolor: '#f8fafc' }}>
-                        <GradientButton
-                            onClick={() => setEmpresaSeleccionada(null)}
-                            variant="contained"
-                            startIcon={<Close />}
-                        >
+                        <GradientButton onClick={() => setEmpresaSeleccionada(null)} variant="contained" startIcon={<Close />}>
                             Cerrar
                         </GradientButton>
                     </DialogActions>

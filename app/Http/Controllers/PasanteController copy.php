@@ -95,7 +95,7 @@ class PasanteController extends Controller
     }
     public function getPasantes()
     {
-        $pasantes = User::role(['pasante', 'marketing', 'camarografo'])
+        $pasantes = User::role(['pasante', 'marketing'])
             ->select('id', 'name', 'email')
             ->with(['roles:id,name'])
             ->get();
@@ -301,7 +301,7 @@ class PasanteController extends Controller
             }
         ])
             ->where('user_id', $userId)
-            ->where('estado', 'corregir'); // Filter for pending tasks;
+            ->where('estado', 'en_revision'); // Filter for pending tasks;
 
         // Búsqueda
         if ($request->filled('search')) {

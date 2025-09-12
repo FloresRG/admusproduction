@@ -22,6 +22,7 @@ use App\Http\Controllers\InfluencerController;
 use App\Http\Controllers\InfluencerDatosController;
 use App\Http\Controllers\InformeController;
 use App\Http\Controllers\InicioController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PaqueteController;
 use App\Http\Controllers\PasanteController;
@@ -209,8 +210,7 @@ Route::put('/api/influencer-availability/{id}', [InfluencerAvailabilityControlle
 Route::delete('/api/influencer-availability/{id}', [InfluencerAvailabilityController::class, 'destroy']);
 Route::post('/api/asignar-empresa', [InfluencerAvailabilityController::class, 'asignarEmpresa']);
 Route::get('/api/reporte-empresas-asignadas', [InfluencerAvailabilityController::class, 'generarPdfEmpresasAsignadas']);
-
-
+Route::post('/clear-availabilities', [InfluencerAvailabilityController::class, 'clearAll']);
 Route::get('/vertareas', function () {
     return Inertia::render('tareas/vertareas');
 });
@@ -311,6 +311,7 @@ Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareas
 Route::get('/pasante/mistareas/enrevicion', function () {
     return Inertia::render('pasante/mistareasenrevicion');
 });
+
 Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
 
 Route::get('/pasante/mistareas/publicadas', function () {
@@ -342,12 +343,28 @@ Route::get('/pasante/mistareasenrevicion', [PasanteController::class, 'mistareas
 Route::get('/pasante/mistareas/enrevicion', function () {
     return Inertia::render('pasante/mistareasenrevicion');
 });
+Route::get('/pasante/mistareasencorregir', [PasanteController::class, 'mistareasencorregir'])->name('pasante.mistareasencorregir');
+
+Route::get('/pasante/mistareas/encorregir', function () {
+    return Inertia::render('pasante/mistareasencorregir');
+});
+
 Route::get('/pasante/mistareaspublicadas', [PasanteController::class, 'mistareaspublicadas'])->name('pasante.mistareaspublicadas');
 
 Route::get('/pasante/mistareas/publicadas', function () {
     return Inertia::render('pasante/mistareaspublicadas');
 });
 
+Route::get('/tareaspublicadas', [MarketingController::class, 'tareaspublicadas'])->name('marketing.tareaspublicadas');
+
+Route::get('/tareas/publicadas', function () {
+    return Inertia::render('marketing/tareaspublicadas');
+});
+Route::get('/tareaspendientes', [MarketingController::class, 'tareaspendientes'])->name('marketing.tareaspendientes');
+
+Route::get('/tareas/pendientes', function () {
+    return Inertia::render('marketing/tareaspendientes');
+});
 Route::patch('/tareas/actualizar-estado/{id}', [PasanteController::class, 'actualizarEstadoa'])->name('tareas.actualizar-estado');
 
 
@@ -367,15 +384,16 @@ Route::get('/influencers/{id}', [InfluencerDatosController::class, 'show'])
 Route::get('/tareas/hoy', function () {
     return Inertia::render('tareas/tareashoy');
 })->name('tareas.index');
+
 Route::get('/tareas/dehoy', function () {
-    return Inertia::render('tareas/tareasdehoy');
+    return Inertia::render('marketing/tareasdehoy');
 })->name('tareas.index');
 
 Route::get('/tareas/revicion', function () {
     return Inertia::render('tareas/tareasrevicion');
 })->name('tareas.index');
 Route::get('/tareas/enrevicion', function () {
-    return Inertia::render('tareas/tareasenrevicion');
+    return Inertia::render('marketing/tareasenrevicion');
 })->name('tareas.index');
 
 Route::patch('/asignaciones/{id}/intercambiar', [AsignacionTareaController::class, 'intercambiar']);
