@@ -304,6 +304,8 @@ class SemanaController extends Controller
             'dia' => 'required|string',
             'turno' => 'required|string', // 'mañana' o 'tarde'
             'influencer_id' => 'required|exists:users,id',
+            'start_time' => 'nullable|string',
+            'end_time' => 'nullable|string',
         ]);
 
         // Calcular inicio y fin de la semana actual
@@ -340,8 +342,8 @@ class SemanaController extends Controller
         $fecha = $startOfWeek->copy()->addDays($diaOffset);
 
         // Definir hora de inicio y fin según turno
-        $startTime = $validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00';
-        $endTime = $validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00';
+        $startTime = $validated['start_time'] ?? ($validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00');
+        $endTime = $validated['end_time'] ?? ($validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00');
 
         // Crear la reserva
         Booking::create([
@@ -349,7 +351,7 @@ class SemanaController extends Controller
             'user_id'      => $validated['influencer_id'],
             'start_time'   => $fecha->format("Y-m-d") . " " . $startTime,
             'end_time'     => $fecha->format("Y-m-d") . " " . $endTime,
-            'status'       => 'pendiente', // Puedes ajustar según lógica de negocio
+            'status'       => 'pendiente',
             'turno'        => $validated['turno'],
             'week_id'      => $weekId,
             'day_of_week'  => strtolower($validated['dia']),
@@ -593,6 +595,48 @@ class SemanaController extends Controller
 
         return response()->json(['success' => true, 'availability' => $availability]);
     }
+
+
+    /* public function agregarDisponibilidadEmpresa(Request $request)
+    {
+        $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
+            'day_of_week' => 'required|string',
+            'turno' => 'required|string',
+            'start_time' => 'nullable|string',
+            'end_time' => 'nullable|string',
+        ]);
+
+        $startTime = $validated['start_time'] ?? ($validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00');
+        $endTime = $validated['end_time'] ?? ($validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00');
+
+        // Buscar si ya existe disponibilidad para ese día y turno
+        $availability = \App\Models\AvailabilityDay::where('company_id', $validated['company_id'])
+            ->where('day_of_week', strtolower($validated['day_of_week']))
+            ->where('turno', strtolower($validated['turno']))
+            ->first();
+
+        if ($availability) {
+            // Si existe, actualiza el horario
+            $availability->update([
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+            ]);
+        } else {
+            // Si no existe, crea uno nuevo
+            $availability = \App\Models\AvailabilityDay::create([
+                'company_id' => $validated['company_id'],
+                'day_of_week' => strtolower($validated['day_of_week']),
+                'turno' => strtolower($validated['turno']),
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'cantidad' => 1,
+            ]);
+        }
+
+        return response()->json(['success' => true, 'availability' => $availability]);
+    } */
+
 
     public function quitarDisponibilidadEmpresa(Request $request)
     {

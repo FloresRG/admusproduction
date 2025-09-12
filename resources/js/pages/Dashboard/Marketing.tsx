@@ -2,6 +2,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { ArrowPathIcon, ChartBarIcon, CheckCircleIcon, ClipboardDocumentListIcon, LinkIcon, UserGroupIcon } from '@heroicons/react/24/solid';
+import { PictureAsPdf } from '@mui/icons-material';
+import { alpha, Button } from '@mui/material';
 import { FC } from 'react';
 import { FaTiktok } from 'react-icons/fa';
 
@@ -56,6 +58,17 @@ interface MarketingDashboardProps {
 
 // Breadcrumbs
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
+const handleGeneratePdf = async () => {
+    try {
+        // Se usa window.open para que el navegador maneje la descarga del PDF
+        // Esto es más simple que manejar la respuesta binaria con fetch
+        window.open('/generar-pdf-disponibilidad', '_blank');
+    } catch (error) {
+        console.error('Error al generar el PDF:', error);
+        // Opcional: mostrar un mensaje de error al usuario
+        alert('Hubo un error al generar el PDF. Por favor, inténtalo de nuevo.');
+    }
+};
 
 const MarketingDashboard: FC<MarketingDashboardProps> = ({ user, estadisticas, tareas, influencers, campanias }) => {
     return (
@@ -69,6 +82,32 @@ const MarketingDashboard: FC<MarketingDashboardProps> = ({ user, estadisticas, t
 
                 {/* Estadísticas */}
                 <h2 className="mb-4 text-2xl font-bold text-gray-700">📊 Estadísticas de Tareas</h2>
+                <Button
+                    variant="contained"
+                    startIcon={<PictureAsPdf />}
+                    onClick={() => window.open('/disponibilidad-semanal-pdf', '_blank')}
+                    sx={{
+                        textTransform: 'none',
+                        fontWeight: 'bold',
+                        borderRadius: 3,
+                        background: 'linear-gradient(135deg, #ff4e50 0%, #000000 100%)',
+                        color: '#fff',
+                        boxShadow: `0 8px 32px ${alpha('#ff4e50', 0.3)}`,
+                        px: 4,
+                        py: 1.5,
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #d7263d 0%, #111111 100%)',
+                            transform: 'translateY(-2px)',
+                            boxShadow: `0 12px 40px ${alpha('#ff4e50', 0.4)}`,
+                        },
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                >
+                    Generar Reporte PDF de Horario Influencers
+                </Button>
+                <Button variant="contained" color="success" onClick={handleGeneratePdf}>
+                    Generar Reporte PDF de Horario Camarografos
+                </Button>
                 <div className="mb-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <Card
                         title="Total de Tareas"
@@ -116,8 +155,6 @@ const MarketingDashboard: FC<MarketingDashboardProps> = ({ user, estadisticas, t
                             <p className="text-gray-500">No hay tareas asignadas</p>
                         )}
                     </SectionCard>
-
-                    
 
                     {/* Campañas */}
                     <SectionCard title="Últimas Publicaciones" icon={<LinkIcon className="h-6 w-6 text-green-500" />}>

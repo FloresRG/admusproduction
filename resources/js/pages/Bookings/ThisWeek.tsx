@@ -277,36 +277,57 @@ export default function BookingsSummary() {
                                                                             direction="row"
                                                                             flexWrap="wrap"
                                                                         >
-                                                                            {Object.entries(item.shifts).map(([turno, count]: any) => (
-                                                                                <Tooltip
-                                                                                    key={turno}
-                                                                                    title={`Turno ${turno}: ${count} tarea(s)`}
-                                                                                    arrow
-                                                                                    placement="top"
-                                                                                >
-                                                                                    <Chip
-                                                                                        icon={<AccessTimeIcon sx={{ fontSize: 13 }} />}
-                                                                                        label={`${turno.charAt(0).toUpperCase() + turno.slice(1)}`}
-                                                                                        color={turnoColors[turno] || 'default'}
-                                                                                        size="small"
-                                                                                        sx={{
-                                                                                            fontWeight: 'bold',
-                                                                                            fontSize: '0.70rem',
-                                                                                            height: 22,
-                                                                                            bgcolor:
-                                                                                                turnoColors[turno] === 'primary'
-                                                                                                    ? '#e3f0ff'
-                                                                                                    : turnoColors[turno] === 'secondary'
-                                                                                                      ? '#fbe9ff'
-                                                                                                      : '#e0f7fa',
-                                                                                            color: '#1976d2',
-                                                                                            borderRadius: 2,
-                                                                                            mx: 0.2,
-                                                                                            my: 0.2,
-                                                                                        }}
-                                                                                    />
-                                                                                </Tooltip>
-                                                                            ))}
+                                                                            {Object.entries(item.shifts).map(([turno, count]: any) => {
+                                                                                // Busca el booking para ese turno y empresa
+                                                                                const booking = bookings.find(
+                                                                                    (b) =>
+                                                                                        b.company.name === item.name &&
+                                                                                        (dayTranslations[b.day_of_week?.toLowerCase()] ||
+                                                                                            b.day_of_week) === day &&
+                                                                                        b.turno?.toLowerCase() === turno,
+                                                                                );
+                                                                                return (
+                                                                                    <Box key={turno} sx={{ width: '100%' }}>
+                                                                                        <Tooltip
+                                                                                            title={`Turno ${turno}: ${count} tarea(s)`}
+                                                                                            arrow
+                                                                                            placement="top"
+                                                                                        >
+                                                                                            <Chip
+                                                                                                icon={<AccessTimeIcon sx={{ fontSize: 13 }} />}
+                                                                                                label={`${turno.charAt(0).toUpperCase() + turno.slice(1)}`}
+                                                                                                color={turnoColors[turno] || 'default'}
+                                                                                                size="small"
+                                                                                                sx={{
+                                                                                                    fontWeight: 'bold',
+                                                                                                    fontSize: '0.70rem',
+                                                                                                    height: 22,
+                                                                                                    bgcolor:
+                                                                                                        turnoColors[turno] === 'primary'
+                                                                                                            ? '#e3f0ff'
+                                                                                                            : turnoColors[turno] === 'secondary'
+                                                                                                              ? '#fbe9ff'
+                                                                                                              : '#e0f7fa',
+                                                                                                    color: '#1976d2',
+                                                                                                    borderRadius: 2,
+                                                                                                    mx: 0.2,
+                                                                                                    my: 0.2,
+                                                                                                }}
+                                                                                            />
+                                                                                        </Tooltip>
+                                                                                        {/* Mostrar horario debajo del turno */}
+                                                                                        {booking && (
+                                                                                            <Typography
+                                                                                                variant="caption"
+                                                                                                color="text.secondary"
+                                                                                                sx={{ display: 'block', mt: 0.5 }}
+                                                                                            >
+                                                                                                {`Inicio: ${booking.start_time?.slice(11, 16) || '--:--'} | Fin: ${booking.end_time?.slice(11, 16) || '--:--'}`}
+                                                                                            </Typography>
+                                                                                        )}
+                                                                                    </Box>
+                                                                                );
+                                                                            })}
                                                                         </Stack>
 
                                                                         {/* Botón de ubicación */}

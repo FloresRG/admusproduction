@@ -83,6 +83,8 @@ const Semanainfluencer = () => {
     }>().props;
 
     const [datosPorEmpresa, setDatosPorEmpresa] = useState(datosPorEmpresaProp);
+    const [startTime, setStartTime] = useState('09:30');
+    const [endTime, setEndTime] = useState('13:00');
 
     // Nuevo estado para el buscador
     const [search, setSearch] = useState('');
@@ -120,6 +122,21 @@ const Semanainfluencer = () => {
         'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
         'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
     ];
+    const handleAgregarDia = async () => {
+        if (!selectedTurno) return;
+        try {
+            await axios.post('/agregar-disponibilidad-empresa', {
+                company_id: selectedTurno.empresaId,
+                day_of_week: selectedTurno.dia,
+                turno: selectedTurno.turno,
+                start_time: startTime,
+                end_time: endTime,
+            });
+            window.location.reload();
+        } catch (e) {
+            alert('Error al agregar disponibilidad');
+        }
+    };
 
     const dayOfWeekInSpanish: { [key: string]: string } = {
         monday: 'Lunes',
@@ -139,10 +156,32 @@ const Semanainfluencer = () => {
         return turno === 'mañana' ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' : 'linear-gradient(135deg, #4A90E2 0%, #7B68EE 100%)';
     };
 
-    const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
-        setSelectedTurno({ empresaId, dia, turno });
-        setModalOpen(true);
-    };
+    // ...existing code...
+const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
+    // Buscar empresa y disponibilidad
+    const empresaSeleccionada = datosPorEmpresa.find((e) => e.empresa.id === empresaId);
+    let horario = { start_time: '', end_time: '' };
+
+    if (empresaSeleccionada) {
+        // Busca el AvailabilityDay correspondiente
+        const availabilityDays = empresaSeleccionada.empresa.availabilityDays || [];
+        const found = availabilityDays.find(
+            (a: any) =>
+                a.day_of_week?.toLowerCase() === dia.toLowerCase() &&
+                a.turno?.toLowerCase() === turno.toLowerCase()
+        );
+        if (found) {
+            horario.start_time = found.start_time?.slice(0, 5) || '';
+            horario.end_time = found.end_time?.slice(0, 5) || '';
+        }
+    }
+
+    setStartTime(horario.start_time || (turno === 'mañana' ? '09:30' : '14:00'));
+    setEndTime(horario.end_time || (turno === 'mañana' ? '13:00' : '18:00'));
+    setSelectedTurno({ empresaId, dia, turno });
+    setModalOpen(true);
+};
+// ...existing code...
 
     const handleCloseModal = () => {
         setModalOpen(false);
@@ -186,8 +225,6 @@ const Semanainfluencer = () => {
             setLoading(false);
         }
     };
-    const [startTime, setStartTime] = useState('');
-    const [endTime, setEndTime] = useState('');
 
     const handleAsignarInfluencer = async () => {
         if (!selectedTurno) return;
@@ -962,6 +999,27 @@ const Semanainfluencer = () => {
                         fontFamily: "'Poppins', sans-serif",
                     }}
                 >
+                    <TextField
+                        label="Hora de inicio"
+                        type="time"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 300 }}
+                        fullWidth
+                    />
+                    <TextField
+                        label="Hora de fin"
+                        type="time"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 300 }}
+                        fullWidth
+                    />
+                    <Button variant="outlined" color="primary" onClick={handleAgregarDia} sx={{ borderRadius: 2, fontWeight: 'bold' }}>
+                        Agregar Día con Horario
+                    </Button>
                     <BriefcaseBusinessIcon />
                     Agregar Influencer
                 </DialogTitle>
@@ -983,22 +1041,6 @@ const Semanainfluencer = () => {
                         <Typography sx={{ fontWeight: '600' }}>
                             <strong>Turno:</strong> <em>{selectedTurno?.turno}</em>
                         </Typography>
-                        <TextField
-                            label="Hora de inicio"
-                            type="time"
-                            value={startTime}
-                            onChange={(e) => setStartTime(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
-                            inputProps={{ step: 300 }}
-                        />
-                        <TextField
-                            label="Hora de fin"
-                            type="time"
-                            value={endTime}
-                            onChange={(e) => setEndTime(e.target.value)}
-                            InputLabelProps={{ shrink: true }}
-                            inputProps={{ step: 300 }}
-                        />
 
                         {/* Select principal con influencers disponibles */}
                         <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1115,8 +1157,6 @@ const Semanainfluencer = () => {
                                         dia: selectedTurno.dia,
                                         turno: selectedTurno.turno,
                                         influencer_id: selectedInfluencer,
-                                        start_time: startTime,
-                                        end_time: endTime,
                                     }),
                                 );
                             }
@@ -1128,8 +1168,6 @@ const Semanainfluencer = () => {
                                         dia: selectedTurno.dia,
                                         turno: selectedTurno.turno,
                                         influencer_id: selectedInfluencerExtra,
-                                        start_time: startTime,
-                                        end_time: endTime,
                                     }),
                                 );
                             }
