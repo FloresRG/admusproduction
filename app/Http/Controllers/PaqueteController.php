@@ -32,6 +32,18 @@ class PaqueteController extends Controller
             'descripcion' => 'required|string',
             'monto' => 'required|numeric',
             'puntos' => 'required|integer',
+            'tiktok_mes' => 'nullable|integer|min:0',
+            'tiktok_semana' => 'nullable|integer|min:0',
+            'facebook_mes' => 'nullable|integer|min:0',
+            'facebook_semana' => 'nullable|integer|min:0',
+            'instagram_mes' => 'nullable|integer|min:0',
+            'instagram_semana' => 'nullable|integer|min:0',
+            'artesfacebook_mes' => 'nullable|integer|min:0',
+            'artesfacebook_semana' => 'nullable|integer|min:0',
+            'artesinstagram_mes' => 'nullable|integer|min:0',
+            'artesinstagram_semana' => 'nullable|integer|min:0',
+            'extras' => 'nullable|string',
+            'total_publicaciones' => 'nullable|integer|min:0',
         ]);
 
         Paquete::create($request->all());
@@ -60,6 +72,18 @@ class PaqueteController extends Controller
             'descripcion' => 'required|string',
             'monto' => 'required|numeric',
             'puntos' => 'required|integer',
+            'tiktok_mes' => 'nullable|integer|min:0',
+            'tiktok_semana' => 'nullable|integer|min:0',
+            'facebook_mes' => 'nullable|integer|min:0',
+            'facebook_semana' => 'nullable|integer|min:0',
+            'instagram_mes' => 'nullable|integer|min:0',
+            'instagram_semana' => 'nullable|integer|min:0',
+            'artesfacebook_mes' => 'nullable|integer|min:0',
+            'artesfacebook_semana' => 'nullable|integer|min:0',
+            'artesinstagram_mes' => 'nullable|integer|min:0',
+            'artesinstagram_semana' => 'nullable|integer|min:0',
+            'extras' => 'nullable|string',
+            'total_publicaciones' => 'nullable|integer|min:0',
         ]);
 
         $paquete->update($request->all());

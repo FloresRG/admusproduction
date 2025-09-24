@@ -22,6 +22,13 @@ class Company extends Model
         'monto_mensual',
         'celular',
         'logo',
+        'influencer',
+        'paquete_id',
+        'nombre_cliente',
+        'especificaciones',
+        'seguidores_inicio',
+        'seguidores_fin',
+
     ];
     protected $casts = [
         'start_date' => 'date:Y-m-d',
@@ -48,5 +55,14 @@ class Company extends Model
     public function informes()
     {
         return $this->hasMany(Informe::class);
+    }
+    public function paquete()
+    {
+        return $this->belongsTo(Paquete::class);
+    }
+
+    public function planEmpresa()
+    {
+        return $this->hasOne(PlanEmpresa::class, 'empresa_id');
     }
 }

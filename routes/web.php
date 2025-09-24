@@ -27,6 +27,7 @@ use App\Http\Controllers\PagosController;
 use App\Http\Controllers\PaqueteController;
 use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
+use App\Http\Controllers\PlanEmpresaController;
 use App\Http\Controllers\PremioController;
 use App\Http\Controllers\SeguimientoEmpresaController;
 use App\Http\Controllers\SeguimientoEmpresaVendedorController;
@@ -525,5 +526,18 @@ Route::post('/comentarios', [InformeController::class, 'comentario'])->name('com
 Route::middleware(['auth'])->group(function () {
     Route::get('/mi-horario', [HorarioPersonalController::class, 'index'])->name('horario.personal');
 });
+Route::get('/planes-empresas', [PlanEmpresaController::class, 'index'])->name('planes.empresas.index');
+Route::post('/planes-empresas/save', [PlanEmpresaController::class, 'save']);
+Route::post('/comentarios-planes', [PlanEmpresaController::class, 'addComment']);
+Route::post('/comentarios-planes/update', [PlanEmpresaController::class, 'updateComment']);
+Route::get('/planes-empresas/pdf', [PlanEmpresaController::class, 'generarPDF']);
+Route::get('/seguimiento', [PlanEmpresaController::class, 'seguimiento'])->name('seguimiento');
+Route::get('/empresas/{empresa}/seguimiento-videos', [PlanEmpresaController::class, 'seguimientoVideos'])->name('empresas.seguimiento-videos');
+Route::get('/empresas/{empresa}/seguimiento-tareas', [PlanEmpresaController::class, 'seguimientoTareas'])->name('empresas.seguimiento-tareas');
+// rutas en web.php o api
+Route::post('/empresa/{empresaId}/tareas/generar', [PlanEmpresaController::class, 'generarTareas'])
+    ->name('tareas.generar');
+Route::patch('/tareas/{tarea}/actualizar', [PlanEmpresaController::class, 'actualizarTarea'])->name('tareas.actualizar');
+
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

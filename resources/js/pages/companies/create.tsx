@@ -22,9 +22,14 @@ type CompanyCategory = {
     id: number;
     name: string;
 };
+type Paquete = {
+    id: number;
+    nombre_paquete: string;
+};
 
 type Props = {
     categories: CompanyCategory[];
+    paquetes: Paquete[];
 };
 
 type Availability = {
@@ -44,7 +49,7 @@ type SearchResult = {
 const DEFAULT_CENTER = { lat: -16.5871, lng: -68.0855 };
 const DEFAULT_ZOOM = 13;
 
-export default function Create({ categories }: Props) {
+export default function Create({ categories, paquetes }: Props) {
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
         company_category_id: string;
@@ -59,6 +64,12 @@ export default function Create({ categories }: Props) {
         logo: File | null;
         availability: Availability[];
         crear_usuario: boolean;
+        influencer: string; // Nuevo campo
+        paquete_id: string; // Nuevo campo
+        nombre_cliente: string;
+        especificaciones: string;
+        seguidores_inicio: string;
+        seguidores_fin: string;
     }>({
         name: '',
         company_category_id: '',
@@ -81,6 +92,12 @@ export default function Create({ categories }: Props) {
             },
         ],
         crear_usuario: false, // ← nuevo campo
+        influencer: 'si', // Valor por defecto
+        paquete_id: '', // Valor por defecto
+        nombre_cliente: '',
+        especificaciones: '',
+        seguidores_inicio: '',
+        seguidores_fin: '',
     });
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -275,6 +292,54 @@ export default function Create({ categories }: Props) {
                             {errors.end_date && <div className="mt-1 text-red-600">{errors.end_date}</div>}
                         </div>
                     </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Nombre del cliente */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Nombre del Cliente</label>
+                            <input
+                                type="text"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.nombre_cliente}
+                                onChange={(e) => setData('nombre_cliente', e.target.value)}
+                            />
+                            {errors.nombre_cliente && <div className="mt-1 text-red-600">{errors.nombre_cliente}</div>}
+                        </div>
+                        {/* Especificaciones */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Especificaciones</label>
+                            <input
+                                type="text"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.especificaciones}
+                                onChange={(e) => setData('especificaciones', e.target.value)}
+                            />
+                            {errors.especificaciones && <div className="mt-1 text-red-600">{errors.especificaciones}</div>}
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Seguidores inicio */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Seguidores Inicio</label>
+                            <input
+                                type="number"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.seguidores_inicio}
+                                onChange={(e) => setData('seguidores_inicio', e.target.value)}
+                            />
+                            {errors.seguidores_inicio && <div className="mt-1 text-red-600">{errors.seguidores_inicio}</div>}
+                        </div>
+                        {/* Seguidores fin */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Seguidores Fin</label>
+                            <input
+                                type="number"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.seguidores_fin}
+                                onChange={(e) => setData('seguidores_fin', e.target.value)}
+                            />
+                            {errors.seguidores_fin && <div className="mt-1 text-red-600">{errors.seguidores_fin}</div>}
+                        </div>
+                    </div>
 
                     {/* El resto del formulario sigue igual, pero aplica el mismo patrón de clases: 
                 
@@ -372,7 +437,52 @@ export default function Create({ categories }: Props) {
                             </Button>
                         </DialogActions>
                     </Dialog>
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">¿Es influencer?</label>
+                        <div className="flex space-x-4">
+                            <label className="inline-flex items-center">
+                                <input
+                                    type="radio"
+                                    name="influencer"
+                                    value="si"
+                                    checked={data.influencer === 'si'}
+                                    onChange={() => setData('influencer', 'si')}
+                                    className="form-radio"
+                                />
+                                <span className="ml-2">Sí</span>
+                            </label>
+                            <label className="inline-flex items-center">
+                                <input
+                                    type="radio"
+                                    name="influencer"
+                                    value="no"
+                                    checked={data.influencer === 'no'}
+                                    onChange={() => setData('influencer', 'no')}
+                                    className="form-radio"
+                                />
+                                <span className="ml-2">No</span>
+                            </label>
+                        </div>
+                        {errors.influencer && <div className="mt-1 text-red-600">{errors.influencer}</div>}
+                    </div>
 
+                    {/* Paquete (select) */}
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">Paquete</label>
+                        <select
+                            className="w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                            value={data.paquete_id}
+                            onChange={(e) => setData('paquete_id', e.target.value)}
+                        >
+                            <option value="">Seleccione un paquete</option>
+                            {paquetes.map((paquete) => (
+                                <option key={paquete.id} value={paquete.id}>
+                                    {paquete.nombre_paquete}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.paquete_id && <div className="mt-1 text-red-600">{errors.paquete_id}</div>}
+                    </div>
                     {/* Descripción (ancho completo) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Descripción</label>

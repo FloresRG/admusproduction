@@ -194,6 +194,7 @@ export function AppSidebar() {
                 icon: BusinessIcon,
                 items: [
                     { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
+                    { title: 'Planes Empresas', href: '/planes-empresas', icon: StoreIcon }, // CAMBIADO               
                     { title: 'Categorias', href: '/categories', icon: CategoryIcon },
                     { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
@@ -306,6 +307,7 @@ export function AppSidebar() {
                     title: 'Encargado de marketing',
                     icon: WorkIcon,
                     items: [
+                        
                         { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO     
                         { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
                         { title: 'Tareas Pendientes', href: '/tareas/pendientes', icon: PendingActionsIcon },
@@ -315,6 +317,7 @@ export function AppSidebar() {
                         { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
                         { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                         { title: 'Informes', href: '/informes', icon: BusinessIcon },
+                        { title: 'Planes Empresas', href: '/planes-empresas', icon: StoreIcon },
                     ],
                     isCollapsible: true,
                 },

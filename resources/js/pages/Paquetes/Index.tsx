@@ -28,9 +28,9 @@ const Index: React.FC<Props> = ({ paquetes, flash }) => {
     };
 
     const truncateText = (text: string | null | undefined, limit: number = 50): string => {
-    if (!text) return '';
-    return text.length > limit ? text.substring(0, limit) + '...' : text;
-};
+        if (!text) return '';
+        return text.length > limit ? text.substring(0, limit) + '...' : text;
+    };
 
     return (
         <AppLayout>

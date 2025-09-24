@@ -6,6 +6,7 @@ use App\Models\AvailabilityDay;
 use App\Models\Booking;
 use App\Models\Company;
 use App\Models\CompanyCategory;
+use App\Models\Paquete;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -57,9 +58,11 @@ class CompanyController extends Controller
     public function create()
     {
         $categories = CompanyCategory::all();
+        $paquetes = Paquete::all(); // Agrega esto
 
         return Inertia::render('companies/create', [
             'categories' => $categories,
+            'paquetes' => $paquetes, // Agrega esto
         ]);
     }
 
@@ -97,6 +100,12 @@ class CompanyController extends Controller
             'company_category_id' => 'required|exists:company_categories,id',
             'contract_duration' => 'required|string',
             'description' => 'nullable|string',
+            'influencer' => 'required|in:si,no',
+            'paquete_id' => 'nullable|exists:paquetes,id',
+            'nombre_cliente' => 'nullable|string|max:255',
+            'especificaciones' => 'nullable|string|max:255',
+            'seguidores_inicio' => 'nullable|integer|min:0',
+            'seguidores_fin' => 'nullable|integer|min:0',
             'direccion' => 'required|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
@@ -162,6 +171,7 @@ class CompanyController extends Controller
     {
         $company = Company::with(['availabilityDays', 'category'])->findOrFail($id);
         $categories = CompanyCategory::all();
+        $paquetes = Paquete::all();
         // Verifica si existe un usuario con el mismo nombre de la empresa
         $hasUser = User::where('name', $company->name)->exists();
 
@@ -202,8 +212,15 @@ class CompanyController extends Controller
                 'contrato_url' => $company->contrato ? asset($company->contrato) : null,
                 'logo_url' => $company->logo ? asset($company->logo) : null,
                 'availability' => $availability,
+                'influencer' => $company->influencer, // Agrega esto
+                'paquete_id' => $company->paquete_id,
+                'nombre_cliente' => $company->nombre_cliente,
+                'especificaciones' => $company->especificaciones,
+                'seguidores_inicio' => $company->seguidores_inicio,
+                'seguidores_fin' => $company->seguidores_fin,
             ],
             'categories' => $categories,
+            'paquetes' => $paquetes,
             'has_user' => $hasUser,
         ]);
     }
@@ -218,6 +235,12 @@ class CompanyController extends Controller
             'company_category_id' => 'required|exists:company_categories,id',
             'contract_duration' => 'required|string',
             'description' => 'nullable|string',
+            'influencer' => 'required|in:si,no',
+            'paquete_id' => 'nullable|exists:paquetes,id',
+            'nombre_cliente' => 'nullable|string|max:255',
+            'especificaciones' => 'nullable|string|max:255',
+            'seguidores_inicio' => 'nullable|integer|min:0',
+            'seguidores_fin' => 'nullable|integer|min:0',
             'direccion' => 'required|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',

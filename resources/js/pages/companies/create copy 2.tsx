@@ -22,48 +22,22 @@ type CompanyCategory = {
     id: number;
     name: string;
 };
+type Paquete = {
+    id: number;
+    nombre_paquete: string;
+};
+
+type Props = {
+    categories: CompanyCategory[];
+    paquetes: Paquete[];
+};
 
 type Availability = {
-    id?: number;
     day_of_week: number;
     start_time: string;
     end_time: string;
     turno: 'mañana' | 'tarde';
     cantidad?: number | null;
-};
-
-type Company = {
-    id: number;
-    name: string;
-    company_category_id: number;
-    contract_duration: string;
-    description: string;
-    direccion: string;
-    start_date: string;
-    end_date: string;
-    celular: string;
-
-    monto_mensual: string;
-    contrato_url: string | null;
-    logo_url: string | null;
-    availability: Availability[];
-};
-type Paquete = {
-    id: number;
-    nombre_paquete: string;
-};
-type Props = {
-    company: Company & {
-        nombre_cliente: string;
-        especificaciones: string;
-        seguidores_inicio: string;
-        seguidores_fin: string;
-        influencer: string;
-        paquete_id: number | null;
-    };
-    categories: CompanyCategory[];
-    paquetes: Paquete[];
-    has_user: boolean;
 };
 
 type SearchResult = {
@@ -74,9 +48,8 @@ type SearchResult = {
 
 const DEFAULT_CENTER = { lat: -16.5871, lng: -68.0855 };
 const DEFAULT_ZOOM = 13;
-const formatDate = (dateStr: string) => (dateStr ? new Date(dateStr).toISOString().slice(0, 10) : '');
 
-export default function Edit({ company, categories, paquetes, has_user }: Props) {
+export default function Create({ categories, paquetes }: Props) {
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
         company_category_id: string;
@@ -92,51 +65,38 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
         availability: Availability[];
         crear_usuario: boolean;
         influencer: string; // Nuevo campo
-        paquete_id: string;
-        nombre_cliente: string;
-        especificaciones: string;
-        seguidores_inicio: string;
-        seguidores_fin: string;
-        _method: string;
+        paquete_id: string; // Nuevo campo
     }>({
-        name: company.name,
-        company_category_id: company.company_category_id.toString(),
-        contract_duration: company.contract_duration,
-        description: company.description || '',
-        direccion: company.direccion,
-        start_date: formatDate(company.start_date), // <-- aquí
-        end_date: formatDate(company.end_date),
-        celular: company.celular || '',
+        name: '',
+        company_category_id: '',
+        contract_duration: '',
+        description: '',
+        direccion: '',
+        start_date: '',
+        end_date: '',
+        celular: '',
         contrato: null,
-        monto_mensual: company.monto_mensual || '',
+        monto_mensual: '',
         logo: null,
-        availability:
-            company.availability.length > 0
-                ? company.availability
-                : [
-                      {
-                          day_of_week: 1,
-                          start_time: '',
-                          end_time: '',
-                          turno: 'mañana',
-                          cantidad: null,
-                      },
-                  ],
+        availability: [
+            {
+                day_of_week: 1,
+                start_time: '',
+                end_time: '',
+                turno: 'mañana',
+                cantidad: null,
+            },
+        ],
         crear_usuario: false, // ← nuevo campo
-        influencer: company.influencer ?? 'no', // Nuevo campo
-        paquete_id: company.paquete_id ? String(company.paquete_id) : '',
-        nombre_cliente: company.nombre_cliente || '',
-        especificaciones: company.especificaciones || '',
-        seguidores_inicio: company.seguidores_inicio ? String(company.seguidores_inicio) : '',
-        seguidores_fin: company.seguidores_fin ? String(company.seguidores_fin) : '',
-        _method: 'PUT',
+        influencer: 'si', // Valor por defecto
+        paquete_id: '', // Valor por defecto
     });
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
-    const [logoPreview, setLogoPreview] = useState<string | null>(company.logo_url);
-    const [pdfPreview, setPdfPreview] = useState<string | null>(company.contrato_url);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [pdfPreview, setPdfPreview] = useState<string | null>(null);
 
     const handleAddAvailability = () => {
         setData('availability', [...data.availability, { day_of_week: 1, start_time: '', end_time: '', turno: 'mañana', cantidad: null }]);
@@ -158,27 +118,21 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/companies/${company.id}`);
+        post('/companies');
     };
-
     // Estado para manejar la visibilidad del mapa
     const [openMapModal, setOpenMapModal] = useState(false);
     const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(null);
     const [mapError, setMapError] = useState<string>('');
 
-    // Inicializar la ubicación desde los datos de la empresa
-    useEffect(() => {
-        if (data.direccion) {
-            const [lat, lng] = data.direccion.split(',').map(Number);
-            if (!isNaN(lat) && !isNaN(lng)) {
-                setSelectedLocation(new LatLng(lat, lng));
-            }
-        }
-    }, [data.direccion]);
-
     const handleOpenMap = () => {
         setMapError('');
         setOpenMapModal(true);
+        // Si ya hay una ubicación guardada, usarla como centro
+        if (data.direccion) {
+            const [lat, lng] = data.direccion.split(',').map(Number);
+            setSelectedLocation(new LatLng(lat, lng));
+        }
     };
 
     const handleCloseMap = () => {
@@ -191,6 +145,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
             return;
         }
 
+        // Redondear coordenadas a 6 decimales para mayor precisión
         const lat = Number(selectedLocation.lat.toFixed(6));
         const lng = Number(selectedLocation.lng.toFixed(6));
         setData('direccion', `${lat},${lng}`);
@@ -230,6 +185,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
         ) : null;
     }
 
+    // Añadir la función de búsqueda
     const handleSearch = async (query: string) => {
         if (!query.trim()) return;
 
@@ -245,6 +201,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
         }
     };
 
+    // Añadir función para seleccionar resultado
     const handleSelectSearchResult = (result: SearchResult) => {
         const newLocation = new LatLng(Number(result.lat), Number(result.lon));
         setSelectedLocation(newLocation);
@@ -254,9 +211,9 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
 
     return (
         <AppLayout>
-            <Head title={`Editar Empresa - ${company.name}`} />
+            <Head title="Crear Empresa" />
             <div className="mx-auto max-w-3xl rounded-xl bg-gradient-to-br from-white via-blue-50 to-blue-100 p-8 shadow-2xl ring-1 ring-blue-100">
-                <h1 className="mb-6 text-center text-3xl font-extrabold text-blue-700">Editar Empresa: {company.name}</h1>
+                <h1 className="mb-6 text-center text-3xl font-extrabold text-blue-700">Crear nueva Empresa</h1>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Nombre */}
@@ -289,6 +246,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                             {errors.company_category_id && <div className="mt-1 text-red-600">{errors.company_category_id}</div>}
                         </div>
                     </div>
+
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {/* Duración del contrato */}
                         <div>
@@ -307,7 +265,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                             <label className="block text-sm font-medium text-gray-700">Fecha de inicio</label>
                             <input
                                 type="date"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
                                 value={data.start_date}
                                 onChange={(e) => setData('start_date', e.target.value)}
                             />
@@ -319,63 +277,17 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                             <label className="block text-sm font-medium text-gray-700">Fecha de fin</label>
                             <input
                                 type="date"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
                                 value={data.end_date}
                                 onChange={(e) => setData('end_date', e.target.value)}
                             />
                             {errors.end_date && <div className="mt-1 text-red-600">{errors.end_date}</div>}
                         </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Nombre del cliente */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Nombre del Cliente</label>
-                            <input
-                                type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                value={data.nombre_cliente}
-                                onChange={(e) => setData('nombre_cliente', e.target.value)}
-                            />
-                            {errors.nombre_cliente && <div className="mt-1 text-red-600">{errors.nombre_cliente}</div>}
-                        </div>
-                        {/* Especificaciones */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Especificaciones</label>
-                            <input
-                                type="text"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                value={data.especificaciones}
-                                onChange={(e) => setData('especificaciones', e.target.value)}
-                            />
-                            {errors.especificaciones && <div className="mt-1 text-red-600">{errors.especificaciones}</div>}
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Seguidores inicio */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Seguidores Inicio</label>
-                            <input
-                                type="number"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                value={data.seguidores_inicio}
-                                onChange={(e) => setData('seguidores_inicio', e.target.value)}
-                            />
-                            {errors.seguidores_inicio && <div className="mt-1 text-red-600">{errors.seguidores_inicio}</div>}
-                        </div>
-                        {/* Seguidores fin */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">Seguidores Fin</label>
-                            <input
-                                type="number"
-                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                value={data.seguidores_fin}
-                                onChange={(e) => setData('seguidores_fin', e.target.value)}
-                            />
-                            {errors.seguidores_fin && <div className="mt-1 text-red-600">{errors.seguidores_fin}</div>}
-                        </div>
-                    </div>
-                    
+
+                    {/* El resto del formulario sigue igual, pero aplica el mismo patrón de clases: 
+                
+                - Botones mejorados con hover y transición */}
                     {/* Dirección con el mapa */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -396,11 +308,12 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                         </div>
                         {errors.direccion && <div className="mt-1 text-red-600">{errors.direccion}</div>}
                     </div>
+
                     <Dialog open={openMapModal} onClose={handleCloseMap} maxWidth="md" fullWidth>
                         <DialogTitle>
                             Seleccionar Ubicación
                             <Typography variant="caption" component="div" color="textSecondary">
-                                Haga doble clic en el mapa para seleccionar la ubicación
+                                Haga clic en el mapa para seleccionar la ubicación
                             </Typography>
                         </DialogTitle>
                         <DialogContent>
@@ -443,7 +356,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                 center={selectedLocation || DEFAULT_CENTER}
                                 zoom={DEFAULT_ZOOM}
                                 style={{ height: '400px', width: '100%' }}
-                                doubleClickZoom={false}
+                                doubleClickZoom={false} // Desactivar zoom con doble clic
                                 className="rounded-lg border border-gray-300 shadow-md"
                             >
                                 <TileLayer
@@ -496,6 +409,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                         </div>
                         {errors.influencer && <div className="mt-1 text-red-600">{errors.influencer}</div>}
                     </div>
+
                     {/* Paquete (select) */}
                     <div>
                         <label className="mb-2 block text-sm font-medium text-gray-700">Paquete</label>
@@ -513,7 +427,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                         </select>
                         {errors.paquete_id && <div className="mt-1 text-red-600">{errors.paquete_id}</div>}
                     </div>
-                    {/* Descripción */}
+                    {/* Descripción (ancho completo) */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Descripción</label>
                         <textarea
@@ -523,7 +437,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                         />
                     </div>
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Celular */}
+                        {/* celular */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Celular</label>
                             <input
@@ -540,7 +454,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                             {errors.celular && <div className="mt-1 text-red-600">{errors.celular}</div>}
                         </div>
 
-                        {/* Monto mensual */}
+                        {/* monto mensual */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Monto Mensual</label>
                             <input
@@ -557,10 +471,11 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                             {errors.monto_mensual && <div className="mt-1 text-red-600">{errors.monto_mensual}</div>}
                         </div>
                     </div>
+
                     <div className="grid grid-cols-1 gap-8 p-4 md:grid-cols-2">
-                        {/* Contrato PDF */}
+                        {/* Subida de contrato PDF */}
                         <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
-                            <h3 className="mb-3 text-lg font-semibold">Contrato (PDF)</h3>
+                            <h3 className="mb-3 text-lg font-semibold">Subir contrato (PDF)</h3>
                             <label className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition hover:border-blue-500">
                                 <span className="text-gray-600">Haz clic o arrastra un archivo PDF aquí</span>
                                 <input
@@ -575,17 +490,18 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                 />
                             </label>
 
+                            {/* Vista previa del contrato PDF */}
                             {pdfPreview && (
                                 <div className="mt-4">
-                                    <p className="mb-2 text-sm text-gray-600">{data.contrato ? 'Nuevo archivo seleccionado' : 'Archivo actual'}</p>
-                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="300px" className="rounded border" />
+                                    <h4 className="mb-2 text-sm font-medium text-gray-700">Vista previa:</h4>
+                                    <embed src={pdfPreview} type="application/pdf" width="100%" height="400px" className="rounded border" />
                                 </div>
                             )}
                         </div>
 
-                        {/* Logo imagen */}
+                        {/* Subida de logo (imagen) */}
                         <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
-                            <h3 className="mb-3 text-lg font-semibold">Logo</h3>
+                            <h3 className="mb-3 text-lg font-semibold">Subir logo (imagen)</h3>
                             <label className="flex h-20 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition hover:border-green-500">
                                 <span className="text-gray-600">Haz clic o arrastra una imagen aquí</span>
                                 <input
@@ -600,28 +516,28 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                 />
                             </label>
 
+                            {/* Vista previa del logo imagen */}
                             {logoPreview && (
                                 <div className="mt-4">
-                                    <p className="mb-2 text-sm text-gray-600">{data.logo ? 'Nueva imagen seleccionada' : 'Imagen actual'}</p>
+                                    <h4 className="mb-2 text-sm font-medium text-gray-700">Vista previa:</h4>
                                     <img src={logoPreview} alt="Vista previa del logo" className="max-h-48 w-full rounded border object-contain" />
                                 </div>
                             )}
                         </div>
                     </div>
-                    {!has_user && (
-                        <div className="mt-6">
-                            <label className="inline-flex items-center">
-                                <input
-                                    type="checkbox"
-                                    className="form-checkbox"
-                                    checked={data.crear_usuario}
-                                    onChange={(e) => setData('crear_usuario', e.target.checked)}
-                                />
-                                <span className="ml-2 text-sm text-gray-700">¿Desea crear usuario para esta empresa?</span>
-                            </label>
-                        </div>
-                    )}
-                    {/* Disponibilidad */}
+
+                    <div className="mt-6">
+                        <label className="inline-flex items-center">
+                            <input
+                                type="checkbox"
+                                className="form-checkbox"
+                                checked={data.crear_usuario}
+                                onChange={(e) => setData('crear_usuario', e.target.checked)}
+                            />
+                            <span className="ml-2 text-sm text-gray-700">¿Desea crear usuario para esta empresa?</span>
+                        </label>
+                    </div>
+                    {/* Disponibilidad (como la tienes, sin cambios grandes) */}
                     <div className="mt-6">
                         <label className="mb-2 block text-sm font-medium text-gray-700">Días de disponibilidad</label>
 
@@ -639,8 +555,7 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                         <option value={3}>Miércoles</option>
                                         <option value={4}>Jueves</option>
                                         <option value={5}>Viernes</option>
-                                        <option value={6}>Sábado</option>
-                                        <option value={7}>Domingo</option>
+                                        <option value={6}>Sabado</option>
                                     </select>
 
                                     {/* Turno */}
@@ -649,12 +564,12 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                         value={avail.turno}
                                         onChange={(e) => {
                                             const turno = e.target.value as 'mañana' | 'tarde';
-                                            let start_time = avail.start_time;
-                                            let end_time = avail.end_time;
-                                            if (turno === 'mañana' && (!start_time || !end_time)) {
+                                            let start_time = '';
+                                            let end_time = '';
+                                            if (turno === 'mañana') {
                                                 start_time = '09:30';
                                                 end_time = '13:00';
-                                            } else if (turno === 'tarde' && (!start_time || !end_time)) {
+                                            } else {
                                                 start_time = '14:00';
                                                 end_time = '18:00';
                                             }
@@ -667,12 +582,13 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                         <option value="tarde">Tarde</option>
                                     </select>
 
-                                    {/* Cantidad */}
-                                    <div className="col-span-1">
+                                    {/* Cantidad (2 fracciones) */}
+                                    <div className="col-span-2">
+                                        <label className="sr-only">Cantidad</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            className="w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                             placeholder="Cantidad"
                                             value={avail.cantidad ?? ''}
                                             onChange={(e) =>
@@ -685,36 +601,50 @@ export default function Edit({ company, categories, paquetes, has_user }: Props)
                                     <div className="col-span-1 flex items-center justify-center">
                                         <button
                                             type="button"
-                                            className="text-xl font-bold text-red-600 hover:text-red-800"
+                                            className="text-xl font-bold text-red-600"
                                             onClick={() => handleRemoveAvailability(idx)}
                                             disabled={data.availability.length === 1}
-                                            
                                             title="Eliminar este día"
                                         >
-                                            &times;
+                                            ×
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         ))}
 
-                        <div className="flex justify-end">
-                            <Button type="button" variant="outlined" color="primary" onClick={handleAddAvailability}>
-                                Agregar día
-                            </Button>
+                        {/* Botón añadir */}
+                        <div className="mt-2 flex justify-center">
+                            <button type="button" onClick={handleAddAvailability} className="font-semibold text-blue-600">
+                                + Añadir otro día
+                            </button>
                         </div>
+
+                        {/* Errores de disponibilidad */}
+                        {Object.keys(errors)
+                            .filter((key) => key.startsWith('availability'))
+                            .map((key) => (
+                                <div key={key} className="text-center text-red-600">
+                                    {errors[key as keyof typeof errors]}
+                                </div>
+                            ))}
                     </div>
-                    {/* Botones de acción */}
-                    <div className="mt-8 flex justify-between">
+
+                    {/* Ejemplo de botón mejorado */}
+                    <div className="flex justify-end space-x-4">
                         <Link
                             href="/companies"
-                            className="inline-block rounded-md bg-gray-200 px-6 py-3 text-center font-semibold text-gray-700 shadow transition hover:bg-gray-300"
+                            className="rounded-md bg-gray-300 px-6 py-2 text-gray-700 transition-colors duration-150 hover:bg-gray-400"
                         >
                             Cancelar
                         </Link>
-                        <Button type="submit" variant="contained" color="primary" disabled={processing}>
-                            Guardar Cambios
-                        </Button>
+                        <button
+                            type="submit"
+                            className="rounded-md bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                            disabled={processing}
+                        >
+                            {processing ? 'Creando...' : 'Crear'}
+                        </button>
                     </div>
                 </form>
             </div>
