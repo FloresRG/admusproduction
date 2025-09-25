@@ -194,7 +194,7 @@ export function AppSidebar() {
                 icon: BusinessIcon,
                 items: [
                     { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
-                    { title: 'Planes Empresas', href: '/planes-empresas', icon: StoreIcon }, // CAMBIADO               
+                                  
                     { title: 'Categorias', href: '/categories', icon: CategoryIcon },
                     { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
@@ -227,6 +227,20 @@ export function AppSidebar() {
                     { title: 'Semana Tareas', href: '/semana', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
                     { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
+                ],
+                isCollapsible: true,
+            },
+            {
+                title: 'Gestion de Marketing',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Empresas', href: '/planes-empresas', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'En Produccion', href: '#', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'En Edicion', href: '#', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'Publicados', href: '#', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'Videos Pendientes', href: '#', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'Videos En revision', href: '#', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'Videos Publicados', href: '#', icon: StoreIcon }, // CAMBIADO 
                 ],
                 isCollapsible: true,
             },
@@ -317,7 +331,7 @@ export function AppSidebar() {
                         { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
                         { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
                         { title: 'Informes', href: '/informes', icon: BusinessIcon },
-                        { title: 'Planes Empresas', href: '/planes-empresas', icon: StoreIcon },
+                        { title: 'Planes Empresas', href: '#', icon: StoreIcon },
                     ],
                     isCollapsible: true,
                 },

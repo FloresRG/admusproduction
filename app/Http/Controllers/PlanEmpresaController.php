@@ -27,17 +27,6 @@ class PlanEmpresaController extends Controller
             'companies' => $companies
         ]);
     }
-
-    public function seguimientoVideos($empresaId)
-    {
-        $empresa = Company::findOrFail($empresaId);
-        $videos = VideoSeguimiento::where('empresa_id', $empresaId)->get();
-
-        return inertia('PlanesEmpresas/VideosSeguimiento', [
-            'empresa' => $empresa,
-            'videos' => $videos,
-        ]);
-    }
     public function seguimientoTareas($empresaId)
     {
         $empresa = Company::with(['category', 'paquete'])->findOrFail($empresaId);
@@ -117,51 +106,5 @@ class PlanEmpresaController extends Controller
         $tarea->update($validated);
 
         return redirect()->back()->with('success', 'Tarea actualizada correctamente.');
-    }
-
-
-
-
-    public function storeTarea(Request $request, $empresaId)
-    {
-        // validar
-        $data = $request->validate([
-            'anio' => 'required|string',
-            'mes' => 'required|string',
-            'semana' => 'required|string',
-            'titulo' => 'nullable|string',
-            'fecha_produccion' => 'nullable|date',
-            'estado_produccion' => 'nullable|string',
-            // otros campos si vienen
-        ]);
-
-        $data['empresa_id'] = $empresaId;
-
-        $tarea = TareaSeguimiento::create($data);
-
-        return response()->json($tarea);
-    }
-
-    public function updateTarea(Request $request, $empresaId, $id)
-    {
-        $tarea = TareaSeguimiento::where('empresa_id', $empresaId)->findOrFail($id);
-
-        $data = $request->validate([
-            'titulo' => 'nullable|string',
-            'fecha_produccion' => 'nullable|date',
-            'estado_produccion' => 'nullable|string',
-            'fecha_edicion' => 'nullable|date',
-            'estado_edicion' => 'nullable|string',
-            'fecha_entrega' => 'nullable|date',
-            'estado_entrega' => 'nullable|string',
-            'estrategia' => 'nullable|string',
-            'comentario' => 'nullable|string',
-            'guion' => 'nullable|string',
-            // tal vez anio, mes, semana no cambien
-        ]);
-
-        $tarea->update($data);
-
-        return response()->json($tarea);
     }
 }

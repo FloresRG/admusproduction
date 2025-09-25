@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 
 type Paquete = {
     nombre_paquete: string;
@@ -34,19 +35,37 @@ type Props = {
 };
 
 const Index = ({ companies }: Props) => {
-    return (
+    const [search, setSearch] = useState('');
+
+    const filteredCompanies = companies.filter((company) =>
+        company.name.toLowerCase().includes(search.toLowerCase())
+    );
+     return (
         <AppLayout>
-            <Head title="Lista de Compañías" />
+            <Head title="Lista de Empresas" />
 
             <div className="container mx-auto p-8">
-                <h1 className="mb-8 border-b-4 border-indigo-500 pb-2 text-4xl font-extrabold text-gray-900">Listado de Compañías</h1>
+                <h1 className="mb-8 border-b-4 border-indigo-500 pb-2 text-4xl font-extrabold text-gray-900">
+                    Listado de Empresas
+                </h1>
+
+                {/* Buscador */}
+                <div className="mb-6 flex justify-end">
+                    <input
+                        type="text"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Buscar empresa..."
+                        className="w-full max-w-xs rounded-lg border border-gray-300 px-4 py-2 text-gray-700 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    />
+                </div>
 
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-indigo-100">
                             <tr>
                                 <th scope="col" className="px-6 py-3 text-left text-lg font-semibold text-indigo-700">
-                                    Datos de la Compañía
+                                    Datos de la Empresa
                                 </th>
                                 <th colSpan={12} scope="col" className="px-6 py-3 text-center text-lg font-semibold text-indigo-700">
                                     Detalles del Paquete
@@ -69,7 +88,7 @@ const Index = ({ companies }: Props) => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 bg-white">
-                            {companies.map((company) => (
+                            {filteredCompanies.map((company) => (
                                 <tr key={company.id} className="transition-colors duration-300 hover:bg-indigo-50">
                                     <td className="px-6 py-4 align-top text-base font-medium whitespace-pre-line text-gray-800">
                                         <p>
@@ -83,9 +102,6 @@ const Index = ({ companies }: Props) => {
                                         </p>
                                         <p>
                                             <span className="font-semibold">Categoría:</span> {company.category?.name || '-'}
-                                        </p>
-                                        <p>
-                                            <span className="font-semibold">Duración Contrato:</span> {company.contract_duration || '-'}
                                         </p>
                                     </td>
                                     <td className="px-3 py-4 text-center font-semibold text-indigo-700">{company.paquete?.nombre_paquete || '-'}</td>

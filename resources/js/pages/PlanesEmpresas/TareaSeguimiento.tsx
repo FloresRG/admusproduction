@@ -392,13 +392,8 @@ export default function SeguimientoTareas({ empresa, tareas = [], usersProduccio
                         <div className="flex flex-col">
                             <span className="text-sm font-semibold text-gray-500">Fechas del Contrato</span>
                             <span className="text-gray-900">
-                                {empresa.start_date} - {empresa.end_date}
+                                Inicio: {empresa.start_date} / Fin: {empresa.end_date}
                             </span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Monto Mensual</span>
-                            <span className="text-gray-900">{empresa.monto_mensual}</span>
                         </div>
 
                         <div className="flex flex-col">
@@ -409,20 +404,8 @@ export default function SeguimientoTareas({ empresa, tareas = [], usersProduccio
                         </div>
 
                         <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Teléfono</span>
+                            <span className="text-sm font-semibold text-gray-500">Celular</span>
                             <span className="text-gray-900">{empresa.celular}</span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Influencer</span>
-                            <span className="text-gray-900">{empresa.influencer}</span>
-                        </div>
-                    </div>
-
-                    <div className="mt-6 border-t pt-4">
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Especificaciones</span>
-                            <span className="mt-1 text-gray-900">{empresa.especificaciones}</span>
                         </div>
                     </div>
                 </div>

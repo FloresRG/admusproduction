@@ -110,7 +110,7 @@ const Semanainfluencer = () => {
 
     const [mensaje, setMensaje] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
-        const empresaColors = [
+    const empresaColors = [
         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
         'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',

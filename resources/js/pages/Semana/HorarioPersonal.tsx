@@ -299,7 +299,7 @@ export default function HorarioPersonal({ user, horarioSemanal, currentWeek, wee
                                         )} */}
                                         {selectedCompany.direccion && (
                                             <MapComponent
-                                                direccion={selectedCompany.direccion}
+                                                
                                                 nombre={selectedCompany.name}
                                                 direccion={selectedCompany.direccion}
                                             />

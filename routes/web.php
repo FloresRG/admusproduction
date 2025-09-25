@@ -527,10 +527,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/mi-horario', [HorarioPersonalController::class, 'index'])->name('horario.personal');
 });
 Route::get('/planes-empresas', [PlanEmpresaController::class, 'index'])->name('planes.empresas.index');
-Route::post('/planes-empresas/save', [PlanEmpresaController::class, 'save']);
-Route::post('/comentarios-planes', [PlanEmpresaController::class, 'addComment']);
-Route::post('/comentarios-planes/update', [PlanEmpresaController::class, 'updateComment']);
-Route::get('/planes-empresas/pdf', [PlanEmpresaController::class, 'generarPDF']);
 Route::get('/seguimiento', [PlanEmpresaController::class, 'seguimiento'])->name('seguimiento');
 Route::get('/empresas/{empresa}/seguimiento-videos', [PlanEmpresaController::class, 'seguimientoVideos'])->name('empresas.seguimiento-videos');
 Route::get('/empresas/{empresa}/seguimiento-tareas', [PlanEmpresaController::class, 'seguimientoTareas'])->name('empresas.seguimiento-tareas');
