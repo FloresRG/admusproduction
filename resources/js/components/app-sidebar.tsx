@@ -322,16 +322,16 @@ export function AppSidebar() {
                     title: 'Encargado de marketing',
                     icon: WorkIcon,
                     items: [
-                        { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO
-                        { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
-                        { title: 'Tareas Pendientes', href: '/tareas/pendientes', icon: PendingActionsIcon },
-                        { title: 'Tareas Publicadas', href: '/tareas/publicadas', icon: PublishedWithChangesIcon },
-                        { title: 'Agenda Mensual', href: '/mes', icon: TableChartIcon }, // CAMBIADO
-                        { title: 'Reporte de tareas', href: '/reportetareas', icon: TableChartIcon }, // CAMBIADO
-                        { title: 'Link de Empresas', href: '/empresa-links', icon: LinkIcon }, // CAMBIADO
-                        { title: 'Videos Empresas', href: '/videos', icon: BusinessIcon },
-                        { title: 'Informes', href: '/informes', icon: BusinessIcon },
-                        { title: 'Planes Empresas', href: '#', icon: StoreIcon },
+                       
+                        { title: 'Lista de Empresas', href: '/planes-empresas', icon: BusinessIcon }, // Empresas
+                        { title: 'Todas las Tareas', href: '/seguimiento-tareas-todos', icon: ListAltIcon }, // Lista
+                        { title: 'Pendientes Mes', href: '/seguimiento-tareas-pendientes', icon: EventNoteIcon }, // Calendario/mes
+                        { title: 'Pendientes de Hoy', href: '/seguimiento-tareas-pendienteshoy', icon: TodayIcon }, // Hoy
+                        { title: 'Pendientes Producción Hoy', href: '/seguimiento-tareas-pendienteshoyproduccion', icon: EmojiPeopleIcon }, // Producción
+                        { title: 'Pendientes Edición Hoy', href: '/seguimiento-tareas-pendienteshoyedicion', icon: AdminPanelSettingsIcon }, // Edición
+                        { title: 'En Revisión', href: '/seguimiento-tareas-pendienteshoyrevision', icon: RateReviewIcon }, // Revisión
+                        { title: 'Publicados', href: '/seguimiento-tareas-publicados', icon: PublishedWithChangesIcon }, // Publicados
+                         { title: 'Informes', href: '/informes', icon: BusinessIcon },
                     ],
                     isCollapsible: true,
                 },

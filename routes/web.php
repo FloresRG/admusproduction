@@ -528,7 +528,6 @@ Route::middleware(['auth'])->group(function () {
 });
 Route::get('/planes-empresas', [PlanEmpresaController::class, 'index'])->name('planes.empresas.index');
 Route::get('/seguimiento', [PlanEmpresaController::class, 'seguimiento'])->name('seguimiento');
-Route::get('/empresas/{empresa}/seguimiento-videos', [PlanEmpresaController::class, 'seguimientoVideos'])->name('empresas.seguimiento-videos');
 Route::get('/empresas/{empresa}/seguimiento-tareas', [PlanEmpresaController::class, 'seguimientoTareas'])->name('empresas.seguimiento-tareas');
 Route::post('/empresa/{empresaId}/tareas/generar', [PlanEmpresaController::class, 'generarTareas'])
     ->name('tareas.generar');
