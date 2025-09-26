@@ -530,10 +530,25 @@ Route::get('/planes-empresas', [PlanEmpresaController::class, 'index'])->name('p
 Route::get('/seguimiento', [PlanEmpresaController::class, 'seguimiento'])->name('seguimiento');
 Route::get('/empresas/{empresa}/seguimiento-videos', [PlanEmpresaController::class, 'seguimientoVideos'])->name('empresas.seguimiento-videos');
 Route::get('/empresas/{empresa}/seguimiento-tareas', [PlanEmpresaController::class, 'seguimientoTareas'])->name('empresas.seguimiento-tareas');
-// rutas en web.php o api
 Route::post('/empresa/{empresaId}/tareas/generar', [PlanEmpresaController::class, 'generarTareas'])
     ->name('tareas.generar');
 Route::patch('/tareas/{tarea}/actualizar', [PlanEmpresaController::class, 'actualizarTarea'])->name('tareas.actualizar');
+Route::post('/empresas/{empresa}/tareas/crear', [PlanEmpresaController::class, 'crear'])->name('tareas.crear');
+
+Route::get('/seguimiento-tareas-todos', [PlanEmpresaController::class, 'seguimientoTareasTodos'])
+    ->name('seguimiento-tareas-todos');
+Route::get('/seguimiento-tareas-pendientes', [PlanEmpresaController::class, 'seguimientoTareasPendientes'])
+    ->name('seguimiento-tareas-pendientes');
+Route::get('/seguimiento-tareas-pendienteshoy', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoy'])
+    ->name('seguimiento-tareas-pendienteshoy');
+Route::get('/seguimiento-tareas-pendienteshoyproduccion', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyProduccion'])
+    ->name('seguimiento-tareas-pendienteshoyproduccion');
+    Route::get('/seguimiento-tareas-pendienteshoyedicion', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyEdicion'])
+    ->name('seguimiento-tareas-pendienteshoyedicion');
+        Route::get('/seguimiento-tareas-pendienteshoyrevision', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyEdicionRevision'])
+    ->name('seguimiento-tareas-pendienteshoyrevision');
+    Route::get('/seguimiento-tareas-publicados', [PlanEmpresaController::class, 'seguimientoTareasPublicados'])
+    ->name('seguimiento-tareas-publicados');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

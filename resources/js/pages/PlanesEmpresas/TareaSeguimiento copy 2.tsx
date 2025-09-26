@@ -180,13 +180,8 @@ function EditableRow({ tarea, usersProduccion, usersEdicion }: { tarea: TareaSeg
     };
 
     // ✅ Clase condicional para la fila
-const rowClass = formData.estado_entrega === 'completado'
-  ? 'bg-green-100 text-green-800 border-2 border-emerald-500 shadow-md font-semibold'
-  : 'hover:bg-gray-50';
+    const rowClass = formData.estado_entrega === 'completado' ? 'bg-green-100 text-green-800' : 'hover:bg-gray-50';
 
-    const columnaProduccion = 'bg-blue-200 border-blue-400'; // azul suave, elegante
-    const columnaEdicion = 'bg-yellow-200 border-yellow-400'; // amarillo dorado claro
-    const columnaEntrega = 'bg-green-200 border-green-400'; // verde menta suave
     return (
         // ✅ Aplicamos la clase condicional en el <tr>
         <tr className={`text-sm ${rowClass}`}>
@@ -213,7 +208,7 @@ const rowClass = formData.estado_entrega === 'completado'
                 </div>
             </td>
             {/* Fechas y estados */}
-            <td className={`border px-4 py-2 ${columnaProduccion}`}>
+            <td className="border px-4 py-2">
                 <input
                     type="date"
                     name="fecha_produccion"
@@ -251,7 +246,7 @@ const rowClass = formData.estado_entrega === 'completado'
                 )}
             </td>
             {/* Estado Producción */}
-            <td className={`border px-4 py-2 text-center ${columnaProduccion}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator
                     status={formData.estado_produccion}
                     fieldName="estado_produccion"
@@ -259,7 +254,7 @@ const rowClass = formData.estado_entrega === 'completado'
                     onChange={handleEstadoChange}
                 />
             </td>
-            <td className={`border px-4 py-2 text-center ${columnaProduccion}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator
                     status={formData.estado_produccion}
                     fieldName="estado_produccion"
@@ -268,7 +263,7 @@ const rowClass = formData.estado_entrega === 'completado'
                 />
             </td>
             {/* Nuevo: Usuario de Producción */}
-            <td className={`border px-4 py-2 ${columnaProduccion}`}>
+            <td className="border px-4 py-2">
                 <label className="text-xs text-gray-500">Asignado:</label>
                 <select
                     name="user_produccion_id"
@@ -284,7 +279,7 @@ const rowClass = formData.estado_entrega === 'completado'
                     ))}
                 </select>
             </td>
-            <td className={`border px-4 py-2 ${columnaEdicion}`}>
+            <td className="border px-4 py-2">
                 <input
                     type="date"
                     name="fecha_edicion"
@@ -321,13 +316,13 @@ const rowClass = formData.estado_entrega === 'completado'
                 )}
             </td>
             {/* Estado Edición */}
-            <td className={`border px-4 py-2 text-center ${columnaEdicion}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator status={formData.estado_edicion} fieldName="estado_edicion" value="pendiente" onChange={handleEstadoChange} />
             </td>
-            <td className={`border px-4 py-2 text-center ${columnaEdicion}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator status={formData.estado_edicion} fieldName="estado_edicion" value="revision" onChange={handleEstadoChange} />
             </td>
-            <td className={`border px-4 py-2 text-center ${columnaEdicion}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator
                     status={formData.estado_edicion}
                     fieldName="estado_edicion"
@@ -336,7 +331,7 @@ const rowClass = formData.estado_entrega === 'completado'
                 />
             </td>
             {/* Nuevo: Usuario de Edición */}
-            <td className={`border px-4 py-2 ${columnaEdicion}`}>
+            <td className="border px-4 py-2">
                 <label className="text-xs text-gray-500">Asignado:</label>
                 <select
                     name="user_edicion_id"
@@ -352,8 +347,7 @@ const rowClass = formData.estado_entrega === 'completado'
                     ))}
                 </select>
             </td>
-
-            <td className={`border px-4 py-2 ${columnaEntrega}`}>
+            <td className="border px-4 py-2">
                 <input
                     type="date"
                     name="fecha_entrega"
@@ -390,10 +384,10 @@ const rowClass = formData.estado_entrega === 'completado'
                 )}
             </td>
             {/* Estado Entrega */}
-            <td className={`border px-4 py-2 text-center ${columnaEntrega}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator status={formData.estado_entrega} fieldName="estado_entrega" value="pendiente" onChange={handleEstadoChange} />
             </td>
-            <td className={`border px-4 py-2 text-center ${columnaEntrega}`}>
+            <td className="border px-4 py-2 text-center">
                 <ColoredStatusIndicator
                     status={formData.estado_entrega}
                     fieldName="estado_entrega"
@@ -441,31 +435,6 @@ export default function SeguimientoTareas({
     mes,
     anio,
 }: Props & { mes: string; anio: string }) {
-    const [nuevoTitulo, setNuevoTitulo] = useState('');
-    const [nuevaSemana, setNuevaSemana] = useState('1');
-
-    const handleCrearTarea = () => {
-        if (!nuevoTitulo) return alert('Debes ingresar un título para la tarea');
-
-        if (!confirm(`¿Crear tarea "${nuevoTitulo}" para la semana ${nuevaSemana}?`)) return;
-
-        router.post(
-            route('tareas.crear', empresa.id),
-            {
-                titulo: nuevoTitulo,
-                semana: nuevaSemana,
-                mes,
-                anio,
-            },
-            {
-                onSuccess: () => {
-                    setNuevoTitulo('');
-                    setNuevaSemana('1');
-                },
-                onError: () => alert('Error al crear la tarea'),
-            },
-        );
-    };
     const now = new Date();
 
     const meses = [
@@ -577,7 +546,6 @@ export default function SeguimientoTareas({
                         </div>
                     </div>
                 </div>
-
                 {/* Formulario de filtro */}
                 <div className="mb-4 flex items-center space-x-4">
                     <select value={mesFiltro} onChange={(e) => setMesFiltro(e.target.value)} className="rounded border px-2 py-1">
@@ -599,9 +567,8 @@ export default function SeguimientoTareas({
                     </button>
                 </div>
                 <div className="mb-6 rounded-lg bg-gray-100 p-4 text-center text-xl font-bold text-gray-800 shadow-sm">
-                    {meses.find((m) => m.value === mes)?.label ?? 'Mes'} {anio}
+                    {meses.find(m => m.value === mes)?.label ?? 'Mes'} {anio}
                 </div>
-
                 {tareas.length === 0 ? (
                     <div className="mb-6">
                         <button onClick={handleGenerar} className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
@@ -610,27 +577,6 @@ export default function SeguimientoTareas({
                     </div>
                 ) : (
                     <div>
-                        <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
-                            <h2 className="mb-4 text-xl font-bold text-gray-800">Crear Nueva Tarea</h2>
-                            <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-                                <input
-                                    type="text"
-                                    placeholder="Título de la tarea"
-                                    value={nuevoTitulo}
-                                    onChange={(e) => setNuevoTitulo(e.target.value)}
-                                    className="w-full rounded border px-2 py-1"
-                                />
-                                <select value={nuevaSemana} onChange={(e) => setNuevaSemana(e.target.value)} className="rounded border px-2 py-1">
-                                    <option value="1">Semana 1</option>
-                                    <option value="2">Semana 2</option>
-                                    <option value="3">Semana 3</option>
-                                    <option value="4">Semana 4</option>
-                                </select>
-                                <button onClick={handleCrearTarea} className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600">
-                                    Crear Tarea
-                                </button>
-                            </div>
-                        </div>
                         <h2 className="mb-4 text-xl font-semibold">Tareas de Seguimiento</h2>
                         {semanasOrdenadas.map((semana) => (
                             <div key={semana} className="mb-8">

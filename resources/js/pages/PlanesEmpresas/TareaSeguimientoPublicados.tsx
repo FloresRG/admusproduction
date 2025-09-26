@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
 type Company = {
@@ -57,11 +57,13 @@ type TareaSeguimiento = {
     estrategia: string;
     comentario: string;
     guion: string;
+    empresa?: Company | null;
 };
 
 type Props = {
-    empresa: Company;
-    tareas: TareaSeguimiento[];
+    empresas: Company[];
+    tareas: TareaSeguimiento[]; // todas las tareas de todas las empresas
+
     // ✅ Ahora recibimos dos listas, una para cada rol
     usersProduccion: User[];
     usersEdicion: User[];
@@ -85,7 +87,17 @@ function ColoredStatusIndicator({ status, fieldName, value, onChange }) {
 }
 // Fila editable para cada tarea
 // Fila editable para cada tarea
-function EditableRow({ tarea, usersProduccion, usersEdicion }: { tarea: TareaSeguimiento; usersProduccion: User[]; usersEdicion: User[] }) {
+function EditableRow({
+    tarea,
+    usersProduccion,
+    usersEdicion,
+    empresaNombre, // 👈 Nuevo prop
+}: {
+    tarea: TareaSeguimiento;
+    usersProduccion: User[];
+    usersEdicion: User[];
+    empresaNombre: string;
+}) {
     const [formData, setFormData] = useState({
         titulo: tarea.titulo,
         fecha_produccion: tarea.fecha_produccion ?? '',
@@ -107,90 +119,53 @@ function EditableRow({ tarea, usersProduccion, usersEdicion }: { tarea: TareaSeg
         guion: tarea.guion,
     });
 
-    // Nuevo estado para controlar la visibilidad de los campos de nueva fecha
     const [showNewProduccion, setShowNewProduccion] = useState(!!tarea.fecha_nueva_produccion);
     const [showNewEdicion, setShowNewEdicion] = useState(!!tarea.fecha_nueva_edicion);
     const [showNewEntrega, setShowNewEntrega] = useState(!!tarea.fecha_nueva_entrega);
 
     const handleEstadoChange = (campo: 'estado_produccion' | 'estado_edicion' | 'estado_entrega', valor: 'pendiente' | 'revision' | 'completado') => {
-        setFormData((prev) => {
-            const newForm = { ...prev, [campo]: valor };
-            router.patch(
-                route('tareas.actualizar', tarea.id),
-                {
-                    ...newForm,
-                    fecha_produccion: newForm.fecha_produccion || null,
-                    fecha_nueva_produccion: newForm.fecha_nueva_produccion || null,
-                    fecha_edicion: newForm.fecha_edicion || null,
-                    fecha_nueva_edicion: newForm.fecha_nueva_edicion || null,
-                    fecha_entrega: newForm.fecha_entrega || null,
-                    fecha_nueva_entrega: newForm.fecha_nueva_entrega || null,
-                },
-                {
-                    preserveScroll: true,
-                    onError: () => alert('Error al actualizar tarea'),
-                },
-            );
-            return newForm;
-        });
+        const newForm = { ...formData, [campo]: valor };
+        setFormData(newForm);
+        router.patch(route('tareas.actualizar', tarea.id), newForm, { preserveScroll: true, onError: () => alert('Error al actualizar tarea') });
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        const finalValue = value === '' ? null : Number(value);
-        const newForm = { ...formData, [name]: finalValue };
+        const value = e.target.value === '' ? null : Number(e.target.value);
+        const newForm = { ...formData, [e.target.name]: value };
         setFormData(newForm);
-        router.patch(
-            route('tareas.actualizar', tarea.id),
-            {
-                ...newForm,
-                fecha_produccion: newForm.fecha_produccion || null,
-                fecha_nueva_produccion: newForm.fecha_nueva_produccion || null,
-                fecha_edicion: newForm.fecha_edicion || null,
-                fecha_nueva_edicion: newForm.fecha_nueva_edicion || null,
-                fecha_entrega: newForm.fecha_entrega || null,
-                fecha_nueva_entrega: newForm.fecha_nueva_entrega || null,
-            },
-            {
-                preserveScroll: true,
-                onError: () => alert('Error al actualizar tarea'),
-            },
-        );
+        router.patch(route('tareas.actualizar', tarea.id), newForm, { preserveScroll: true, onError: () => alert('Error al actualizar tarea') });
     };
 
     const handleBlur = () => {
-        const payload = {
-            ...formData,
-            fecha_produccion: formData.fecha_produccion || null,
-            fecha_nueva_produccion: formData.fecha_nueva_produccion || null,
-            fecha_edicion: formData.fecha_edicion || null,
-            fecha_nueva_edicion: formData.fecha_nueva_edicion || null,
-            fecha_entrega: formData.fecha_entrega || null,
-            fecha_nueva_entrega: formData.fecha_nueva_entrega || null,
-        };
-        router.patch(route('tareas.actualizar', tarea.id), payload, {
-            preserveScroll: true,
-            onError: () => alert('Error al actualizar tarea'),
-        });
+        router.patch(route('tareas.actualizar', tarea.id), formData, { preserveScroll: true, onError: () => alert('Error al actualizar tarea') });
     };
 
-    // ✅ Clase condicional para la fila
 const rowClass = formData.estado_entrega === 'completado'
   ? 'bg-green-100 text-green-800 border-2 border-emerald-500 shadow-md font-semibold'
   : 'hover:bg-gray-50';
-
     const columnaProduccion = 'bg-blue-200 border-blue-400'; // azul suave, elegante
     const columnaEdicion = 'bg-yellow-200 border-yellow-400'; // amarillo dorado claro
     const columnaEntrega = 'bg-green-200 border-green-400'; // verde menta suave
+
     return (
-        // ✅ Aplicamos la clase condicional en el <tr>
         <tr className={`text-sm ${rowClass}`}>
-            {/* Celda combinada para Título y Estrategia */}
+            {/* Empresa */}
+            {/* Empresa */}
+            <td className="border px-4 py-2 font-semibold">
+                {tarea.empresa ? (
+                    <Link href={route('empresas.seguimiento-tareas', tarea.empresa.id)} className="text-blue-600 hover:underline">
+                        {empresaNombre}
+                    </Link>
+                ) : (
+                    'Sin empresa'
+                )}
+            </td>
+
+            {/* Título y Estrategia */}
             <td className="border px-4 py-2">
                 <div className="flex flex-col space-y-2">
                     <label className="text-xs text-gray-500">Título:</label>
@@ -284,7 +259,7 @@ const rowClass = formData.estado_entrega === 'completado'
                     ))}
                 </select>
             </td>
-            <td className={`border px-4 py-2 ${columnaEdicion}`}>
+            <td  className={`border px-4 py-2 ${columnaEdicion}`}>
                 <input
                     type="date"
                     name="fecha_edicion"
@@ -321,7 +296,7 @@ const rowClass = formData.estado_entrega === 'completado'
                 )}
             </td>
             {/* Estado Edición */}
-            <td className={`border px-4 py-2 text-center ${columnaEdicion}`}>
+            <td className={`border px-4 py-2 text-center ${columnaEdicion}`}> 
                 <ColoredStatusIndicator status={formData.estado_edicion} fieldName="estado_edicion" value="pendiente" onChange={handleEstadoChange} />
             </td>
             <td className={`border px-4 py-2 text-center ${columnaEdicion}`}>
@@ -352,7 +327,6 @@ const rowClass = formData.estado_entrega === 'completado'
                     ))}
                 </select>
             </td>
-
             <td className={`border px-4 py-2 ${columnaEntrega}`}>
                 <input
                     type="date"
@@ -401,7 +375,10 @@ const rowClass = formData.estado_entrega === 'completado'
                     onChange={handleEstadoChange}
                 />
             </td>
-            {/* Celda combinada para Comentario y Guión */}
+            {/* Fechas, estados y usuarios (Producción, Edición, Entrega) */}
+            {/* Mantenerías toda la lógica que ya tienes aquí, con inputs, selects y ColoredStatusIndicator */}
+
+            {/* Comentario y Guion */}
             <td className="border px-4 py-2">
                 <div className="flex flex-col space-y-2">
                     <label className="text-xs text-gray-500">Comentario:</label>
@@ -428,29 +405,30 @@ const rowClass = formData.estado_entrega === 'completado'
     );
 }
 
-// ---
-// El resto del componente principal se mantiene igual, solo necesitas pasar 'users' a EditableRow
-// ---
-
-export default function SeguimientoTareas({
-    empresa,
+export default function SeguimientoTareasTodos({
     tareas = [],
     usersProduccion,
     usersEdicion,
     mensaje,
     mes,
     anio,
-}: Props & { mes: string; anio: string }) {
+}: {
+    tareas: TareaSeguimiento[];
+    usersProduccion: User[];
+    usersEdicion: User[];
+    mensaje?: string;
+    mes: string;
+    anio: string;
+}) {
     const [nuevoTitulo, setNuevoTitulo] = useState('');
     const [nuevaSemana, setNuevaSemana] = useState('1');
 
     const handleCrearTarea = () => {
         if (!nuevoTitulo) return alert('Debes ingresar un título para la tarea');
-
         if (!confirm(`¿Crear tarea "${nuevoTitulo}" para la semana ${nuevaSemana}?`)) return;
 
         router.post(
-            route('tareas.crear', empresa.id),
+            route('tareas.crear'),
             {
                 titulo: nuevoTitulo,
                 semana: nuevaSemana,
@@ -466,6 +444,7 @@ export default function SeguimientoTareas({
             },
         );
     };
+
     const now = new Date();
 
     const meses = [
@@ -488,7 +467,7 @@ export default function SeguimientoTareas({
     const [anioFiltro, setAnioFiltro] = useState(anio);
 
     const handleFiltrar = () => {
-        router.get(route('empresas.seguimiento-tareas', empresa.id), {
+        router.get(route('seguimiento-tareas-publicados'), {
             mes: mesFiltro,
             anio: anioFiltro,
         });
@@ -496,7 +475,7 @@ export default function SeguimientoTareas({
 
     const handleGenerar = () => {
         if (confirm('¿Estás seguro de generar registros por defecto para este mes?')) {
-            router.post(route('tareas.generar', empresa.id), {
+            router.post(route('tareas.generar-todas'), {
                 mes: mesFiltro,
                 anio: anioFiltro,
             });
@@ -516,9 +495,9 @@ export default function SeguimientoTareas({
 
     const semanasOrdenadas = Object.keys(tareasPorSemana)
         .filter(Boolean)
-        .map((s) => Number(s))
+        .map(Number)
         .sort((a, b) => a - b)
-        .map((n) => n.toString());
+        .map(String);
 
     const verticalText = {
         writingMode: 'vertical-rl' as 'vertical-rl',
@@ -535,50 +514,10 @@ export default function SeguimientoTareas({
             <Head title="Tareas de Seguimiento" />
 
             <div className="p-6">
-                <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
-                    <div className="mb-4 flex items-center justify-between border-b pb-4">
-                        <h1 className="text-3xl font-bold text-gray-800">{empresa.name}</h1>
-                        {/* {empresa.logo && <img src={empresa.logo} alt={`${empresa.name} logo`} className="h-16 w-16 object-contain" />} */}
+                <div className="mb-4 flex items-center justify-between border-b pb-4">
+                        <h1 className="text-3xl font-bold text-gray-800">Videos Publicados</h1>
                     </div>
-
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Categoría</span>
-                            <span className="text-gray-900">{empresa.category?.name ?? 'No asignada'}</span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Duración del Contrato</span>
-                            <span className="text-gray-900">{empresa.contract_duration}</span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Paquete</span>
-                            <span className="text-gray-900">{empresa.paquete?.nombre_paquete ?? 'No asignado'}</span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Cliente</span>
-                            <span className="text-gray-900">{empresa.nombre_cliente}</span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Fechas del Contrato</span>
-                            <span className="text-gray-900">
-                                Inicio: {empresa.start_date} / Fin: {empresa.end_date}
-                            </span>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-gray-500">Seguidores</span>
-                            <span className="text-gray-900">
-                                Inicio: {empresa.seguidores_inicio} / Fin: {empresa.seguidores_fin}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Formulario de filtro */}
+                {/* Filtros de mes y año */}
                 <div className="mb-4 flex items-center space-x-4">
                     <select value={mesFiltro} onChange={(e) => setMesFiltro(e.target.value)} className="rounded border px-2 py-1">
                         {meses.map((m) => (
@@ -598,40 +537,23 @@ export default function SeguimientoTareas({
                         Filtrar
                     </button>
                 </div>
+
                 <div className="mb-6 rounded-lg bg-gray-100 p-4 text-center text-xl font-bold text-gray-800 shadow-sm">
                     {meses.find((m) => m.value === mes)?.label ?? 'Mes'} {anio}
                 </div>
 
                 {tareas.length === 0 ? (
                     <div className="mb-6">
-                        <button onClick={handleGenerar} className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
+                        {/* <button onClick={handleGenerar} className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">
                             Generar registros
-                        </button>
+                        </button> */}
+                        <h3>No hay tareas para este mes.</h3>
                     </div>
                 ) : (
                     <div>
-                        <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
-                            <h2 className="mb-4 text-xl font-bold text-gray-800">Crear Nueva Tarea</h2>
-                            <div className="flex flex-col space-y-4 md:flex-row md:space-y-0 md:space-x-4">
-                                <input
-                                    type="text"
-                                    placeholder="Título de la tarea"
-                                    value={nuevoTitulo}
-                                    onChange={(e) => setNuevoTitulo(e.target.value)}
-                                    className="w-full rounded border px-2 py-1"
-                                />
-                                <select value={nuevaSemana} onChange={(e) => setNuevaSemana(e.target.value)} className="rounded border px-2 py-1">
-                                    <option value="1">Semana 1</option>
-                                    <option value="2">Semana 2</option>
-                                    <option value="3">Semana 3</option>
-                                    <option value="4">Semana 4</option>
-                                </select>
-                                <button onClick={handleCrearTarea} className="rounded bg-green-500 px-4 py-2 text-white hover:bg-green-600">
-                                    Crear Tarea
-                                </button>
-                            </div>
-                        </div>
+
                         <h2 className="mb-4 text-xl font-semibold">Tareas de Seguimiento</h2>
+
                         {semanasOrdenadas.map((semana) => (
                             <div key={semana} className="mb-8">
                                 <h3 className="mb-2 text-lg font-bold text-blue-700">Semana {semana}</h3>
@@ -639,6 +561,9 @@ export default function SeguimientoTareas({
                                     <table className="min-w-full border border-gray-300 bg-white">
                                         <thead className="bg-gray-100">
                                             <tr>
+                                                <th className="border px-4 py-2" rowSpan={2}>
+                                                    Empresa
+                                                </th>
                                                 <th className="border px-4 py-2" rowSpan={2}>
                                                     Título/Estrategia
                                                 </th>
@@ -648,7 +573,6 @@ export default function SeguimientoTareas({
                                                 <th className="border px-4 py-2" colSpan={2}>
                                                     Estado Producción
                                                 </th>
-                                                {/* Encabezado para User Producción */}
                                                 <th className="border px-4 py-2" rowSpan={2}>
                                                     Usuario Producción
                                                 </th>
@@ -658,7 +582,6 @@ export default function SeguimientoTareas({
                                                 <th className="border px-4 py-2" colSpan={3}>
                                                     Estado Edición
                                                 </th>
-                                                {/* Encabezado para User Edición */}
                                                 <th className="border px-4 py-2" rowSpan={2}>
                                                     Usuario Edición
                                                 </th>
@@ -702,8 +625,9 @@ export default function SeguimientoTareas({
                                                     <EditableRow
                                                         key={tarea.id}
                                                         tarea={tarea}
-                                                        usersProduccion={usersProduccion} // ✅ Pasar la nueva prop correctamente
-                                                        usersEdicion={usersEdicion} // ✅ Pasar la nueva prop correctamente
+                                                        usersProduccion={usersProduccion}
+                                                        usersEdicion={usersEdicion}
+                                                        empresaNombre={tarea.empresa?.name ?? 'Sin empresa'}
                                                     />
                                                 ))}
                                         </tbody>

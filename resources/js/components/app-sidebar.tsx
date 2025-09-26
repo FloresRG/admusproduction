@@ -194,7 +194,7 @@ export function AppSidebar() {
                 icon: BusinessIcon,
                 items: [
                     { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
-                                  
+
                     { title: 'Categorias', href: '/categories', icon: CategoryIcon },
                     { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
@@ -231,16 +231,17 @@ export function AppSidebar() {
                 isCollapsible: true,
             },
             {
-                title: 'Gestion de Marketing',
-                icon: WorkIcon,
+                title: 'Gestión de Marketing',
+                icon: WorkIcon, // Podrías cambiarlo también a "CampaignIcon" para darle un toque más de marketing
                 items: [
-                    { title: 'Empresas', href: '/planes-empresas', icon: StoreIcon }, // CAMBIADO 
-                    { title: 'En Produccion', href: '#', icon: StoreIcon }, // CAMBIADO 
-                    { title: 'En Edicion', href: '#', icon: StoreIcon }, // CAMBIADO 
-                    { title: 'Publicados', href: '#', icon: StoreIcon }, // CAMBIADO 
-                    { title: 'Videos Pendientes', href: '#', icon: StoreIcon }, // CAMBIADO 
-                    { title: 'Videos En revision', href: '#', icon: StoreIcon }, // CAMBIADO 
-                    { title: 'Videos Publicados', href: '#', icon: StoreIcon }, // CAMBIADO 
+                    { title: 'Lista de Empresas', href: '/planes-empresas', icon: BusinessIcon }, // Empresas
+                    { title: 'Todas las Tareas', href: '/seguimiento-tareas-todos', icon: ListAltIcon }, // Lista
+                    { title: 'Pendientes Mes', href: '/seguimiento-tareas-pendientes', icon: EventNoteIcon }, // Calendario/mes
+                    { title: 'Pendientes de Hoy', href: '/seguimiento-tareas-pendienteshoy', icon: TodayIcon }, // Hoy
+                    { title: 'Pendientes Producción Hoy', href: '/seguimiento-tareas-pendienteshoyproduccion', icon: EmojiPeopleIcon }, // Producción
+                    { title: 'Pendientes Edición Hoy', href: '/seguimiento-tareas-pendienteshoyedicion', icon: AdminPanelSettingsIcon }, // Edición
+                    { title: 'En Revisión', href: '/seguimiento-tareas-pendienteshoyrevision', icon: RateReviewIcon }, // Revisión
+                    { title: 'Publicados', href: '/seguimiento-tareas-publicados', icon: PublishedWithChangesIcon }, // Publicados
                 ],
                 isCollapsible: true,
             },
@@ -314,15 +315,14 @@ export function AppSidebar() {
                 isCollapsible: false,
             });
         }
-        
+
         if (isMarketing) {
             menuSections.push(
                 {
                     title: 'Encargado de marketing',
                     icon: WorkIcon,
                     items: [
-                        
-                        { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO     
+                        { title: 'Tareas de Hoy', href: '/tareas/dehoy', icon: TodayIcon }, // CAMBIADO
                         { title: 'Tareas para revision', href: '/tareas/enrevicion', icon: PendingActionsIcon },
                         { title: 'Tareas Pendientes', href: '/tareas/pendientes', icon: PendingActionsIcon },
                         { title: 'Tareas Publicadas', href: '/tareas/publicadas', icon: PublishedWithChangesIcon },
@@ -346,7 +346,7 @@ export function AppSidebar() {
                 }, */
             );
         }
-        
+
         if (isEmpresa) {
             menuSections.push({
                 title: 'Empresa',
