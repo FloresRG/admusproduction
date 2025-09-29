@@ -9,9 +9,10 @@ import {
     Delete as DeleteIcon,
     Edit as EditIcon,
     EventAvailable as EventAvailableIcon,
-    ListAlt as ListAltIcon,
     Search as SearchIcon,
 } from '@mui/icons-material';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import {
     Alert,
     Box,
@@ -33,6 +34,7 @@ import {
     TablePagination,
     TableRow,
     TextField,
+    Tooltip,
     Typography,
     useMediaQuery,
     useTheme,
@@ -54,6 +56,7 @@ type Company = {
     contract_duration: string;
     start_date?: string;
     end_date?: string;
+    estado: 'activo' | 'inactivo';
     availabilityDays?: AvailabilityDay[];
     availability_days?: AvailabilityDay[];
 };
@@ -145,6 +148,33 @@ const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
             }
             setModalOpen(false);
             setSelectedCompany(null);
+        }
+    }
+    async function toggleEstado(company: Company) {
+        try {
+            const response = await fetch(`/companies/${company.id}/estado`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+
+            if (response.ok) {
+                // Eliminar la actualización del estado local
+                // const updatedCompany = await response.json();
+                // setCompaniesList((prev) => prev.map((c) => (c.id === updatedCompany.id ? updatedCompany : c)));
+
+                // 💡 Recarga COMPLETA de la página para obtener los nuevos datos desde Laravel.
+                window.location.reload();
+
+                // setNotification(`Estado actualizado: ${updatedCompany.estado}`); // Esta línea no se ejecutará antes de la recarga.
+            } else {
+                setNotification('Error al cambiar estado');
+            }
+        } catch (error) {
+            setNotification('Error al cambiar estado');
         }
     }
 
@@ -470,10 +500,9 @@ const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
                                         fontSize: isMobile ? '0.875rem' : '1rem',
                                     }}
                                 >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <ListAltIcon fontSize="small" /> Duración del contrato
-                                    </Box>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>Estado</Box>
                                 </TableCell>
+
                                 <TableCell
                                     sx={{
                                         fontWeight: 'bold',
@@ -542,7 +571,17 @@ const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
                                     <TableCell>
                                         {company.category?.name || <span style={{ color: '#aaa', fontStyle: 'italic' }}>Sin categoría</span>}
                                     </TableCell>
-                                    <TableCell>{company.contract_duration}</TableCell>
+                                    <TableCell>
+                                        <Typography
+                                            variant="body2"
+                                            sx={{
+                                                fontWeight: 600,
+                                                color: company.estado === 'activo' ? 'green' : 'red',
+                                            }}
+                                        >
+                                            {company.estado}
+                                        </Typography>
+                                    </TableCell>
                                     <TableCell>{company.start_date || '-'}</TableCell>
                                     <TableCell>{company.end_date || '-'}</TableCell>
                                     <TableCell>
@@ -575,12 +614,30 @@ const CompaniesIndex = ({ companies, influencersByDay }: Props) => {
                                         </Box>
                                     </TableCell>
                                     <TableCell>
-                                        <IconButton color="primary" component={Link} href={`/companies/${company.id}/edit`} aria-label="Editar">
-                                            <EditIcon />
-                                        </IconButton>
-                                        <IconButton color="error" onClick={() => handleDelete(company)} aria-label="Eliminar">
-                                            <DeleteIcon />
-                                        </IconButton>
+                                        {/* Botón de Editar */}
+                                        <Tooltip title="Editar Empresa">
+                                            <IconButton color="primary" component={Link} href={`/companies/${company.id}/edit`} aria-label="Editar">
+                                                <EditIcon />
+                                            </IconButton>
+                                        </Tooltip>
+
+                                        {/* Botón de Eliminar */}
+                                        {/* <Tooltip title="Eliminar Empresa">
+                                            <IconButton color="error" onClick={() => handleDelete(company)} aria-label="Eliminar">
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </Tooltip> */}
+
+                                        {/* Botón de Activar/Desactivar */}
+                                        <Tooltip title={company.estado === 'activo' ? 'Desactivar Empresa' : 'Activar Empresa'}>
+                                            <IconButton
+                                                color={company.estado === 'activo' ? 'warning' : 'success'}
+                                                onClick={() => toggleEstado(company)}
+                                                aria-label={company.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                                            >
+                                                {company.estado === 'activo' ? <BlockIcon /> : <CheckCircleIcon />}
+                                            </IconButton>
+                                        </Tooltip>
                                     </TableCell>
                                 </TableRow>
                             ))}

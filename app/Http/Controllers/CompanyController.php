@@ -164,8 +164,6 @@ class CompanyController extends Controller
         return redirect()->route('companies.index')
             ->with('success', 'Empresa creada correctamente');
     }
-
-
     // Mostrar formulario para editar una compañía existente
     public function edit($id)
     {
@@ -319,5 +317,12 @@ class CompanyController extends Controller
         $company->delete();
 
         return response()->json(['success' => 'Compañía eliminada con éxito.']);
+    }
+    public function toggleEstado(Company $company)
+    {
+        $company->estado = $company->estado === 'activo' ? 'inactivo' : 'activo';
+        $company->save();
+
+        return response()->json($company);
     }
 }

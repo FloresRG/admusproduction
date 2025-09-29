@@ -28,6 +28,7 @@ class Company extends Model
         'especificaciones',
         'seguidores_inicio',
         'seguidores_fin',
+        'estado',
 
     ];
     protected $casts = [

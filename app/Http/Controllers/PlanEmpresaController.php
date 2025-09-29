@@ -21,7 +21,9 @@ class PlanEmpresaController extends Controller
 
     public function index()
     {
-        $companies = Company::with(['category', 'paquete'])->get();
+        $companies = Company::with(['category', 'paquete'])
+            ->where('estado', 'activo') // 👈 FILTRO AÑADIDO
+            ->get();
 
         return Inertia::render('PlanesEmpresas/Index', [
             'companies' => $companies

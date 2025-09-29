@@ -85,8 +85,20 @@ const Edit: React.FC<Props> = ({ paquete }) => {
     // Detectar redes sociales seleccionadas según los datos existentes
     const initialSelectedSocials: string[] = [];
     if (parseInt(data.tiktok_mes) > 0 || parseInt(data.tiktok_semana) > 0) initialSelectedSocials.push('tiktok');
-    if (parseInt(data.facebook_mes) > 0 || parseInt(data.facebook_semana) > 0) initialSelectedSocials.push('facebook');
-    if (parseInt(data.instagram_mes) > 0 || parseInt(data.instagram_semana) > 0) initialSelectedSocials.push('instagram');
+    if (
+        parseInt(data.facebook_mes) > 0 ||
+        parseInt(data.facebook_semana) > 0 ||
+        parseInt(data.artesfacebook_mes) > 0 ||
+        parseInt(data.artesfacebook_semana) > 0
+    )
+        initialSelectedSocials.push('facebook');
+    if (
+        parseInt(data.instagram_mes) > 0 ||
+        parseInt(data.instagram_semana) > 0 ||
+        parseInt(data.artesinstagram_mes) > 0 ||
+        parseInt(data.artesinstagram_semana) > 0
+    )
+        initialSelectedSocials.push('instagram');
     const [selectedSocials, setSelectedSocials] = useState<string[]>(initialSelectedSocials);
 
     const toggleSocial = (key: string) => {
@@ -106,6 +118,7 @@ const Edit: React.FC<Props> = ({ paquete }) => {
             total_publicaciones: total.toString(),
         }));
     }, [data.tiktok_mes, data.facebook_mes, data.instagram_mes, data.artesfacebook_mes, data.artesinstagram_mes]);
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setProcessing(true);
@@ -123,7 +136,26 @@ const Edit: React.FC<Props> = ({ paquete }) => {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setData((prev) => ({ ...prev, [name]: value }));
+
+        let newValues = { [name]: value };
+
+        // Lógica de cálculo para campos por semana
+        if (name.endsWith('_mes')) {
+            const socialKey = name.replace('_mes', '');
+            const semanaFieldName = `${socialKey}_semana`;
+
+            const monthValue = parseInt(value);
+            if (!isNaN(monthValue) && monthValue >= 0) {
+                // Cálculo simple de Mes / 4 para Semana
+                const calculatedSemana = Math.floor(monthValue / 4);
+                newValues = { ...newValues, [semanaFieldName]: calculatedSemana.toString() };
+            } else if (value === '') {
+                // Limpiar si el campo mes está vacío
+                newValues = { ...newValues, [semanaFieldName]: '' };
+            }
+        }
+
+        setData((prev) => ({ ...prev, ...newValues }));
 
         // Limpiar error cuando el usuario empiece a escribir
         if (errors[name]) {
@@ -494,9 +526,19 @@ const Edit: React.FC<Props> = ({ paquete }) => {
                                 </button>
                             ))}
                         </div>
+
+                        {/* Campos de TikTok - MODIFICADO CON FLEXBOX */}
                         {selectedSocials.includes('tiktok') && (
-                            <>
-                                <div style={{ marginBottom: '25px' }}>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: '20px',
+                                    marginBottom: '25px',
+                                    flexWrap: 'wrap',
+                                }}
+                            >
+                                {/* Columna "TikTok por mes" */}
+                                <div style={{ flex: '1 1 45%' }}>
                                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
                                         TikTok por mes
                                     </label>
@@ -520,7 +562,9 @@ const Edit: React.FC<Props> = ({ paquete }) => {
                                         <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.tiktok_mes}</div>
                                     )}
                                 </div>
-                                <div style={{ marginBottom: '25px' }}>
+
+                                {/* Columna "TikTok por semana" */}
+                                <div style={{ flex: '1 1 45%' }}>
                                     <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
                                         TikTok por semana
                                     </label>
@@ -530,6 +574,7 @@ const Edit: React.FC<Props> = ({ paquete }) => {
                                         value={data.tiktok_semana}
                                         onChange={handleChange}
                                         min="0"
+                                        readOnly // Campo de solo lectura
                                         style={{
                                             width: '100%',
                                             padding: '15px',
@@ -544,207 +589,255 @@ const Edit: React.FC<Props> = ({ paquete }) => {
                                         <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.tiktok_semana}</div>
                                     )}
                                 </div>
-                            </>
+                            </div>
                         )}
 
+                        {/* Campos de Facebook - MODIFICADO CON FLEXBOX */}
                         {selectedSocials.includes('facebook') && (
                             <>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Facebook por mes
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="facebook_mes"
-                                        value={data.facebook_mes}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.facebook_mes ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.facebook_mes && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.facebook_mes}</div>
-                                    )}
+                                {/* Facebook Publicaciones */}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '20px',
+                                        marginBottom: '25px',
+                                        flexWrap: 'wrap',
+                                    }}
+                                >
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Facebook por mes
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="facebook_mes"
+                                            value={data.facebook_mes}
+                                            onChange={handleChange}
+                                            min="0"
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.facebook_mes ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.facebook_mes && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.facebook_mes}</div>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Facebook por semana
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="facebook_semana"
+                                            value={data.facebook_semana}
+                                            onChange={handleChange}
+                                            min="0"
+                                            readOnly
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.facebook_semana ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.facebook_semana && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.facebook_semana}</div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Facebook por semana
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="facebook_semana"
-                                        value={data.facebook_semana}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.facebook_semana ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.facebook_semana && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.facebook_semana}</div>
-                                    )}
-                                </div>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Artes Facebook por mes
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="artesfacebook_mes"
-                                        value={data.artesfacebook_mes}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.artesfacebook_mes ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.artesfacebook_mes && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesfacebook_mes}</div>
-                                    )}
-                                </div>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Artes Facebook por semana
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="artesfacebook_semana"
-                                        value={data.artesfacebook_semana}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.artesfacebook_semana ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.artesfacebook_semana && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesfacebook_semana}</div>
-                                    )}
+
+                                {/* Facebook Artes */}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '20px',
+                                        marginBottom: '25px',
+                                        flexWrap: 'wrap',
+                                    }}
+                                >
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Artes Facebook por mes
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="artesfacebook_mes"
+                                            value={data.artesfacebook_mes}
+                                            onChange={handleChange}
+                                            min="0"
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.artesfacebook_mes ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.artesfacebook_mes && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesfacebook_mes}</div>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Artes Facebook por semana
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="artesfacebook_semana"
+                                            value={data.artesfacebook_semana}
+                                            onChange={handleChange}
+                                            min="0"
+                                            readOnly
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.artesfacebook_semana ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.artesfacebook_semana && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesfacebook_semana}</div>
+                                        )}
+                                    </div>
                                 </div>
                             </>
                         )}
 
+                        {/* Campos de Instagram - MODIFICADO CON FLEXBOX */}
                         {selectedSocials.includes('instagram') && (
                             <>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Instagram por mes
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="instagram_mes"
-                                        value={data.instagram_mes}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.instagram_mes ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.instagram_mes && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.instagram_mes}</div>
-                                    )}
+                                {/* Instagram Publicaciones */}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '20px',
+                                        marginBottom: '25px',
+                                        flexWrap: 'wrap',
+                                    }}
+                                >
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Instagram por mes
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="instagram_mes"
+                                            value={data.instagram_mes}
+                                            onChange={handleChange}
+                                            min="0"
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.instagram_mes ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.instagram_mes && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.instagram_mes}</div>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Instagram por semana
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="instagram_semana"
+                                            value={data.instagram_semana}
+                                            onChange={handleChange}
+                                            min="0"
+                                            readOnly
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.instagram_semana ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.instagram_semana && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.instagram_semana}</div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Instagram por semana
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="instagram_semana"
-                                        value={data.instagram_semana}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.instagram_semana ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.instagram_semana && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.instagram_semana}</div>
-                                    )}
-                                </div>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Artes Instagram por mes
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="artesinstagram_mes"
-                                        value={data.artesinstagram_mes}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.artesinstagram_mes ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.artesinstagram_mes && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesinstagram_mes}</div>
-                                    )}
-                                </div>
-                                <div style={{ marginBottom: '25px' }}>
-                                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
-                                        Artes Instagram por semana
-                                    </label>
-                                    <input
-                                        type="number"
-                                        name="artesinstagram_semana"
-                                        value={data.artesinstagram_semana}
-                                        onChange={handleChange}
-                                        min="0"
-                                        style={{
-                                            width: '100%',
-                                            padding: '15px',
-                                            border: `2px solid ${errors.artesinstagram_semana ? '#e74c3c' : '#e1e5e9'}`,
-                                            borderRadius: '10px',
-                                            fontSize: '16px',
-                                            background: '#f8f9fa',
-                                            boxSizing: 'border-box',
-                                        }}
-                                    />
-                                    {errors.artesinstagram_semana && (
-                                        <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesinstagram_semana}</div>
-                                    )}
+
+                                {/* Instagram Artes */}
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        gap: '20px',
+                                        marginBottom: '25px',
+                                        flexWrap: 'wrap',
+                                    }}
+                                >
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Artes Instagram por mes
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="artesinstagram_mes"
+                                            value={data.artesinstagram_mes}
+                                            onChange={handleChange}
+                                            min="0"
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.artesinstagram_mes ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.artesinstagram_mes && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesinstagram_mes}</div>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: '1 1 45%' }}>
+                                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600, color: '#555', fontSize: '14px' }}>
+                                            Artes Instagram por semana
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="artesinstagram_semana"
+                                            value={data.artesinstagram_semana}
+                                            onChange={handleChange}
+                                            min="0"
+                                            readOnly
+                                            style={{
+                                                width: '100%',
+                                                padding: '15px',
+                                                border: `2px solid ${errors.artesinstagram_semana ? '#e74c3c' : '#e1e5e9'}`,
+                                                borderRadius: '10px',
+                                                fontSize: '16px',
+                                                background: '#f8f9fa',
+                                                boxSizing: 'border-box',
+                                            }}
+                                        />
+                                        {errors.artesinstagram_semana && (
+                                            <div style={{ color: '#e74c3c', fontSize: '14px', marginTop: '5px' }}>{errors.artesinstagram_semana}</div>
+                                        )}
+                                    </div>
                                 </div>
                             </>
                         )}

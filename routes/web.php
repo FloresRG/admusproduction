@@ -75,6 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('{id}', [CompanyController::class, 'update'])->name('companies.update');
         Route::delete('{company}', [CompanyController::class, 'destroy'])->name('destroy');
     });
+    Route::patch('/companies/{company}/estado', [CompanyController::class, 'toggleEstado']);
     Route::get('/users', function () {
         return Inertia::render('user');
     });

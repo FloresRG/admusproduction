@@ -69,17 +69,22 @@ type EmpresaConDisponibilidad = {
         };
     };
 };
-
+interface WeekProps {
+    id: number;
+    name: string;
+}
 const Semanainfluencer = () => {
     const theme = useTheme();
     const {
         datosPorEmpresa: datosPorEmpresaProp,
         diasSemana,
         influencers,
+        week,
     } = usePage<{
         datosPorEmpresa: EmpresaConDisponibilidad[];
         diasSemana: DiaSemana[];
         influencers: Influencer[];
+        week: WeekProps;
     }>().props;
 
     const [datosPorEmpresa, setDatosPorEmpresa] = useState(datosPorEmpresaProp);
@@ -152,7 +157,7 @@ const Semanainfluencer = () => {
         setAgregarOtro(false);
     };
 
-    const handleQuitarInfluencer = async (empresaId: number, dia: string, turno: string, influencerId: number) => {
+    const handleQuitarInfluencer = async (empresaId: number, dia: string, turno: string, influencerId: number,weekId: number) => {
         setLoading(true);
         try {
             await axios.post('/quitar-influencer', {
@@ -160,6 +165,7 @@ const Semanainfluencer = () => {
                 dia,
                 turno,
                 influencer_id: influencerId,
+                week_id: weekId,
             });
 
             // Actualiza el estado local para reflejar el cambio sin recargar
@@ -579,7 +585,7 @@ const Semanainfluencer = () => {
                                                     disponiblesManana.map((inf) => (
                                                         <Chip
                                                             key={`manana-${inf.id}`}
-                                                            label={inf.name.split(' ')[0]}
+                                                            label={inf.name.split(' ').slice(0, 2).join(' ')}
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',
@@ -653,7 +659,7 @@ const Semanainfluencer = () => {
                                                     disponiblesTarde.map((inf) => (
                                                         <Chip
                                                             key={`tarde-${inf.id}`}
-                                                            label={inf.name.split(' ')[0]}
+                                                            label={inf.name.split(' ').slice(0, 2).join(' ')}
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',
@@ -882,7 +888,9 @@ const Semanainfluencer = () => {
                                                                                 }
                                                                                 label={
                                                                                     <span style={{ fontSize: '0.75rem' }}>
-                                                                                        {influencer.name.split(' ')[0]}
+                                                                                        {influencer.name.split(' ').slice(0, 2).join(' ')}
+                                                                                        
+
                                                                                     </span>
                                                                                 }
                                                                                 deleteIcon={<Close fontSize="inherit" />}
@@ -892,6 +900,7 @@ const Semanainfluencer = () => {
                                                                                         dia.nombre.toLowerCase(),
                                                                                         turno,
                                                                                         influencer.id,
+                                                                                        week.id,
                                                                                     )
                                                                                 }
                                                                                 variant="outlined"

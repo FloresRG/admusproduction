@@ -214,7 +214,7 @@ class SemanaController extends Controller
         }
 
         // Empresas con disponibilidad
-        $empresas = Company::with('availabilityDays')->get();
+        $empresas = Company::with('availabilityDays')->where('estado', 'activo')->get();
 
         // Influencers con disponibilidad
         $influencers = User::role('influencer')
@@ -358,7 +358,7 @@ class SemanaController extends Controller
         ]);
         return back()->with('success', 'Influencer asignado exitosamente.');
     }
-    public function quitarInfluencer(Request $request)
+    /*  public function quitarInfluencer(Request $request)
     {
         // Validar datos de entrada
         $validated = $request->validate([
@@ -416,6 +416,76 @@ class SemanaController extends Controller
         }
 
         // Eliminar la reserva
+        $booking->delete();
+
+        return back()->with('success', 'Influencer removido exitosamente.');
+    } */
+    public function quitarInfluencer(Request $request)
+    {
+        // 1. Validar datos de entrada (añade week_id)
+        $validated = $request->validate([
+            'empresa_id' => 'required|exists:companies,id',
+            'dia' => 'required|string',
+            'turno' => 'required|string', // 'mañana' o 'tarde'
+            'influencer_id' => 'required|exists:users,id',
+            'week_id' => 'required|exists:weeks,id', // 👈 ¡Requerido!
+        ]);
+
+        $weekId = $validated['week_id'];
+
+        // 2. Opcional: Buscar la semana solo para obtener su fecha de inicio.
+        // Esto es necesario para reconstruir el start_time y end_time.
+        $week = Week::find($weekId);
+
+        if (!$week) {
+            return back()->withErrors(['error' => 'No se encontró la semana con el ID proporcionado']);
+        }
+
+        $startOfWeek = Carbon::parse($week->start_date);
+
+        // 3. Calcular fecha del día de la semana
+        $dias = [
+            'monday' => 0,
+            'tuesday' => 1,
+            'wednesday' => 2,
+            'thursday' => 3,
+            'friday' => 4,
+            'saturday' => 5,
+            'sunday' => 6,
+        ];
+
+        $diaOffset = $dias[strtolower($validated['dia'])] ?? 0;
+        $fecha = $startOfWeek->copy()->addDays($diaOffset);
+
+        // 4. Definir hora de inicio y fin según turno
+        // Asumo que estos son los defaults o que las reservas se crearon con ellos.
+        $startTime = $validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00';
+        $endTime = $validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00';
+
+        // 5. Buscar la reserva para eliminar (usando $weekId)
+        $booking = Booking::where('company_id', $validated['empresa_id'])
+            ->where('user_id', $validated['influencer_id'])
+            ->where('week_id', $weekId) // 👈 ¡CRUCIAL! Usa el week_id del request.
+            ->where('day_of_week', strtolower($validated['dia']))
+            ->where('turno', strtolower($validated['turno']))
+            ->where('start_time', $fecha->format("Y-m-d") . " " . $startTime)
+            ->where('end_time', $fecha->format("Y-m-d") . " " . $endTime)
+            ->first();
+
+        if (!$booking) {
+            // Consejo: Añade los detalles para un mejor debug en caso de error
+            /* \Log::warning('Reserva no encontrada', [
+                'empresa_id' => $validated['empresa_id'],
+                'influencer_id' => $validated['influencer_id'],
+                'week_id' => $weekId,
+                'dia' => $validated['dia'],
+                'turno' => $validated['turno'],
+                'start_time' => $fecha->format("Y-m-d") . " " . $startTime,
+            ]); */
+            return back()->withErrors(['error' => 'No se encontró la asignación para eliminar']);
+        }
+
+        // 6. Eliminar la reserva
         $booking->delete();
 
         return back()->with('success', 'Influencer removido exitosamente.');
