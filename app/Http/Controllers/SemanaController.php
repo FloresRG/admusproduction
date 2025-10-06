@@ -528,9 +528,21 @@ class SemanaController extends Controller
         foreach ($bookings as $booking) {
             $empresaNombre = $booking->company->name;
             $dia = strtolower($booking->day_of_week);
+            $nombres = explode(' ', $booking->user->name);
             // Solo mostrar la primera palabra (primer nombre) del usuario
-            $primerNombre = explode(' ', $booking->user->name)[0];
-            $influencer = $primerNombre . ' (' . ucfirst($booking->turno) . ')';
+            $primerdosNombre = implode(' ', array_slice($nombres, 0, 2));
+            $turnoAbreviado = '';
+            $turno = strtolower($booking->turno);
+
+            if ($turno === 'mañana') {
+                $turnoAbreviado = 'M';
+            } elseif ($turno === 'tarde') {
+                $turnoAbreviado = 'T';
+            } else {
+                // Manejar otros casos o dejar en blanco si no es 'mañana' o 'tarde'
+                $turnoAbreviado = ucfirst($booking->turno); // o solo '';
+            }
+            $influencer = $primerdosNombre . ' (' . $turnoAbreviado . ')';
 
             $calendario[$empresaNombre][$dia][] = $influencer;
         }
@@ -540,6 +552,8 @@ class SemanaController extends Controller
         $cellWidth = 38;
         $empresaWidth = 50;
         $lineHeight = 6.5;
+        // Nueva constante para el límite de empresas por página
+        $limitPerPage = 5;
 
         // Función para encabezado
         $agregarEncabezado = function () use ($pdf, $dias, $diasTraducidos, $week, $empresaWidth, $cellWidth) {
@@ -581,7 +595,7 @@ class SemanaController extends Controller
         $pdf->SetFont('Arial', '', 9);
 
         foreach ($calendario as $empresaNombre => $diasData) {
-            if ($empresaCount === 8) {
+            if ($empresaCount >= $limitPerPage) {
                 $agregarEncabezado();
                 $empresaCount = 0;
             }

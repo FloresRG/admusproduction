@@ -8,6 +8,7 @@ use App\Models\AsignacionTarea;
 use App\Models\Tarea;
 use App\Models\Tipo;
 use App\Models\Company;
+use App\Models\TareaSeguimiento;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -302,7 +303,7 @@ class TareaController extends Controller
             'user' => $user,
         ]);
     }
-    public function estadisticasUsuarioCamarografo()
+    /* public function estadisticasUsuarioCamarografo()
     {
         $user = Auth::user();
 
@@ -323,7 +324,130 @@ class TareaController extends Controller
             'estadisticas' => $resultado,
             'user' => $user,
         ]);
+    } */
+    public function estadisticasUsuarioCamarografo()
+    {
+        $user = auth()->user();
+
+        // Todas las tareas del camarógrafo
+        $tareas = TareaSeguimiento::where('user_produccion_id', $user->id)->get();
+
+        // Estadísticas por estado
+        $estadisticas = $tareas
+            ->groupBy('estado_produccion')
+            ->map(function ($grupo) {
+                return $grupo->count();
+            });
+
+        $resultado = [
+            'pendiente'   => $estadisticas->get('pendiente', 0),
+            'completado'  => $estadisticas->get('completado', 0),
+            // puedes incluir otros estados si los tienes, por ejemplo 'retrasado', etc.
+        ];
+
+        // Total de tareas
+        $totalTareas = $tareas->count();
+
+        // Tareas completadas esta semana
+        $completadasSemana = TareaSeguimiento::where('user_produccion_id', $user->id)
+            ->where('estado_produccion', 'completado')
+            ->whereBetween('fecha_produccion', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        // Última tarea completada (si existe)
+        $ultimaTarea = TareaSeguimiento::where('user_produccion_id', $user->id)
+            ->where('estado_produccion', 'completado')
+            ->orderBy('updated_at', 'desc')
+            ->first();
+
+        $ultima = null;
+        if ($ultimaTarea) {
+            $ultima = [
+                'titulo' => $ultimaTarea->titulo,
+                'fecha'  => $ultimaTarea->updated_at->toDateTimeString(),
+            ];
+        }
+
+        // Estado más frecuente en todas las tareas
+        $estadoFrecuente = $tareas
+            ->groupBy('estado_produccion')
+            ->map(fn($g) => $g->count())
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        return Inertia::render('Dashboard/Camarografo', [
+            'user' => $user,
+            'estadisticas' => $resultado,
+            'totalTareas' => $totalTareas,
+            'completadasSemana' => $completadasSemana,
+            'ultimaTarea' => $ultima,
+            'estadoFrecuente' => $estadoFrecuente,
+        ]);
     }
+    public function estadisticasUsuarioEditor()
+    {
+        $user = auth()->user();
+
+        // Todas las tareas asignadas al editor actual
+        $tareas = TareaSeguimiento::where('user_edicion_id', $user->id)->get();
+
+        // Estadísticas por estado de edición
+        $estadisticas = $tareas
+            ->groupBy('estado_edicion')
+            ->map(function ($grupo) {
+                return $grupo->count();
+            });
+
+        // Resultado formateado
+        $resultado = [
+            'pendiente'   => $estadisticas->get('pendiente', 0),
+            'revision'    => $estadisticas->get('revision', 0),
+            'completado'  => $estadisticas->get('completado', 0),
+        ];
+
+        // Total de tareas
+        $totalTareas = $tareas->count();
+
+        // Tareas completadas esta semana (usando fecha_edicion)
+        $completadasSemana = TareaSeguimiento::where('user_edicion_id', $user->id)
+            ->where('estado_edicion', 'completado')
+            ->whereBetween('fecha_edicion', [now()->startOfWeek(), now()->endOfWeek()])
+            ->count();
+
+        // Última tarea completada (edición)
+        $ultimaTarea = TareaSeguimiento::where('user_edicion_id', $user->id)
+            ->where('estado_edicion', 'completado')
+            ->orderBy('updated_at', 'desc')
+            ->first();
+
+        $ultima = null;
+        if ($ultimaTarea) {
+            $ultima = [
+                'titulo' => $ultimaTarea->titulo,
+                'fecha'  => $ultimaTarea->updated_at->toDateTimeString(),
+            ];
+        }
+
+        // Estado más frecuente en las tareas del editor
+        $estadoFrecuente = $tareas
+            ->groupBy('estado_edicion')
+            ->map(fn($g) => $g->count())
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        return Inertia::render('Dashboard/Editor', [
+            'user' => $user,
+            'estadisticas' => $resultado,
+            'totalTareas' => $totalTareas,
+            'completadasSemana' => $completadasSemana,
+            'ultimaTarea' => $ultima,
+            'estadoFrecuente' => $estadoFrecuente,
+        ]);
+    }
+
+
 
     public function estadisticasMesActual()
     {

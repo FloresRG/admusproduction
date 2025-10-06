@@ -42,15 +42,27 @@ type Company = {
     start_date: string;
     end_date: string;
     celular: string;
+
     monto_mensual: string;
     contrato_url: string | null;
     logo_url: string | null;
     availability: Availability[];
 };
-
+type Paquete = {
+    id: number;
+    nombre_paquete: string;
+};
 type Props = {
-    company: Company;
+    company: Company & {
+        nombre_cliente: string;
+        especificaciones: string;
+        seguidores_inicio: string;
+        seguidores_fin: string;
+        influencer: string;
+        paquete_id: number | null;
+    };
     categories: CompanyCategory[];
+    paquetes: Paquete[];
     has_user: boolean;
 };
 
@@ -64,7 +76,7 @@ const DEFAULT_CENTER = { lat: -16.5871, lng: -68.0855 };
 const DEFAULT_ZOOM = 13;
 const formatDate = (dateStr: string) => (dateStr ? new Date(dateStr).toISOString().slice(0, 10) : '');
 
-export default function Edit({ company, categories, has_user }: Props) {
+export default function Edit({ company, categories, paquetes, has_user }: Props) {
     const { data, setData, post, processing, errors } = useForm<{
         name: string;
         company_category_id: string;
@@ -79,6 +91,12 @@ export default function Edit({ company, categories, has_user }: Props) {
         logo: File | null;
         availability: Availability[];
         crear_usuario: boolean;
+        influencer: string; // Nuevo campo
+        paquete_id: string;
+        nombre_cliente: string;
+        especificaciones: string;
+        seguidores_inicio: string;
+        seguidores_fin: string;
         _method: string;
     }>({
         name: company.name,
@@ -105,6 +123,12 @@ export default function Edit({ company, categories, has_user }: Props) {
                       },
                   ],
         crear_usuario: false, // ← nuevo campo
+        influencer: company.influencer ?? 'no', // Nuevo campo
+        paquete_id: company.paquete_id ? String(company.paquete_id) : '',
+        nombre_cliente: company.nombre_cliente || '',
+        especificaciones: company.especificaciones || '',
+        seguidores_inicio: company.seguidores_inicio ? String(company.seguidores_inicio) : '',
+        seguidores_fin: company.seguidores_fin ? String(company.seguidores_fin) : '',
         _method: 'PUT',
     });
 
@@ -134,7 +158,7 @@ export default function Edit({ company, categories, has_user }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/companies/${company.id}`);
+        post(`/companiasmark/${company.id}`);
     };
 
     // Estado para manejar la visibilidad del mapa
@@ -265,7 +289,6 @@ export default function Edit({ company, categories, has_user }: Props) {
                             {errors.company_category_id && <div className="mt-1 text-red-600">{errors.company_category_id}</div>}
                         </div>
                     </div>
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         {/* Duración del contrato */}
                         <div>
@@ -304,6 +327,93 @@ export default function Edit({ company, categories, has_user }: Props) {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Nombre del cliente */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Nombre del Cliente <span className="font-normal text-gray-500">(Opcional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.nombre_cliente}
+                                onChange={(e) => setData('nombre_cliente', e.target.value)}
+                            />
+                            {errors.nombre_cliente && <div className="mt-1 text-red-600">{errors.nombre_cliente}</div>}
+                        </div>
+
+                        {/* Especificaciones */}
+                        {/* <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Especificaciones <span className="font-normal text-gray-500">(Opcional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.especificaciones}
+                                onChange={(e) => setData('especificaciones', e.target.value)}
+                            />
+                            {errors.especificaciones && <div className="mt-1 text-red-600">{errors.especificaciones}</div>}
+                        </div> */}
+                        <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">¿Necesita influencers?</label>
+                        <div className="flex space-x-4">
+                            <label className="inline-flex items-center">
+                                <input
+                                    type="radio"
+                                    name="influencer"
+                                    value="si"
+                                    checked={data.influencer === 'si'}
+                                    onChange={() => setData('influencer', 'si')}
+                                    className="form-radio"
+                                />
+                                <span className="ml-2">Sí</span>
+                            </label>
+                            <label className="inline-flex items-center">
+                                <input
+                                    type="radio"
+                                    name="influencer"
+                                    value="no"
+                                    checked={data.influencer === 'no'}
+                                    onChange={() => setData('influencer', 'no')}
+                                    className="form-radio"
+                                />
+                                <span className="ml-2">No</span>
+                            </label>
+                        </div>
+                        {errors.influencer && <div className="mt-1 text-red-600">{errors.influencer}</div>}
+                    </div>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Seguidores inicio */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Seguidores Inicio <span className="font-normal text-gray-500">(Opcional)</span>
+                            </label>
+                            <input
+                                type="number"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.seguidores_inicio}
+                                onChange={(e) => setData('seguidores_inicio', e.target.value)}
+                            />
+                            {errors.seguidores_inicio && <div className="mt-1 text-red-600">{errors.seguidores_inicio}</div>}
+                        </div>
+
+                        {/* Seguidores fin */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">
+                                Seguidores Fin <span className="font-normal text-gray-500">(Opcional)</span>
+                            </label>
+                            <input
+                                type="number"
+                                className="mt-2 w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                value={data.seguidores_fin}
+                                onChange={(e) => setData('seguidores_fin', e.target.value)}
+                            />
+                            {errors.seguidores_fin && <div className="mt-1 text-red-600">{errors.seguidores_fin}</div>}
+                        </div>
+                    </div>
+
                     {/* Dirección con el mapa */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -324,7 +434,6 @@ export default function Edit({ company, categories, has_user }: Props) {
                         </div>
                         {errors.direccion && <div className="mt-1 text-red-600">{errors.direccion}</div>}
                     </div>
-
                     <Dialog open={openMapModal} onClose={handleCloseMap} maxWidth="md" fullWidth>
                         <DialogTitle>
                             Seleccionar Ubicación
@@ -397,7 +506,24 @@ export default function Edit({ company, categories, has_user }: Props) {
                             </Button>
                         </DialogActions>
                     </Dialog>
-
+                    
+                    {/* Paquete (select) */}
+                    <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">Paquete</label>
+                        <select
+                            className="w-full rounded-md border border-gray-300 p-3 shadow transition focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                            value={data.paquete_id}
+                            onChange={(e) => setData('paquete_id', e.target.value)}
+                        >
+                            <option value="">Seleccione un paquete</option>
+                            {paquetes.map((paquete) => (
+                                <option key={paquete.id} value={paquete.id}>
+                                    {paquete.nombre_paquete}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.paquete_id && <div className="mt-1 text-red-600">{errors.paquete_id}</div>}
+                    </div>
                     {/* Descripción */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700">Descripción</label>
@@ -407,7 +533,6 @@ export default function Edit({ company, categories, has_user }: Props) {
                             onChange={(e) => setData('description', e.target.value)}
                         />
                     </div>
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         {/* Celular */}
                         <div>
@@ -427,7 +552,7 @@ export default function Edit({ company, categories, has_user }: Props) {
                         </div>
 
                         {/* Monto mensual */}
-                        <div>
+                        {/* <div>
                             <label className="block text-sm font-medium text-gray-700">Monto Mensual</label>
                             <input
                                 type="text"
@@ -441,9 +566,8 @@ export default function Edit({ company, categories, has_user }: Props) {
                                 }}
                             />
                             {errors.monto_mensual && <div className="mt-1 text-red-600">{errors.monto_mensual}</div>}
-                        </div>
+                        </div> */}
                     </div>
-
                     <div className="grid grid-cols-1 gap-8 p-4 md:grid-cols-2">
                         {/* Contrato PDF */}
                         <div className="rounded-lg border p-4 shadow transition hover:shadow-md">
@@ -495,7 +619,6 @@ export default function Edit({ company, categories, has_user }: Props) {
                             )}
                         </div>
                     </div>
-
                     {!has_user && (
                         <div className="mt-6">
                             <label className="inline-flex items-center">
@@ -576,7 +699,6 @@ export default function Edit({ company, categories, has_user }: Props) {
                                             className="text-xl font-bold text-red-600 hover:text-red-800"
                                             onClick={() => handleRemoveAvailability(idx)}
                                             disabled={data.availability.length === 1}
-                                            // ...existing code...
                                             title="Eliminar este día"
                                         >
                                             &times;
@@ -592,11 +714,10 @@ export default function Edit({ company, categories, has_user }: Props) {
                             </Button>
                         </div>
                     </div>
-
                     {/* Botones de acción */}
                     <div className="mt-8 flex justify-between">
                         <Link
-                            href="/companies"
+                            href="/companiasmark"
                             className="inline-block rounded-md bg-gray-200 px-6 py-3 text-center font-semibold text-gray-700 shadow transition hover:bg-gray-300"
                         >
                             Cancelar

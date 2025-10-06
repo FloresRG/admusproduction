@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import type { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Box, Button, Chip, Grid, LinearProgress, Paper, Typography, useTheme } from '@mui/material';
+import { Box, Chip, Grid, LinearProgress, Paper, Typography, useTheme } from '@mui/material';
 import { motion } from 'framer-motion';
 
 // Íconos de MUI (Simplificamos usando los de MUI para evitar redefinir SVGs)
@@ -22,6 +22,7 @@ interface DashboardProps extends PageProps {
     };
     estadisticas: {
         pendiente: number;
+        revision: number;
         completado: number;
     };
     totalTareas: number;
@@ -43,28 +44,36 @@ export default function Dashboard({ user, estadisticas, totalTareas, completadas
     // Colores y datos adaptados a tus métricas originales
     const statsCards = [
         {
-            title: 'Grabaciones Pendientes',
+            title: 'Ediciones Pendientes',
             value: estadisticas.pendiente,
             icon: <PendingActionsIcon fontSize="large" />,
-            color: '#FF5F6D', // Rojo Suave
+            color: '#FF5F6D',
             gradient: 'linear-gradient(135deg, #FF5F6D, #FFC371)',
-            description: 'Requieren tu atención',
+            description: 'Aún por iniciar o trabajar',
+        },
+        {
+            title: 'En Revisión',
+            value: estadisticas.revision,
+            icon: <CalendarIcon fontSize="large" />,
+            color: '#f59e0b',
+            gradient: 'linear-gradient(135deg, #fcd34d, #fbbf24)',
+            description: 'Esperando aprobación',
         },
         {
             title: 'Completadas',
             value: estadisticas.completado,
             icon: <CheckCircleIcon fontSize="large" />,
-            color: '#36D1DC', // Azul Cian
-            gradient: 'linear-gradient(135deg, #36D1DC, #5B86E5)',
+            color: '#10b981',
+            gradient: 'linear-gradient(135deg, #6EE7B7, #3B82F6)',
             description: 'Finalizadas con éxito',
         },
         {
-            title: 'Total De Grabaciones',
+            title: 'Total De Ediciones',
             value: totalTareas,
             icon: <FormatListNumberedIcon fontSize="large" />,
-            color: '#764ba2', // Púrpura
-            gradient: 'linear-gradient(135deg, #A8C0FF, #3F2B96)',
-            description: 'Total gestionado',
+            color: '#6366F1',
+            gradient: 'linear-gradient(135deg, #C084FC, #6366F1)',
+            description: 'Tareas asignadas',
         },
     ];
 
@@ -180,7 +189,7 @@ export default function Dashboard({ user, estadisticas, totalTareas, completadas
                             fontWeight: 500,
                         }}
                     >
-                        Panel de Control - Resumen de tus Grabaciones
+                        Panel de Control Editor - Resumen de tus Videos Editados
                     </Typography>
 
                     {totalTareas > 0 && (
@@ -298,21 +307,23 @@ export default function Dashboard({ user, estadisticas, totalTareas, completadas
                     style={{ width: '100%', maxWidth: 1200, marginBottom: '3rem', zIndex: 1 }}
                 >
                     <Grid container spacing={3}>
-                        {/* Tareas Semanales y Frecuencia */}
+                        {/* Ediciones Semanales y Estado Frecuente */}
                         <Grid item xs={12} md={6}>
                             <Paper sx={glassPaperStyle}>
                                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
                                     Rendimiento
                                 </Typography>
-                                {/* Tareas Completadas Semana */}
+
+                                {/* Ediciones completadas esta semana */}
                                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                                     <TrendingUpIcon color="primary" sx={{ mr: 1 }} />
                                     <Typography variant="body1" sx={{ fontWeight: 600, flex: 1 }}>
-                                        Grabaciones completadas esta semana:
+                                        Ediciones completadas esta semana:
                                     </Typography>
                                     <Chip label={completadasSemana} color="primary" size="small" sx={{ fontWeight: 'bold' }} />
                                 </Box>
-                                {/* Estado Frecuente */}
+
+                                {/* Estado de edición más frecuente */}
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <StarIcon color="warning" sx={{ mr: 1 }} />
                                     <Typography variant="body1" sx={{ fontWeight: 600, flex: 1 }}>
@@ -323,17 +334,17 @@ export default function Dashboard({ user, estadisticas, totalTareas, completadas
                             </Paper>
                         </Grid>
 
-                        {/* Última Tarea y Tasa de Finalización */}
+                        {/* Última Edición Completada + Progreso */}
                         <Grid item xs={12} md={6}>
                             <Paper sx={glassPaperStyle}>
                                 <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: theme.palette.secondary.main }}>
                                     Progreso General
                                 </Typography>
 
-                                {/* Tasa de Finalización (Barra de progreso) */}
+                                {/* Tasa de Finalización (barra de progreso) */}
                                 <Box sx={{ mb: 2 }}>
                                     <Typography variant="body1" sx={{ fontWeight: 600, mb: 1 }}>
-                                        Tasa de Finalización: **{completionRate.toFixed(1)}%**
+                                        Tasa de Finalización: <strong>{completionRate.toFixed(1)}%</strong>
                                     </Typography>
                                     <LinearProgress
                                         variant="determinate"
@@ -343,20 +354,21 @@ export default function Dashboard({ user, estadisticas, totalTareas, completadas
                                             borderRadius: 6,
                                             bgcolor: '#eee',
                                             '& .MuiLinearProgress-bar': {
-                                                background: 'linear-gradient(90deg, #36D1DC, #5B86E5)',
+                                                background: 'linear-gradient(90deg, #10b981, #3B82F6)',
                                             },
                                         }}
                                     />
                                 </Box>
 
-                                {/* Última Tarea Completada */}
+                                {/* Última edición completada */}
                                 <Box>
                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                         <AccessTimeIcon color="action" sx={{ mr: 1 }} />
                                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                            Última grabacion completada:
+                                            Última edición completada:
                                         </Typography>
                                     </Box>
+
                                     {ultimaTarea ? (
                                         <>
                                             <Typography variant="body2" sx={{ ml: 3, fontWeight: 500 }}>
@@ -383,8 +395,7 @@ export default function Dashboard({ user, estadisticas, totalTareas, completadas
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                     style={{ zIndex: 1, marginTop: '2rem' }}
-                >
-                </motion.div>
+                ></motion.div>
 
                 {/* CSS Animations (necesarias para 'float' y 'bounce') */}
                 <style jsx global>{`

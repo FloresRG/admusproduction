@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AsignacionTareaController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CamarografoController;
 use App\Http\Controllers\CanjeController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\CompanyCategoryController;
 use App\Http\Controllers\CompanyLinkComprobanteController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DatoInfluencersController;
+use App\Http\Controllers\EditorController;
 use App\Http\Controllers\HorarioPersonalController;
 use App\Http\Controllers\InfluencerAvailabilityController;
 use App\Http\Controllers\InfluencerController;
@@ -76,6 +78,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('{company}', [CompanyController::class, 'destroy'])->name('destroy');
     });
     Route::patch('/companies/{company}/estado', [CompanyController::class, 'toggleEstado']);
+    Route::get('/users', function () {
+        return Inertia::render('user');
+    });
+
+    Route::prefix('companiasmark')->group(function () {
+        Route::get('/', [CompanyController::class, 'indexmark'])->name('indexmark');
+        Route::get('/create', [CompanyController::class, 'createmark'])->name('createmark');
+        Route::post('/', [CompanyController::class, 'storemark'])->name('storemark');
+        Route::get('{id}/edit', [CompanyController::class, 'editmark'])->name('editmark');
+        Route::put('{id}', [CompanyController::class, 'updatemark'])->name('updatemark');
+        Route::delete('{company}', [CompanyController::class, 'destroymark'])->name('destroymark');
+    });
+    Route::patch('/companiasm/{company}/estado', [CompanyController::class, 'toggleEstado']);
     Route::get('/users', function () {
         return Inertia::render('user');
     });
@@ -543,12 +558,30 @@ Route::get('/seguimiento-tareas-pendienteshoy', [PlanEmpresaController::class, '
     ->name('seguimiento-tareas-pendienteshoy');
 Route::get('/seguimiento-tareas-pendienteshoyproduccion', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyProduccion'])
     ->name('seguimiento-tareas-pendienteshoyproduccion');
-    Route::get('/seguimiento-tareas-pendienteshoyedicion', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyEdicion'])
+Route::get('/seguimiento-tareas-pendienteshoyedicion', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyEdicion'])
     ->name('seguimiento-tareas-pendienteshoyedicion');
-        Route::get('/seguimiento-tareas-pendienteshoyrevision', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyEdicionRevision'])
+Route::get('/seguimiento-tareas-pendienteshoyrevision', [PlanEmpresaController::class, 'seguimientoTareasPendientesHoyEdicionRevision'])
     ->name('seguimiento-tareas-pendienteshoyrevision');
-    Route::get('/seguimiento-tareas-publicados', [PlanEmpresaController::class, 'seguimientoTareasPublicados'])
+Route::get('/seguimiento-tareas-publicados', [PlanEmpresaController::class, 'seguimientoTareasPublicados'])
     ->name('seguimiento-tareas-publicados');
+
+//nurvas rutas camarografo
+Route::get('/tareas-camarografo', [CamarografoController::class, 'tareasSemanaActual'])
+    ->middleware(['auth'])
+    ->name('tareas.semana');
+Route::put('/tareas/{id}/completar', [CamarografoController::class, 'marcarComoCompletada'])
+    ->middleware(['auth', 'verified'])
+    ->name('tareas.completar');
+Route::get('/camarografo/tareas-hoy', [CamarografoController::class, 'tareasHoy'])->name('tareas.hoy');
+//nurvas rutas editor
+Route::get('/tareas-editor', [EditorController::class, 'tareasSemanaActual'])
+    ->middleware(['auth'])
+    ->name('tareaseditor.semana');
+Route::put('/tareaseditor/{id}/completar', [EditorController::class, 'marcarComoCompletada'])
+    ->middleware(['auth', 'verified'])
+    ->name('tareaseditor.completar');
+Route::get('/editor/tareas-hoy', [EditorController::class, 'tareasHoy'])->name('tareaseditor.hoy');
+
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

@@ -165,6 +165,7 @@ export function AppSidebar() {
     const isInfluencer = roles.includes('influencer');
     const isPasante = roles.includes('pasante');
     const isCamarografo = roles.includes('camarografo');
+    const isEditor = roles.includes('editor');
     const isVendedor = roles.includes('Ejecutivo de Ventas');
     const isMarketing = roles.includes('marketing');
     const isEmpresa = roles.includes('empresa');
@@ -194,7 +195,6 @@ export function AppSidebar() {
                 icon: BusinessIcon,
                 items: [
                     { title: 'Empresas', href: '/companies', icon: StoreIcon }, // CAMBIADO
-
                     { title: 'Categorias', href: '/categories', icon: CategoryIcon },
                     { title: 'Link de Empresas', href: '/company-links', icon: LinkIcon }, // CAMBIADO
                     { title: 'Pagos del MES', href: '/pagos-del-mes', icon: MonetizationOnIcon }, // CAMBIADO
@@ -275,7 +275,7 @@ export function AppSidebar() {
         }
         if (isPasante) {
             menuSections.push({
-                title: 'Editor',
+                title: 'Pasante',
                 icon: WorkIcon,
                 items: [
                     { title: 'Mis Tareas de HOY', href: '/tareas-personales', icon: TodayIcon },
@@ -294,12 +294,25 @@ export function AppSidebar() {
                 title: 'Camarografo',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Mis Tareas de HOY', href: '/tareas-personales', icon: TodayIcon },
+                    { title: 'Grabaciones de HOY', href: '/camarografo/tareas-hoy', icon: TodayIcon },
+                    { title: 'Grabaciones Semana ', href: '/tareas-camarografo', icon: TodayIcon },
+                     
                     /* { title: 'Tareas Pendientes', href: '/pasante/mistareas/pendientes', icon: PendingActionsIcon },
                     { title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
                     { title: 'Tareas Realizadas', href: '/pasante/mistareas/enrevicion', icon: RateReviewIcon }, */
                     //{ title: 'Tareas Publicadas', href: '/pasante/mistareas/publicadas', icon: PublishedWithChangesIcon },
-                    { title: 'Mi Horario', href: '/mi-horario', icon: AccessTimeIcon },
+                    //{ title: 'Mi Horario', href: '/mi-horario', icon: AccessTimeIcon },
+                ],
+                isCollapsible: true,
+            });
+        }
+        if (isEditor) {
+            menuSections.push({
+                title: 'Panel Editor',
+                icon: WorkIcon,
+                items: [
+                    { title: 'Edicion de Hoy', href: '/editor/tareas-hoy', icon: TodayIcon },
+                    { title: 'Edicion de Semana ', href: '/tareas-editor', icon: TodayIcon },
                 ],
                 isCollapsible: true,
             });
@@ -322,7 +335,7 @@ export function AppSidebar() {
                     title: 'Encargado de marketing',
                     icon: WorkIcon,
                     items: [
-                       
+                        { title: 'Crear Empresas', href: '/companiasmark', icon: StoreIcon }, // CAMBIADO
                         { title: 'Lista de Empresas', href: '/planes-empresas', icon: BusinessIcon }, // Empresas
                         { title: 'Todas las Tareas', href: '/seguimiento-tareas-todos', icon: ListAltIcon }, // Lista
                         { title: 'Pendientes Mes', href: '/seguimiento-tareas-pendientes', icon: EventNoteIcon }, // Calendario/mes
@@ -331,7 +344,7 @@ export function AppSidebar() {
                         { title: 'Pendientes Edición Hoy', href: '/seguimiento-tareas-pendienteshoyedicion', icon: AdminPanelSettingsIcon }, // Edición
                         { title: 'En Revisión', href: '/seguimiento-tareas-pendienteshoyrevision', icon: RateReviewIcon }, // Revisión
                         { title: 'Publicados', href: '/seguimiento-tareas-publicados', icon: PublishedWithChangesIcon }, // Publicados
-                         { title: 'Informes', href: '/informes', icon: BusinessIcon },
+                        { title: 'Informes', href: '/informes', icon: BusinessIcon },
                     ],
                     isCollapsible: true,
                 },

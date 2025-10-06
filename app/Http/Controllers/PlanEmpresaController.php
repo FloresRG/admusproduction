@@ -29,89 +29,6 @@ class PlanEmpresaController extends Controller
             'companies' => $companies
         ]);
     }
-    /* public function seguimientoTareas($empresaId)
-    {
-        $empresa = Company::with(['category', 'paquete'])->findOrFail($empresaId);
-        $tareas = TareaSeguimiento::where('empresa_id', $empresaId)->get();
-
-        $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
-
-        return inertia('PlanesEmpresas/TareaSeguimiento', [
-            'empresa' => $empresa,
-            'tareas' => $tareas,
-            'usersProduccion' => $usersProduccion,
-            'usersEdicion' => $usersEdicion,
-            'mensaje' => session('message'),
-        ]);
-    }
-    
-    public function generarTareas($empresaId)
-    {
-        $empresa = Company::findOrFail($empresaId);
-
-        // Verifica si ya tiene tareas (opcional, para no duplicar)
-        $existing = TareaSeguimiento::where('empresa_id', $empresaId)->exists();
-        if ($existing) {
-            return redirect()->back()->with('message', 'Ya existen tareas para esta empresa.');
-        }
-
-        $now = now();
-        $anio = $now->year;
-        $mes = $now->format('m'); // si lo guardas como número
-        // o $now->format('Y-m') dependiendo de cómo guardes
-
-        // Crear 4 semanas
-        for ($sem = 1; $sem <= 4; $sem++) {
-            // Para cada semana, 3 registros
-            for ($i = 1; $i <= 3; $i++) {
-                TareaSeguimiento::create([
-                    'empresa_id' => $empresaId,
-                    'titulo' => "Video {$i}",
-                    'anio' => (string)$anio,
-                    'mes' => $mes,
-                    'semana' => (string)$sem,
-                    // los demás campos pueden quedar en null o default
-                    'fecha_produccion' => null,
-                    'estado_produccion' => '',
-                    'fecha_edicion' => null,
-                    'estado_edicion' => '',
-                    'fecha_entrega' => null,
-                    'estado_entrega' => '',
-                    'estrategia' => '',
-                    'comentario' => '',
-                    'guion' => '',
-                ]);
-            }
-        }
-
-        return redirect()->back()->with('message', 'Tareas generadas exitosamente.');
-    } */
-    /* public function seguimientoTareas(Request $request, $empresaId)
-    {
-        $empresa = Company::with(['category', 'paquete'])->findOrFail($empresaId);
-
-        $anio = $request->get('anio', now()->year);
-        $mes = str_pad($request->get('mes', now()->format('m')), 2, '0', STR_PAD_LEFT);
-
-        $tareas = TareaSeguimiento::where('empresa_id', $empresaId)
-            ->where('anio', $anio)
-            ->where('mes', $mes)
-            ->get();
-
-        $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
-
-        return inertia('PlanesEmpresas/TareaSeguimiento', [
-            'empresa' => $empresa,
-            'tareas' => $tareas,
-            'usersProduccion' => $usersProduccion,
-            'usersEdicion' => $usersEdicion,
-            'mensaje' => session('message'),
-            'mes' => $mes,
-            'anio' => $anio,
-        ]);
-    } */
     public function seguimientoTareas(Request $request, $empresaId)
     {
         $empresa = Company::with(['category', 'paquete'])->findOrFail($empresaId);
@@ -122,12 +39,10 @@ class PlanEmpresaController extends Controller
         $tareas = TareaSeguimiento::where('empresa_id', $empresaId)
             ->where('anio', $anio)
             ->where('mes', $mes)
-            ->orderByRaw("CASE WHEN fecha_produccion = ? THEN 0 ELSE 1 END", [$hoy]) // primero las de hoy
-            ->orderBy('fecha_produccion', 'asc') // luego por fecha ascendente
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimiento', [
             'empresa' => $empresa,
@@ -140,29 +55,6 @@ class PlanEmpresaController extends Controller
         ]);
     }
 
-    /* public function seguimientoTareasTodos(Request $request)
-    {
-        $anio = $request->get('anio', now()->year);
-        $mes = str_pad($request->get('mes', now()->format('m')), 2, '0', STR_PAD_LEFT);
-
-        // Traemos todas las tareas pendientes de producción de todas las empresas
-        $tareas = TareaSeguimiento::where('anio', $anio)
-            ->where('mes', $mes)
-            ->with('empresa') // opcional, si quieres acceder a los datos de la empresa
-            ->get();
-
-        $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
-
-        return inertia('PlanesEmpresas/TareaSeguimientoTodos', [
-            'tareas' => $tareas,
-            'usersProduccion' => $usersProduccion,
-            'usersEdicion' => $usersEdicion,
-            'mensaje' => session('message'),
-            'mes' => $mes,
-            'anio' => $anio,
-        ]);
-    } */
     public function seguimientoTareasTodos(Request $request)
     {
         $anio = $request->get('anio', now()->year);
@@ -185,7 +77,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoTodos', [
             'tareas' => $tareas,
@@ -218,7 +110,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoPendientes', [
             'tareas' => $tareas,
@@ -267,7 +159,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoPendientesHoy', [
             'tareas' => $tareas,
@@ -295,7 +187,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoPendientesHoyProduccion', [
             'tareas' => $tareas,
@@ -323,7 +215,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoPendientesHoyEdicion', [
             'tareas' => $tareas,
@@ -347,7 +239,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoPendientesHoyRevision', [
             'tareas' => $tareas,
@@ -370,7 +262,7 @@ class PlanEmpresaController extends Controller
             ->get();
 
         $usersProduccion = User::role('camarografo')->get(['id', 'name']);
-        $usersEdicion = User::role('pasante')->get(['id', 'name']);
+        $usersEdicion = User::role('editor')->get(['id', 'name']);
 
         return inertia('PlanesEmpresas/TareaSeguimientoPublicados', [
             'tareas' => $tareas,

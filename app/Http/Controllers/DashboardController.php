@@ -33,6 +33,7 @@ class DashboardController extends Controller
             $user->hasRole('influencer') => $this->showInfluencerDashboard($user),
             $user->hasRole('pasante') => app(TareaController::class)->estadisticasUsuario(),
             $user->hasRole('camarografo') => app(TareaController::class)->estadisticasUsuarioCamarografo(),
+            $user->hasRole('editor') => app(TareaController::class)->estadisticasUsuarioEditor(),
             $user->hasRole('Ejecutivo de Ventas') => $this->showVendedorDashboard($user),
             $user->hasRole('marketing') => $this->showMarketingDashboard($user),
             $user->hasRole('empresa') => $this->showEmpresaDashboard($user),
