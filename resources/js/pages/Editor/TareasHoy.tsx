@@ -153,36 +153,7 @@ const TareasHoy = ({ tareas, hoy }: Props) => {
                                     </div>
                                 </div>
 
-                                {/* Influencers */}
-                                {tarea.influencers && tarea.influencers.length > 0 && (
-                                    <div className="mt-4 rounded-lg bg-blue-50 p-3">
-                                        <div className="mb-2 flex items-center gap-2">
-                                            <PersonIcon sx={{ color: '#6366f1', fontSize: 20 }} />
-                                            <span className="font-bold text-indigo-800">Influencers asignados</span>
-                                        </div>
-                                        <div className="space-y-2">
-                                            {tarea.influencers.map((booking, idx) => (
-                                                <div key={idx} className="flex items-center gap-2 rounded bg-white p-2 shadow-sm">
-                                                    <Avatar sx={{ bgcolor: '#6366f1', width: 32, height: 32 }}>{booking.user.name.charAt(0)}</Avatar>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-800">{booking.user.name}</p>
-                                                        <p className="text-xs text-gray-500">
-                                                            {new Date(booking.start_time).toLocaleTimeString([], {
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                            })}{' '}
-                                                            -{' '}
-                                                            {new Date(booking.end_time).toLocaleTimeString([], {
-                                                                hour: '2-digit',
-                                                                minute: '2-digit',
-                                                            })}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                
 
                                 {/* Botón completar */}
                                 {tarea.estado_edicion !== 'revision' && tarea.estado_edicion !== 'completado' && (

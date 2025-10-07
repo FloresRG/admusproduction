@@ -313,6 +313,8 @@ export function AppSidebar() {
                 items: [
                     { title: 'Edicion de Hoy', href: '/editor/tareas-hoy', icon: TodayIcon },
                     { title: 'Edicion de Semana ', href: '/tareas-editor', icon: TodayIcon },
+                    //{ title: 'Tareas Realizadas HOY', href: '/tareas-personales', icon: TodayIcon },
+                    //{ title: 'Todas mis tareas', href: '/pasante/mistareas/todos', icon: ListAltIcon },
                 ],
                 isCollapsible: true,
             });

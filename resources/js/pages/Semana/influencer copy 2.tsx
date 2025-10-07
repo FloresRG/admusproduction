@@ -69,22 +69,25 @@ type EmpresaConDisponibilidad = {
         };
     };
 };
-
+interface WeekProps {
+    id: number;
+    name: string;
+}
 const Semanainfluencer = () => {
     const theme = useTheme();
     const {
         datosPorEmpresa: datosPorEmpresaProp,
         diasSemana,
         influencers,
+        week,
     } = usePage<{
         datosPorEmpresa: EmpresaConDisponibilidad[];
         diasSemana: DiaSemana[];
         influencers: Influencer[];
+        week: WeekProps;
     }>().props;
 
     const [datosPorEmpresa, setDatosPorEmpresa] = useState(datosPorEmpresaProp);
-    const [startTime, setStartTime] = useState('09:30');
-    const [endTime, setEndTime] = useState('13:00');
 
     // Nuevo estado para el buscador
     const [search, setSearch] = useState('');
@@ -122,21 +125,6 @@ const Semanainfluencer = () => {
         'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
         'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
     ];
-    const handleAgregarDia = async () => {
-        if (!selectedTurno) return;
-        try {
-            await axios.post('/agregar-disponibilidad-empresa', {
-                company_id: selectedTurno.empresaId,
-                day_of_week: selectedTurno.dia,
-                turno: selectedTurno.turno,
-                start_time: startTime,
-                end_time: endTime,
-            });
-            window.location.reload();
-        } catch (e) {
-            alert('Error al agregar disponibilidad');
-        }
-    };
 
     const dayOfWeekInSpanish: { [key: string]: string } = {
         monday: 'Lunes',
@@ -156,32 +144,10 @@ const Semanainfluencer = () => {
         return turno === 'mañana' ? 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)' : 'linear-gradient(135deg, #4A90E2 0%, #7B68EE 100%)';
     };
 
-    // ...existing code...
-const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
-    // Buscar empresa y disponibilidad
-    const empresaSeleccionada = datosPorEmpresa.find((e) => e.empresa.id === empresaId);
-    let horario = { start_time: '', end_time: '' };
-
-    if (empresaSeleccionada) {
-        // Busca el AvailabilityDay correspondiente
-        const availabilityDays = empresaSeleccionada.empresa.availabilityDays || [];
-        const found = availabilityDays.find(
-            (a: any) =>
-                a.day_of_week?.toLowerCase() === dia.toLowerCase() &&
-                a.turno?.toLowerCase() === turno.toLowerCase()
-        );
-        if (found) {
-            horario.start_time = found.start_time?.slice(0, 5) || '';
-            horario.end_time = found.end_time?.slice(0, 5) || '';
-        }
-    }
-
-    setStartTime(horario.start_time || (turno === 'mañana' ? '09:30' : '14:00'));
-    setEndTime(horario.end_time || (turno === 'mañana' ? '13:00' : '18:00'));
-    setSelectedTurno({ empresaId, dia, turno });
-    setModalOpen(true);
-};
-// ...existing code...
+    const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
+        setSelectedTurno({ empresaId, dia, turno });
+        setModalOpen(true);
+    };
 
     const handleCloseModal = () => {
         setModalOpen(false);
@@ -191,7 +157,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
         setAgregarOtro(false);
     };
 
-    const handleQuitarInfluencer = async (empresaId: number, dia: string, turno: string, influencerId: number) => {
+    const handleQuitarInfluencer = async (empresaId: number, dia: string, turno: string, influencerId: number, weekId: number) => {
         setLoading(true);
         try {
             await axios.post('/quitar-influencer', {
@@ -199,6 +165,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                 dia,
                 turno,
                 influencer_id: influencerId,
+                week_id: weekId,
             });
 
             // Actualiza el estado local para reflejar el cambio sin recargar
@@ -218,13 +185,15 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                         : empresa,
                 ),
             );
-        } catch (error) {
-            console.error('Error al quitar influencer:', error);
+        } catch (error: any) {
+            console.error('Error al quitar influencer:', error.response?.data || error.message);
             alert('Hubo un error al quitar el influencer');
         } finally {
             setLoading(false);
         }
     };
+    const [startTime, setStartTime] = useState('');
+    const [endTime, setEndTime] = useState('');
 
     const handleAsignarInfluencer = async () => {
         if (!selectedTurno) return;
@@ -269,13 +238,6 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-        });
     };
 
     const getTotalInfluencersAsignados = () => {
@@ -531,17 +493,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                             <Typography fontWeight="bold" fontSize="0.80rem">
                                                 {dayOfWeekInSpanish[dia.nombre.toLowerCase()] ?? dia.nombre}
                                             </Typography>
-                                            <Chip
-                                                label={formatDate(dia.fecha)}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: alpha('#fff', 0.2),
-                                                    color: '#fff',
-                                                    fontSize: '0.65rem',
-                                                    height: 18,
-                                                    px: 0.5,
-                                                }}
-                                            />
+                                        
                                         </Stack>
                                     </TableCell>
                                 ))}
@@ -616,7 +568,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                                     disponiblesManana.map((inf) => (
                                                         <Chip
                                                             key={`manana-${inf.id}`}
-                                                            label={inf.name.split(' ')[0]}
+                                                            label={inf.name.split(' ').slice(0, 2).join(' ')}
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',
@@ -690,7 +642,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                                     disponiblesTarde.map((inf) => (
                                                         <Chip
                                                             key={`tarde-${inf.id}`}
-                                                            label={inf.name.split(' ')[0]}
+                                                            label={inf.name.split(' ').slice(0, 2).join(' ')}
                                                             size="small"
                                                             sx={{
                                                                 fontSize: '0.68rem',
@@ -919,7 +871,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                                                                 }
                                                                                 label={
                                                                                     <span style={{ fontSize: '0.75rem' }}>
-                                                                                        {influencer.name.split(' ')[0]}
+                                                                                        {influencer.name.split(' ').slice(0, 2).join(' ')}
                                                                                     </span>
                                                                                 }
                                                                                 deleteIcon={<Close fontSize="inherit" />}
@@ -929,6 +881,7 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                                                                         dia.nombre.toLowerCase(),
                                                                                         turno,
                                                                                         influencer.id,
+                                                                                        week.id,
                                                                                     )
                                                                                 }
                                                                                 variant="outlined"
@@ -999,27 +952,6 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                         fontFamily: "'Poppins', sans-serif",
                     }}
                 >
-                    <TextField
-                        label="Hora de inicio"
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ step: 300 }}
-                        fullWidth
-                    />
-                    <TextField
-                        label="Hora de fin"
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ step: 300 }}
-                        fullWidth
-                    />
-                    <Button variant="outlined" color="primary" onClick={handleAgregarDia} sx={{ borderRadius: 2, fontWeight: 'bold' }}>
-                        Agregar Día con Horario
-                    </Button>
                     <BriefcaseBusinessIcon />
                     Agregar Influencer
                 </DialogTitle>
@@ -1041,6 +973,22 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                         <Typography sx={{ fontWeight: '600' }}>
                             <strong>Turno:</strong> <em>{selectedTurno?.turno}</em>
                         </Typography>
+                        <TextField
+                            label="Hora de inicio"
+                            type="time"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            inputProps={{ step: 300 }}
+                        />
+                        <TextField
+                            label="Hora de fin"
+                            type="time"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            inputProps={{ step: 300 }}
+                        />
 
                         {/* Select principal con influencers disponibles */}
                         <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -1157,6 +1105,8 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                         dia: selectedTurno.dia,
                                         turno: selectedTurno.turno,
                                         influencer_id: selectedInfluencer,
+                                        start_time: startTime,
+                                        end_time: endTime,
                                     }),
                                 );
                             }
@@ -1168,6 +1118,8 @@ const handleOpenModal = (empresaId: number, dia: string, turno: string) => {
                                         dia: selectedTurno.dia,
                                         turno: selectedTurno.turno,
                                         influencer_id: selectedInfluencerExtra,
+                                        start_time: startTime,
+                                        end_time: endTime,
                                     }),
                                 );
                             }

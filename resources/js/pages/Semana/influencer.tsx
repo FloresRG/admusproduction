@@ -51,6 +51,7 @@ type DiaSemana = {
 type Influencer = {
     id: number;
     name: string;
+    bookingId: number; // ✅ Este lo necesitas
 };
 
 type EmpresaConDisponibilidad = {
@@ -157,18 +158,30 @@ const Semanainfluencer = () => {
         setAgregarOtro(false);
     };
 
-    const handleQuitarInfluencer = async (empresaId: number, dia: string, turno: string, influencerId: number,weekId: number) => {
+    /* const handleQuitarInfluencer = async (bookingId: number) => {
         setLoading(true);
         try {
             await axios.post('/quitar-influencer', {
-                empresa_id: empresaId,
-                dia,
-                turno,
-                influencer_id: influencerId,
-                week_id: weekId,
+                booking_id: bookingId,
             });
 
-            // Actualiza el estado local para reflejar el cambio sin recargar
+            // Si quieres, recarga la página para reflejar los cambios fácilmente:
+            window.location.reload();
+        } catch (error: any) {
+            console.error('Error al quitar influencer:', error.response?.data || error.message);
+            alert('Hubo un error al quitar el influencer');
+        } finally {
+            setLoading(false);
+        }
+    }; */
+    const handleQuitarInfluencer = async (bookingId: number, empresaId: number, dia: string, turno: string, influencerId: number) => {
+        setLoading(true);
+        try {
+            await axios.post('/quitar-influencer', {
+                booking_id: bookingId,
+            });
+
+            // ✅ Actualiza el estado local para reflejar el cambio en la UI sin recargar
             setDatosPorEmpresa((prev) =>
                 prev.map((empresa) =>
                     empresa.empresa.id === empresaId
@@ -178,20 +191,21 @@ const Semanainfluencer = () => {
                                   ...empresa.influencersAsignados,
                                   [dia]: {
                                       ...empresa.influencersAsignados[dia],
-                                      [turno]: empresa.influencersAsignados[dia][turno].filter((inf: any) => inf.id !== influencerId),
+                                      [turno]: empresa.influencersAsignados[dia][turno].filter((inf) => inf.id !== influencerId),
                                   },
                               },
                           }
                         : empresa,
                 ),
             );
-        } catch (error) {
-            console.error('Error al quitar influencer:', error);
+        } catch (error: any) {
+            console.error('Error al quitar influencer:', error.response?.data || error.message);
             alert('Hubo un error al quitar el influencer');
         } finally {
             setLoading(false);
         }
     };
+
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
 
@@ -238,13 +252,6 @@ const Semanainfluencer = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-ES', {
-            day: 'numeric',
-            month: 'short',
-        });
     };
 
     const getTotalInfluencersAsignados = () => {
@@ -500,17 +507,6 @@ const Semanainfluencer = () => {
                                             <Typography fontWeight="bold" fontSize="0.80rem">
                                                 {dayOfWeekInSpanish[dia.nombre.toLowerCase()] ?? dia.nombre}
                                             </Typography>
-                                            <Chip
-                                                label={formatDate(dia.fecha)}
-                                                size="small"
-                                                sx={{
-                                                    bgcolor: alpha('#fff', 0.2),
-                                                    color: '#fff',
-                                                    fontSize: '0.65rem',
-                                                    height: 18,
-                                                    px: 0.5,
-                                                }}
-                                            />
                                         </Stack>
                                     </TableCell>
                                 ))}
@@ -889,18 +885,16 @@ const Semanainfluencer = () => {
                                                                                 label={
                                                                                     <span style={{ fontSize: '0.75rem' }}>
                                                                                         {influencer.name.split(' ').slice(0, 2).join(' ')}
-                                                                                        
-
                                                                                     </span>
                                                                                 }
                                                                                 deleteIcon={<Close fontSize="inherit" />}
                                                                                 onDelete={() =>
                                                                                     handleQuitarInfluencer(
+                                                                                        influencer.bookingId, // <- Necesario para el backend
                                                                                         empresaData.empresa.id,
                                                                                         dia.nombre.toLowerCase(),
                                                                                         turno,
                                                                                         influencer.id,
-                                                                                        week.id,
                                                                                     )
                                                                                 }
                                                                                 variant="outlined"

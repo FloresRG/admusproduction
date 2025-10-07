@@ -273,6 +273,7 @@ class SemanaController extends Controller
                 })->map(fn($b) => [
                     'id' => $b->user_id,
                     'name' => optional($b->user)->name,
+                    'bookingId' => $b->id,
                 ])->values();
 
                 $influencersAsignados[$day][$turno] = $asignados;
@@ -420,7 +421,7 @@ class SemanaController extends Controller
 
         return back()->with('success', 'Influencer removido exitosamente.');
     } */
-    public function quitarInfluencer(Request $request)
+    /* public function quitarInfluencer(Request $request)
     {
         // 1. Validar datos de entrada (añade week_id)
         $validated = $request->validate([
@@ -468,28 +469,47 @@ class SemanaController extends Controller
             ->where('week_id', $weekId) // 👈 ¡CRUCIAL! Usa el week_id del request.
             ->where('day_of_week', strtolower($validated['dia']))
             ->where('turno', strtolower($validated['turno']))
-            ->where('start_time', $fecha->format("Y-m-d") . " " . $startTime)
-            ->where('end_time', $fecha->format("Y-m-d") . " " . $endTime)
+            ->whereDate('start_time', $fecha->format("Y-m-d"))
+            ->whereTime('start_time', $startTime)
+            ->whereTime('end_time', $endTime)
+
             ->first();
 
         if (!$booking) {
-            // Consejo: Añade los detalles para un mejor debug en caso de error
-            /* \Log::warning('Reserva no encontrada', [
-                'empresa_id' => $validated['empresa_id'],
-                'influencer_id' => $validated['influencer_id'],
-                'week_id' => $weekId,
-                'dia' => $validated['dia'],
-                'turno' => $validated['turno'],
-                'start_time' => $fecha->format("Y-m-d") . " " . $startTime,
-            ]); */
-            return back()->withErrors(['error' => 'No se encontró la asignación para eliminar']);
+            return response()->json([
+                'error' => 'No se encontró la asignación para eliminar',
+            ], 404);
         }
 
         // 6. Eliminar la reserva
         $booking->delete();
 
-        return back()->with('success', 'Influencer removido exitosamente.');
+        return response()->json([
+            'message' => 'Influencer removido exitosamente.',
+        ]);
     }
+     */
+    public function quitarInfluencer(Request $request)
+    {
+        $validated = $request->validate([
+            'booking_id' => 'required|exists:bookings,id',
+        ]);
+
+        $booking = Booking::find($validated['booking_id']);
+
+        if (!$booking) {
+            return response()->json(['error' => 'No se encontró la reserva.'], 404);
+        }
+
+        $booking->delete();
+
+        return response()->json(['message' => 'Influencer removido exitosamente.']);
+    }
+
+
+
+
+
 
     public function generarPdfDisponibilidad()
     {
