@@ -1,16 +1,24 @@
 //import { PageProps } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { Box, Typography, Paper, Grid, Button, IconButton, useTheme } from '@mui/material';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-    CalendarMonth, BarChart, Business, AccessTime, PlaylistAddCheck,
-    HourglassEmpty, EventNote, TrendingUp, PhotoCamera, Block, WavingHand,
-    ArrowDownward // Nuevo icono para indicar desplazamiento
+    AccessTime,
+    ArrowDownward, // Nuevo icono para indicar desplazamiento
+    BarChart,
+    Block,
+    Business,
+    CalendarMonth,
+    EventNote,
+    HourglassEmpty,
+    PhotoCamera,
+    PlaylistAddCheck,
+    TrendingUp,
+    WavingHand,
 } from '@mui/icons-material';
-import React, { useState, useEffect, useRef } from 'react';
+import { Box, Button, Grid, IconButton, Paper, Typography, useTheme } from '@mui/material';
 import dayjs from 'dayjs'; // Importamos dayjs para formateo de fechas
-import { ArrowDown } from 'lucide-react'; // Puedes usar iconos de Lucide React también
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 
 // Definición de interfaces (mantienen las mismas)
 interface Week {
@@ -68,8 +76,8 @@ interface DashboardProps extends PageProps {
 // Variantes para la animación de la bienvenida
 const welcomeVariants = {
     hidden: { opacity: 0, y: -50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
-    exit: { opacity: 0, y: -50, transition: { duration: 0.5, ease: "easeIn" } },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } },
+    exit: { opacity: 0, y: -50, transition: { duration: 0.5, ease: 'easeIn' } },
 };
 
 // Variantes para las cards
@@ -81,7 +89,7 @@ const cardVariants = {
         transition: {
             delay: i * 0.1 + 0.5, // Retraso incremental, comenzando después de la bienvenida
             duration: 0.6,
-            ease: "easeOut",
+            ease: 'easeOut',
         },
     }),
 };
@@ -113,7 +121,8 @@ export default function InfluencerDashboard({
 
         // Opción 2: Ocultar la bienvenida al hacer scroll
         const handleScroll = () => {
-            if (window.scrollY > 50) { // Si el usuario se desplaza más de 50px
+            if (window.scrollY > 50) {
+                // Si el usuario se desplaza más de 50px
                 setShowWelcome(false);
             }
         };
@@ -161,19 +170,28 @@ export default function InfluencerDashboard({
                             background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
                             color: theme.palette.common.white,
                             position: 'relative',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
                         }}
                     >
                         <motion.div
                             initial={{ scale: 0.8 }}
                             animate={{ scale: 1 }}
-                            transition={{ duration: 1, repeat: Infinity, repeatType: "mirror" }}
-                            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.1)', filter: 'blur(50px)', zIndex: 0 }}
+                            transition={{ duration: 1, repeat: Infinity, repeatType: 'mirror' }}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'rgba(255,255,255,0.1)',
+                                filter: 'blur(50px)',
+                                zIndex: 0,
+                            }}
                         />
                         <Box sx={{ zIndex: 1 }}>
                             <motion.div
                                 animate={{ rotate: [0, 14, -8, 14, -4, 10, 0] }}
-                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                             >
                                 <WavingHand sx={{ fontSize: 120, mb: 2 }} />
                             </motion.div>
@@ -186,11 +204,7 @@ export default function InfluencerDashboard({
                             <Typography variant="h6" component="p" sx={{ mb: 6 }}>
                                 Aquí tienes un resumen rápido de tu actividad.
                             </Typography>
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 1.5, duration: 0.8 }}
-                            >
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5, duration: 0.8 }}>
                                 <IconButton
                                     color="inherit"
                                     onClick={scrollToContent}
@@ -199,7 +213,7 @@ export default function InfluencerDashboard({
                                         p: 1,
                                         '&:hover': {
                                             backgroundColor: 'rgba(255,255,255,0.1)',
-                                        }
+                                        },
                                     }}
                                 >
                                     <ArrowDownward sx={{ fontSize: 32 }} />
@@ -218,17 +232,28 @@ export default function InfluencerDashboard({
                     {/* Card 1: Semanas Trabajando */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={0} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <CalendarMonth color="primary" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Semanas en Curso
                                 </Typography>
                                 {workingWeeks.length > 0 ? (
                                     <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
-                                        {workingWeeks.map(week => (
+                                        {workingWeeks.map((week) => (
                                             <li key={week.id}>
                                                 <Typography variant="body2">
-                                                    <strong>{week.name}</strong><br />
+                                                    <strong>{week.name}</strong>
+                                                    <br />
                                                     {dayjs(week.start_date).format('DD MMM YYYY')} - {dayjs(week.end_date).format('DD MMM YYYY')}
                                                 </Typography>
                                             </li>
@@ -246,7 +271,17 @@ export default function InfluencerDashboard({
                     {/* Card 2: Días Trabajados por Semana */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={1} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <BarChart color="secondary" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Días Trabajados por Semana
@@ -273,14 +308,24 @@ export default function InfluencerDashboard({
                     {/* Card 3: Empresas Colaboradoras */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={2} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <Business color="error" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Empresas Colaboradoras
                                 </Typography>
                                 {workedCompanies.length > 0 ? (
                                     <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
-                                        {workedCompanies.map(company => (
+                                        {workedCompanies.map((company) => (
                                             <li key={company.id}>
                                                 <Typography variant="body2">{company.name}</Typography>
                                             </li>
@@ -298,14 +343,24 @@ export default function InfluencerDashboard({
                     {/* Card 4: Tu Disponibilidad Registrada */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={3} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <AccessTime color="warning" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Tu Disponibilidad
                                 </Typography>
                                 {availabilities.length > 0 ? (
                                     <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
-                                        {availabilities.slice(0, 3).map(availability => (
+                                        {availabilities.slice(0, 3).map((availability) => (
                                             <li key={availability.id}>
                                                 <Typography variant="body2">
                                                     <strong>{availability.day_of_week}</strong>: {availability.start_time} - {availability.end_time}
@@ -333,7 +388,17 @@ export default function InfluencerDashboard({
                     {/* Card 5: Total de Reservas */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={4} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <PlaylistAddCheck color="info" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Total de Reservas
@@ -351,7 +416,17 @@ export default function InfluencerDashboard({
                     {/* Card 6: Desglose de Reservas por Estado */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={5} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <HourglassEmpty color="action" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Reservas por Estado
@@ -378,7 +453,17 @@ export default function InfluencerDashboard({
                     {/* Card 7: Total de Horas de Disponibilidad */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={6} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <AccessTime color="success" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Horas Disponibles
@@ -396,7 +481,17 @@ export default function InfluencerDashboard({
                     {/* Card 8: Próxima Reserva */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={7} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <EventNote color="primary" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Próxima Reserva
@@ -422,7 +517,17 @@ export default function InfluencerDashboard({
                     {/* Card 9: Última Empresa Trabajada */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={8} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <Business color="info" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Última Empresa
@@ -440,7 +545,17 @@ export default function InfluencerDashboard({
                     {/* Card 10: Promedio de Días de Trabajo por Semana */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={9} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <TrendingUp color="secondary" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Promedio Días/Semana
@@ -458,7 +573,17 @@ export default function InfluencerDashboard({
                     {/* Card 11: Cantidad de Fotos Subidas */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={10} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <PhotoCamera color="action" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Tus Fotos
@@ -476,7 +601,17 @@ export default function InfluencerDashboard({
                     {/* Card 12: Días sin Disponibilidad */}
                     <Grid item xs={12} sm={6} md={3}>
                         <motion.div initial="hidden" animate="visible" custom={11} variants={cardVariants}>
-                            <Paper elevation={3} sx={{ p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', minHeight: 200, justifyContent: 'center' }}>
+                            <Paper
+                                elevation={3}
+                                sx={{
+                                    p: 3,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    minHeight: 200,
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 <Block color="error" sx={{ fontSize: 48, mb: 2 }} />
                                 <Typography variant="h6" component="h3" gutterBottom align="center">
                                     Días Sin Disponibilidad
@@ -485,9 +620,7 @@ export default function InfluencerDashboard({
                                     <ul style={{ listStyleType: 'none', padding: 0, textAlign: 'center' }}>
                                         {daysWithoutAvailability.map((day, index) => (
                                             <li key={index}>
-                                                <Typography variant="body2">
-                                                    {day.charAt(0).toUpperCase() + day.slice(1)}
-                                                </Typography>
+                                                <Typography variant="body2">{day.charAt(0).toUpperCase() + day.slice(1)}</Typography>
                                             </li>
                                         ))}
                                     </ul>

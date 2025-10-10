@@ -158,18 +158,46 @@ const Semanainfluencer = () => {
         setAgregarOtro(false);
     };
 
-    const handleQuitarInfluencer = async (bookingId: number) => {
-        const confirmDelete = window.confirm('¿Estás seguro que deseas quitar este influencer?');
-        if (!confirmDelete) return;
-
+    /* const handleQuitarInfluencer = async (bookingId: number) => {
         setLoading(true);
         try {
             await axios.post('/quitar-influencer', {
                 booking_id: bookingId,
             });
 
-            // Recarga la página para reflejar los cambios
+            // Si quieres, recarga la página para reflejar los cambios fácilmente:
             window.location.reload();
+        } catch (error: any) {
+            console.error('Error al quitar influencer:', error.response?.data || error.message);
+            alert('Hubo un error al quitar el influencer');
+        } finally {
+            setLoading(false);
+        }
+    }; */
+    const handleQuitarInfluencer = async (bookingId: number, empresaId: number, dia: string, turno: string, influencerId: number) => {
+        setLoading(true);
+        try {
+            await axios.post('/quitar-influencer', {
+                booking_id: bookingId,
+            });
+
+            // ✅ Actualiza el estado local para reflejar el cambio en la UI sin recargar
+            setDatosPorEmpresa((prev) =>
+                prev.map((empresa) =>
+                    empresa.empresa.id === empresaId
+                        ? {
+                              ...empresa,
+                              influencersAsignados: {
+                                  ...empresa.influencersAsignados,
+                                  [dia]: {
+                                      ...empresa.influencersAsignados[dia],
+                                      [turno]: empresa.influencersAsignados[dia][turno].filter((inf) => inf.id !== influencerId),
+                                  },
+                              },
+                          }
+                        : empresa,
+                ),
+            );
         } catch (error: any) {
             console.error('Error al quitar influencer:', error.response?.data || error.message);
             alert('Hubo un error al quitar el influencer');
@@ -862,7 +890,11 @@ const Semanainfluencer = () => {
                                                                                 deleteIcon={<Close fontSize="inherit" />}
                                                                                 onDelete={() =>
                                                                                     handleQuitarInfluencer(
-                                                                                        influencer.bookingId, // ✅ ahora sí el ID real
+                                                                                        influencer.bookingId, // <- Necesario para el backend
+                                                                                        empresaData.empresa.id,
+                                                                                        dia.nombre.toLowerCase(),
+                                                                                        turno,
+                                                                                        influencer.id,
                                                                                     )
                                                                                 }
                                                                                 variant="outlined"

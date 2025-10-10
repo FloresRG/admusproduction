@@ -19,7 +19,6 @@ use Inertia\Inertia;
 
 class SemanaController extends Controller
 {
-
     public function index()
     {
         $hoy = Carbon::now();
@@ -68,56 +67,6 @@ class SemanaController extends Controller
             }),
         ]);
     }
-    /* public function indexMensual()
-    {
-        $hoy = Carbon::now();
-        $inicioMes = $hoy->copy()->startOfMonth();
-        $finMes = $hoy->copy()->endOfMonth();
-
-        $tareas = Tarea::with([
-            'company',
-            'tipo',
-            'asignaciones.user'
-        ])
-            ->whereBetween('fecha', [$inicioMes->toDateString(), $finMes->toDateString()])
-            ->orderBy('fecha')
-            ->orderByRaw("FIELD(prioridad, 'alta', 'media', 'baja')")
-            ->get();
-
-        $datosPorEmpresa = [];
-
-        foreach ($tareas as $tarea) {
-            $empresaId = $tarea->company_id ?? 0;
-
-            if (!isset($datosPorEmpresa[$empresaId])) {
-                $datosPorEmpresa[$empresaId] = [
-                    'empresa' => $tarea->company ?? ['id' => 0, 'nombre' => 'Sin empresa'],
-                    'tareas' => [],
-                ];
-            }
-
-            $fecha = $tarea->fecha;
-            if (!isset($datosPorEmpresa[$empresaId]['tareas'][$fecha])) {
-                $datosPorEmpresa[$empresaId]['tareas'][$fecha] = [];
-            }
-
-            $datosPorEmpresa[$empresaId]['tareas'][$fecha][] = $tarea;
-        }
-
-        // todos los días del mes
-        $diasMes = collect();
-        for ($date = $inicioMes->copy(); $date->lte($finMes); $date->addDay()) {
-            $diasMes->push([
-                'fecha' => $date->toDateString(),
-                'nombre' => $date->translatedFormat('l'),
-            ]);
-        }
-
-        return Inertia::render('Semana/IndexMensual', [
-            'datosPorEmpresa' => array_values($datosPorEmpresa),
-            'diasMes' => $diasMes,
-        ]);
-    } */
     public function indexMensual()
     {
         $hoy = Carbon::now();
@@ -178,9 +127,6 @@ class SemanaController extends Controller
             'mes' => $inicioMes->translatedFormat('F Y'),
         ]);
     }
-
-
-
     public function indexinfluencer(Request $request)
     {
         $weekId = $request->query('week_id');
@@ -359,136 +305,6 @@ class SemanaController extends Controller
         ]);
         return back()->with('success', 'Influencer asignado exitosamente.');
     }
-    /*  public function quitarInfluencer(Request $request)
-    {
-        // Validar datos de entrada
-        $validated = $request->validate([
-            'empresa_id' => 'required|exists:companies,id',
-            'dia' => 'required|string',
-            'turno' => 'required|string', // 'mañana' o 'tarde'
-            'influencer_id' => 'required|exists:users,id',
-        ]);
-
-        // Calcular inicio y fin de la semana actual
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SUNDAY);
-
-        // Buscar la semana actual
-        $week = Week::where('start_date', $startOfWeek->toDateString())
-            ->where('end_date', $endOfWeek->toDateString())
-            ->first();
-
-        if (!$week) {
-            return back()->withErrors(['error' => 'No se encontró la semana actual']);
-        }
-
-        $weekId = $week->id;
-
-        // Calcular el día de la semana (offset)
-        $dias = [
-            'monday' => 0,
-            'tuesday' => 1,
-            'wednesday' => 2,
-            'thursday' => 3,
-            'friday' => 4,
-            'saturday' => 5,
-            'sunday' => 6,
-        ];
-
-        $diaOffset = $dias[strtolower($validated['dia'])] ?? 0;
-        $fecha = $startOfWeek->copy()->addDays($diaOffset);
-
-        // Definir hora de inicio y fin según turno
-        $startTime = $validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00';
-        $endTime = $validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00';
-
-        // Buscar la reserva para eliminar
-        $booking = Booking::where('company_id', $validated['empresa_id'])
-            ->where('user_id', $validated['influencer_id'])
-            ->where('week_id', $weekId)
-            ->where('day_of_week', strtolower($validated['dia']))
-            ->where('turno', strtolower($validated['turno']))
-            ->where('start_time', $fecha->format("Y-m-d") . " " . $startTime)
-            ->where('end_time', $fecha->format("Y-m-d") . " " . $endTime)
-            ->first();
-
-        if (!$booking) {
-            return back()->withErrors(['error' => 'No se encontró la asignación para eliminar']);
-        }
-
-        // Eliminar la reserva
-        $booking->delete();
-
-        return back()->with('success', 'Influencer removido exitosamente.');
-    } */
-    /* public function quitarInfluencer(Request $request)
-    {
-        // 1. Validar datos de entrada (añade week_id)
-        $validated = $request->validate([
-            'empresa_id' => 'required|exists:companies,id',
-            'dia' => 'required|string',
-            'turno' => 'required|string', // 'mañana' o 'tarde'
-            'influencer_id' => 'required|exists:users,id',
-            'week_id' => 'required|exists:weeks,id', // 👈 ¡Requerido!
-        ]);
-
-        $weekId = $validated['week_id'];
-
-        // 2. Opcional: Buscar la semana solo para obtener su fecha de inicio.
-        // Esto es necesario para reconstruir el start_time y end_time.
-        $week = Week::find($weekId);
-
-        if (!$week) {
-            return back()->withErrors(['error' => 'No se encontró la semana con el ID proporcionado']);
-        }
-
-        $startOfWeek = Carbon::parse($week->start_date);
-
-        // 3. Calcular fecha del día de la semana
-        $dias = [
-            'monday' => 0,
-            'tuesday' => 1,
-            'wednesday' => 2,
-            'thursday' => 3,
-            'friday' => 4,
-            'saturday' => 5,
-            'sunday' => 6,
-        ];
-
-        $diaOffset = $dias[strtolower($validated['dia'])] ?? 0;
-        $fecha = $startOfWeek->copy()->addDays($diaOffset);
-
-        // 4. Definir hora de inicio y fin según turno
-        // Asumo que estos son los defaults o que las reservas se crearon con ellos.
-        $startTime = $validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00';
-        $endTime = $validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00';
-
-        // 5. Buscar la reserva para eliminar (usando $weekId)
-        $booking = Booking::where('company_id', $validated['empresa_id'])
-            ->where('user_id', $validated['influencer_id'])
-            ->where('week_id', $weekId) // 👈 ¡CRUCIAL! Usa el week_id del request.
-            ->where('day_of_week', strtolower($validated['dia']))
-            ->where('turno', strtolower($validated['turno']))
-            ->whereDate('start_time', $fecha->format("Y-m-d"))
-            ->whereTime('start_time', $startTime)
-            ->whereTime('end_time', $endTime)
-
-            ->first();
-
-        if (!$booking) {
-            return response()->json([
-                'error' => 'No se encontró la asignación para eliminar',
-            ], 404);
-        }
-
-        // 6. Eliminar la reserva
-        $booking->delete();
-
-        return response()->json([
-            'message' => 'Influencer removido exitosamente.',
-        ]);
-    }
-     */
     public function quitarInfluencer(Request $request)
     {
         $validated = $request->validate([
@@ -505,12 +321,6 @@ class SemanaController extends Controller
 
         return response()->json(['message' => 'Influencer removido exitosamente.']);
     }
-
-
-
-
-
-
     public function generarPdfDisponibilidad()
     {
         $now = Carbon::now();
@@ -675,7 +485,6 @@ class SemanaController extends Controller
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="disponibilidad_semanal.pdf"');
     }
-
     public function agregarDisponibilidadEmpresa(Request $request)
     {
         $validated = $request->validate([
@@ -699,49 +508,6 @@ class SemanaController extends Controller
 
         return response()->json(['success' => true, 'availability' => $availability]);
     }
-
-
-    /* public function agregarDisponibilidadEmpresa(Request $request)
-    {
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'day_of_week' => 'required|string',
-            'turno' => 'required|string',
-            'start_time' => 'nullable|string',
-            'end_time' => 'nullable|string',
-        ]);
-
-        $startTime = $validated['start_time'] ?? ($validated['turno'] === 'mañana' ? '09:00:00' : '14:00:00');
-        $endTime = $validated['end_time'] ?? ($validated['turno'] === 'mañana' ? '13:00:00' : '18:00:00');
-
-        // Buscar si ya existe disponibilidad para ese día y turno
-        $availability = \App\Models\AvailabilityDay::where('company_id', $validated['company_id'])
-            ->where('day_of_week', strtolower($validated['day_of_week']))
-            ->where('turno', strtolower($validated['turno']))
-            ->first();
-
-        if ($availability) {
-            // Si existe, actualiza el horario
-            $availability->update([
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-            ]);
-        } else {
-            // Si no existe, crea uno nuevo
-            $availability = \App\Models\AvailabilityDay::create([
-                'company_id' => $validated['company_id'],
-                'day_of_week' => strtolower($validated['day_of_week']),
-                'turno' => strtolower($validated['turno']),
-                'start_time' => $startTime,
-                'end_time' => $endTime,
-                'cantidad' => 1,
-            ]);
-        }
-
-        return response()->json(['success' => true, 'availability' => $availability]);
-    } */
-
-
     public function quitarDisponibilidadEmpresa(Request $request)
     {
         $validated = $request->validate([
@@ -757,7 +523,6 @@ class SemanaController extends Controller
 
         return response()->json(['success' => $deleted > 0]);
     }
-
     public function asignarEmpresasMasivamente()
     {
         $nextMonday = now()->startOfWeek();
@@ -895,7 +660,6 @@ class SemanaController extends Controller
             'detalle' => $asignaciones,
         ]);
     }
-
     public function indexpasante(Request $request)
     {
         $weekId = $request->query('week_id');
