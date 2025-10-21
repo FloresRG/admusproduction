@@ -31,6 +31,7 @@ use App\Http\Controllers\PasanteController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\PlanEmpresaController;
 use App\Http\Controllers\PremioController;
+use App\Http\Controllers\ReporteVentaController;
 use App\Http\Controllers\SeguimientoEmpresaController;
 use App\Http\Controllers\SeguimientoEmpresaVendedorController;
 use App\Http\Controllers\SemanaController;
@@ -509,18 +510,13 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/seguimiento-empresa-vendedor', [SeguimientoEmpresaVendedorController::class, 'store'])
         ->name('seguimiento-empresa-vendedor.store');
-
-    Route::put('/seguimiento-empresa-vendedor/{seguimiento_empresa}', [SeguimientoEmpresaVendedorController::class, 'update'])
+    Route::put('/reporte-empresa-vendedor/{seguimiento_empresa}', [SeguimientoEmpresaVendedorController::class, 'update'])
         ->name('seguimiento-empresa-vendedor.update');
-
-    Route::delete('/seguimiento-empresa-vendedor/{seguimiento_empresa}', [SeguimientoEmpresaVendedorController::class, 'destroy'])
+    Route::delete('/reporte-empresa-vendedor/{seguimiento_empresa}', [SeguimientoEmpresaVendedorController::class, 'destroy'])
         ->name('seguimiento-empresa-vendedor.destroy');
-
-    // Rutas adicionales personalizadas
-    Route::put('/seguimiento-empresa-vendedor/{seguimiento_empresa}/finalize', [SeguimientoEmpresaVendedorController::class, 'finalize'])
+    Route::put('/reporte-empresa-vendedor/{seguimiento_empresa}/finalize', [SeguimientoEmpresaVendedorController::class, 'finalize'])
         ->name('seguimiento-empresa-vendedor.finalize');
-
-    Route::put('/seguimiento-empresa-vendedor/{seguimiento_empresa}/cancel', [SeguimientoEmpresaVendedorController::class, 'cancel'])
+    Route::put('/reporte-empresa-vendedor/{seguimiento_empresa}/cancel', [SeguimientoEmpresaVendedorController::class, 'cancel'])
         ->name('seguimiento-empresa-vendedor.cancel');
 });
 
@@ -581,7 +577,20 @@ Route::put('/tareaseditor/{id}/completar', [EditorController::class, 'marcarComo
     ->middleware(['auth', 'verified'])
     ->name('tareaseditor.completar');
 Route::get('/editor/tareas-hoy', [EditorController::class, 'tareasHoy'])->name('tareaseditor.hoy');
+Route::middleware(['auth'])->group(function () {
+    Route::get('/reportes', [ReporteVentaController::class, 'index'])->name('reportes.index');
+    Route::get('/reportesgeneral', [ReporteVentaController::class, 'indexgeneral'])->name('reportes.indexgeneral');
+    Route::get('/reportes/crear', [ReporteVentaController::class, 'create'])->name('reportes.create');
+    Route::post('/reportes', [ReporteVentaController::class, 'store'])->name('reportes.store');
+    Route::get('/reportes/{id}', [ReporteVentaController::class, 'show'])->name('reportes.show');
+    Route::get('/reportesuser/{id}', [ReporteVentaController::class, 'showuser'])->name('reportes.showuser');
+    Route::get('/reportes/{id}/pdf', [ReporteVentaController::class, 'pdf'])->name('reportes.pdf');
+    Route::get('/reportes/{id}/editar', [ReporteVentaController::class, 'edit'])->name('reportes.edit');
+    // También necesitarás la ruta para actualizar:
+    Route::put('/reportes/{id}', [ReporteVentaController::class, 'update'])->name('reportes.update');
 
+
+});
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

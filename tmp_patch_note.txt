@@ -1,0 +1,7 @@
+Patch will:
+- Add type definitions: Actividad, Estrategia, Resultado, Dificultad, Meta, FormState
+- Use useState<FormState> for form
+- Change textarea rows="4" to rows={4}
+- Add section-level error messages for actividades and estrategias
+
+Applying edits to Create.tsx now.

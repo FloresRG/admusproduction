@@ -249,8 +249,10 @@ export function AppSidebar() {
                 title: 'Gestion de Vendedores',
                 icon: WorkIcon,
                 items: [
+                    { title: 'Reportes Empresas general', href: '/reportesgeneral', icon: StoreIcon }, // admin
                     { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
                     { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, // admin
+                    { title: 'Reportes Empresas', href: '/reporte-empresa-vendedor', icon: RateReviewIcon }, // admin
                     { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
                     { title: 'Premios', href: '/premios', icon: PendingActionsIcon },
                     { title: 'Paquetes', href: '/paquetes', icon: TableChartIcon }, // CAMBIADO
@@ -379,9 +381,10 @@ export function AppSidebar() {
                 title: 'Gestion de Vendedores',
                 icon: WorkIcon,
                 items: [
-                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: StoreIcon }, // admin
-                    { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, // admin
-                    { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, // admin
+                    { title: 'Reportes Empresas', href: '/reportes', icon: BusinessIcon },
+                    { title: 'Seguimiento Empresas', href: '/seguimiento-empresa', icon: EmojiPeopleIcon }, 
+                    { title: 'Seguimiento Historial', href: '/seguimiento-historial', icon: StoreIcon }, 
+                    { title: 'Canjes Pendientes', href: '/canjes/pendientes', icon: TodayIcon }, 
                 ],
                 isCollapsible: true,
             });

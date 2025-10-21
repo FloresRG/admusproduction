@@ -19,19 +19,27 @@ class SeguimientoEmpresa extends Model
         'fecha_inicio',
         'fecha_fin',
         'descripcion',
-        'celular', 
+        'celular',
     ];
-    
+
 
     // Relación con el usuario
     public function usuario()
     {
         return $this->belongsTo(User::class, 'id_user');
     }
+    public function usuariovendedor()
+    {
+        return $this->belongsTo(User::class, 'user_vendedor_id');
+    }
 
     // Relación con el paquete
     public function paquete()
     {
         return $this->belongsTo(Paquete::class, 'id_paquete');
+    }
+    public function reportes()
+    {
+        return $this->belongsToMany(ReporteVenta::class, 'reporte_venta_seguimiento_empresa');
     }
 }

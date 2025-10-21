@@ -107,4 +107,8 @@ class User extends Authenticatable
     {
         return $this->hasMany(Canje::class, 'id_user');
     }
+    public function reportesVentas()
+    {
+        return $this->hasMany(ReporteVenta::class, 'jefe_ventas_id');
+    }
 }

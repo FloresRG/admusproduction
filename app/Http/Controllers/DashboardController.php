@@ -42,12 +42,12 @@ class DashboardController extends Controller
         };
     }
 
- protected function showJefeVentasDashboard(User $user)
-{
-    return Inertia::render('Dashboard/JefeVentas', [
-        'user' => $user
-    ]);
-}
+    protected function showJefeVentasDashboard(User $user)
+    {
+        return Inertia::render('Dashboard/JefeVentas', [
+            'user' => $user
+        ]);
+    }
 
 
     protected function showEmpresaDashboard(User $user)
